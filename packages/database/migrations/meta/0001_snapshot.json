@@ -42,12 +42,8 @@
           "tableFrom": "app_users",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -155,14 +151,8 @@
           "name": "availability_rules_business_staff_fk",
           "tableFrom": "availability_rules",
           "tableTo": "staff_members",
-          "columnsFrom": [
-            "business_id",
-            "staff_member_id"
-          ],
-          "columnsTo": [
-            "business_id",
-            "id"
-          ],
+          "columnsFrom": ["business_id", "staff_member_id"],
+          "columnsTo": ["business_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -270,12 +260,8 @@
           "name": "business_memberships_business_id_businesses_id_fk",
           "tableFrom": "business_memberships",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -283,12 +269,8 @@
           "name": "business_memberships_user_id_app_users_id_fk",
           "tableFrom": "business_memberships",
           "tableTo": "app_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -433,12 +415,8 @@
           "name": "services_business_id_businesses_id_fk",
           "tableFrom": "services",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -448,10 +426,7 @@
         "services_business_id_id_unique": {
           "name": "services_business_id_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "id"
-          ]
+          "columns": ["business_id", "id"]
         }
       },
       "policies": {},
@@ -534,12 +509,8 @@
           "name": "staff_members_business_id_businesses_id_fk",
           "tableFrom": "staff_members",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -549,10 +520,7 @@
         "staff_members_business_id_id_unique": {
           "name": "staff_members_business_id_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "id"
-          ]
+          "columns": ["business_id", "id"]
         }
       },
       "policies": {},
@@ -663,14 +631,8 @@
           "name": "staff_services_business_staff_fk",
           "tableFrom": "staff_services",
           "tableTo": "staff_members",
-          "columnsFrom": [
-            "business_id",
-            "staff_member_id"
-          ],
-          "columnsTo": [
-            "business_id",
-            "id"
-          ],
+          "columnsFrom": ["business_id", "staff_member_id"],
+          "columnsTo": ["business_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -678,14 +640,8 @@
           "name": "staff_services_business_service_fk",
           "tableFrom": "staff_services",
           "tableTo": "services",
-          "columnsFrom": [
-            "business_id",
-            "service_id"
-          ],
-          "columnsTo": [
-            "business_id",
-            "id"
-          ],
+          "columnsFrom": ["business_id", "service_id"],
+          "columnsTo": ["business_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -701,11 +657,7 @@
     "public.business_membership_role": {
       "name": "business_membership_role",
       "schema": "public",
-      "values": [
-        "owner",
-        "admin",
-        "member"
-      ]
+      "values": ["owner", "admin", "member"]
     }
   },
   "schemas": {},
