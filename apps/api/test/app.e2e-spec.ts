@@ -35,22 +35,16 @@ describe('API (e2e)', () => {
   });
 
   it('/health/live (GET)', async () => {
-    await request(app.getHttpServer())
-      .get('/health/live')
-      .expect(200)
-      .expect({
-        status: 'ok',
-        service: 'api',
-      });
+    await request(app.getHttpServer()).get('/health/live').expect(200).expect({
+      status: 'ok',
+      service: 'api',
+    });
   });
 
   it('/health/ready (GET)', async () => {
-    await request(app.getHttpServer())
-      .get('/health/ready')
-      .expect(200)
-      .expect({
-        status: 'ready',
-        service: 'api',
-      });
+    await request(app.getHttpServer()).get('/health/ready').expect(200).expect({
+      status: 'ready',
+      service: 'api',
+    });
   });
 });

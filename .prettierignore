@@ -1,0 +1,16 @@
+node_modules/
+.pnpm-store/
+
+dist/
+build/
+.next/
+out/
+coverage/
+
+pnpm-lock.yaml
+
+docs/
+AGENTS.md
+README.md
+
+apps/web/next-env.d.ts

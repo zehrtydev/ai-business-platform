@@ -115,6 +115,9 @@ importers:
       oxlint-tsgolint:
         specifier: ^7.0.2002
         version: 7.0.2002
+      prettier:
+        specifier: ^3.4.2
+        version: 3.9.8
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -161,9 +164,6 @@ importers:
       oxlint-tsgolint:
         specifier: ^7.0.2001
         version: 7.0.2002
-      prettier:
-        specifier: ^3.4.2
-        version: 3.9.8
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
