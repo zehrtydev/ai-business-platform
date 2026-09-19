@@ -1,1102 +1,520 @@
-# ARCHITECTURE.md
+# STATUS.md
 
-## Status
+## Project
 
-Initial draft.
+**ia-business-platform**
 
-This document describes the candidate architecture for the **ia-business-platform** MVP and establishes the main boundaries between components.
+Temporary project name.
 
-Decisions marked as candidates may change during implementation. Final decisions must be recorded in `docs/DECISIONS.md`.
+* * *
 
----
+## Current phase
 
-## 1. Architecture goals
+    M0 — Project foundation
 
-The architecture must make it possible to:
+Status:
 
-- build the MVP quickly;
-- maintain a clear separation between frontend, backend, and asynchronous processing;
-- support multiple businesses from the start;
-- decouple messaging and artificial intelligence providers;
-- process webhooks safely and idempotently;
-- run background tasks;
-- maintain a central source of truth for appointments, contacts, and conversations;
-- add new channels and providers without rewriting the core;
-- grow progressively without adopting microservices prematurely;
-- deploy initially on simple, low-cost infrastructure.
+    IN PROGRESS
 
----
+The project is currently in the documentation and technical-definition stage.
 
-## 2. Main principle
+No product code has been implemented yet.
 
-The initial architecture will be a:
+* * *
 
-> **Modular monolith with asynchronous workers.**
+## Current objective
 
-Microservices will not be used during the MVP.
+Complete the foundational documentation and resolve the technical decisions required before bootstrapping the monorepo.
 
-This means business logic will remain inside a backend application organized by domains, while work that does not require an immediate response will be executed by one or more workers.
+Immediate target:
 
----
+    Documentation foundation
+            ↓
+    Technical decisions
+            ↓
+    Monorepo bootstrap
+            ↓
+    M1 — Technical base
 
-## 3. Overview
+* * *
 
-                              USERS
+## Completed
 
-                        Browser / Dashboard
-                                  │
-                                  ▼
-                           ┌─────────────┐
-                           │   Next.js   │
-                           │     Web     │
-                           └──────┬──────┘
-                                  │ HTTPS
-                                  ▼
-                           ┌─────────────┐
-                           │   NestJS    │
-                           │   Fastify   │
-                           │     API     │
-                           └──────┬──────┘
-                                  │
-                ┌─────────────────┼─────────────────┐
-                │                 │                 │
-                ▼                 ▼                 ▼
-          ┌───────────┐     ┌───────────┐     ┌────────────┐
-          │PostgreSQL │     │   Redis   │     │ AI Layer   │
-          │ Supabase  │     │  BullMQ   │     │ Providers  │
-          └─────┬─────┘     └─────┬─────┘     └────────────┘
-                │                 │
-                │                 ▼
-                │           ┌───────────┐
-                │           │  Worker   │
-                │           └─────┬─────┘
-                │                 │
-                ▼                 ▼
-          Supabase Realtime    Integrations
-                                  │
-               ┌──────────────────┼──────────────────┐
-               │                  │                  │
-               ▼                  ▼                  ▼
-           WhatsApp         Google Calendar         n8n
-           Provider             future             optional
+### Product definition
 
----
+* [x] General product vision defined.
+* [x] First real use case identified: dental office.
+* [x] Product designed as multi-industry from the beginning.
+* [x] SaaS / multi-tenant direction established.
+* [x] Core product value proposition established.
+* [x] MVP scope defined.
+* [x] Explicit out-of-scope items defined.
+* [x] Initial product modules defined.
+* [x] Initial development roadmap defined.
 
-## 4. Main components
+* * *
 
-### 4.1 `apps/web`
+## Documentation
 
-Administrative frontend.
+Current foundational documents:
 
-Candidate technology:
+    docs/
+    ├── PROJECT.md
+    ├── PRODUCT.md
+    ├── MVP.md
+    ├── ARCHITECTURE.md
+    ├── ROADMAP.md
+    ├── STATUS.md
+    └── DECISIONS.md
 
-    Next.js
-    TypeScript
+Current state:
 
-Responsibilities:
+| Document | Status |
+| --- | --- |
+| `PROJECT.md` | Defined |
+| `PRODUCT.md` | Defined |
+| `MVP.md` | Defined |
+| `ARCHITECTURE.md` | Initial architecture defined |
+| `ROADMAP.md` | Initial roadmap defined |
+| `STATUS.md` | Active |
+| `DECISIONS.md` | Active |
 
-- user authentication;
-- dashboard;
-- inbox;
-- CRM;
-- scheduling;
-- services;
-- staff;
-- business settings;
-- metrics visualization;
-- human handoff;
-- interaction with the API.
+Additional root documentation still to refine:
 
-The frontend must not contain critical business logic.
+    AGENTS.md
+    README.md
 
-It will not be responsible for determining:
+* * *
 
-- actual availability;
-- effective permissions;
-- multi-tenant isolation;
-- definitive appointment creation;
-- automation execution;
-- direct calls to external providers using secrets.
+## Repository
 
----
+Repository working name:
 
-### 4.2 `apps/api`
+    ai-business-platform
 
-Main backend.
+Primary branch:
 
-Candidate technology:
+    main
 
-    NestJS
-    Fastify
-    TypeScript
+Confirmed foundational commit:
 
-Responsibilities:
+    b519e75 docs: define project and initial architecture
 
-- business rules;
-- authorization;
-- tenant resolution;
-- contacts;
-- leads;
-- conversations;
-- messages;
-- services;
-- staff;
-- availability;
-- appointments;
-- pipelines;
-- provider integrations;
-- tools available to AI agents;
-- webhook reception;
-- event generation;
-- job creation;
-- health/readiness endpoints.
+The repository currently contains documentation and empty/initial structural directories.
 
-The backend will be the main authority over the operational state of the product.
+* * *
 
----
+## Product scope
 
-### 4.3 `apps/worker`
+The first validated product flow must become:
 
-Asynchronous processing.
+    WhatsApp
+       ↓
+    Inbound message
+       ↓
+    Contact identified/created
+       ↓
+    Conversation persisted
+       ↓
+    AI agent
+       ↓
+    Service intent
+       ↓
+    Availability lookup
+       ↓
+    Slot selection
+       ↓
+    Appointment created
+       ↓
+    Lead updated
+       ↓
+    Confirmation
+       ↓
+    Reminder
 
-Candidate technology:
+The MVP is not considered validated merely because the AI can answer messages.
 
-    Node.js
-    BullMQ
-    Redis
+The MVP is validated when this flow works reliably from a real messaging channel to a real persisted appointment.
 
-Initial responsibilities:
+* * *
 
-- deferred message processing;
-- execution of AI-generated responses;
-- message sending;
-- reminders;
-- retries;
-- external synchronization;
-- scheduled jobs;
-- processing of secondary events.
+## Initial modules
 
-The worker may share domain packages with `apps/api`, but it must not depend on the frontend.
+Planned core modules:
 
----
+    Auth
+    Business
+    Users / Memberships
+    Dashboard
+    Inbox
+    CRM
+    Contacts
+    Leads
+    Pipeline
+    Services
+    Staff
+    Availability
+    Appointments
+    AI Agent
+    Messaging
+    Automations
+    Analytics
+    Integrations
+    Audit / Observability
 
-## 5. Database
+* * *
 
-Primary engine:
+## Architecture direction
 
-    PostgreSQL
+Current architecture:
 
-Candidate provider for the MVP:
+    Modular monolith
+    +
+    asynchronous workers
 
-    Supabase
+Candidate/selected technologies:
 
-Supabase will be used mainly as managed infrastructure for:
+    Frontend        Next.js + TypeScript
+    Backend         NestJS + Fastify
+    Worker          Node.js
+    Database        PostgreSQL
+    DB/Auth infra   Supabase
+    Queue           BullMQ
+    Queue backend   Redis
+    Reverse proxy   Caddy
+    Deployment      Docker on VPS
 
-- PostgreSQL;
-- authentication;
-- storage when needed;
-- realtime where useful.
+Important principle:
 
-Supabase will not replace the backend business layer.
+    Frontend
+       ↓
+    Backend
+       ↓
+    Domain rules
+       ↓
+    Database / queues / provider adapters
 
----
+External providers must not become the core domain.
 
-## 6. Source of truth
+* * *
 
-The ia-business-platform database will be the source of truth for the main entities.
+## Multi-tenancy
 
-Examples:
+Multi-tenancy is a first-class architectural requirement.
+
+Primary tenant:
 
     Business
-    Contact
-    Lead
-    Conversation
-    Message
-    Service
-    StaffMember
-    Availability
-    Appointment
-    Pipeline
-    PipelineStage
-    Integration
 
-External systems such as Google Calendar must not be the only source of truth.
-
-Example:
-
-    Internal Appointment
-           ↓
-    synchronization
-           ↓
-    Google Calendar
-
----
-
-## 7. Multi-tenancy
-
-The application will be multi-tenant from the beginning.
-
-The main isolation unit will be:
+Operational entities will be associated with:
 
     business_id
 
-Every entity belonging to a business must be unambiguously associated with that tenant.
+Access must be resolved and validated by the backend through authenticated memberships.
 
-Examples:
+The frontend must never be trusted to freely choose a tenant.
 
-    services.business_id
-    contacts.business_id
-    conversations.business_id
-    appointments.business_id
-    pipelines.business_id
-    integrations.business_id
+* * *
 
-### Security rule
+## AI direction
 
-The backend must never rely solely on a `business_id` sent by the frontend.
+The AI layer will be provider-agnostic.
 
-The tenant must be resolved from the authenticated identity and its memberships.
+Conceptual abstraction:
 
-Conceptually:
+    AIProvider
 
-    User
-      ↓
-    BusinessMembership
-      ↓
-    Business
+The model will:
 
----
+* understand conversation;
+* interpret intent;
+* generate language;
+* request tools.
 
-## 8. Initial domain model
+The backend will:
 
-Planned domains:
+* validate parameters;
+* enforce tenant isolation;
+* execute tools;
+* create appointments;
+* update business state;
+* persist results.
 
-    auth
-    businesses
-    users
-    memberships
-    contacts
-    leads
-    pipelines
-    conversations
-    messages
-    services
-    staff
-    availability
-    appointments
-    integrations
-    ai
-    automations
-    analytics
-    audit
+The LLM will not have direct database access.
 
-These domains will exist as modules inside the monolith.
+* * *
 
-They do not imply separate microservices.
+## Available development models
 
----
+Available models that may be used during development and review include:
 
-## 9. Synchronous and asynchronous communication
+### ChatGPT
 
-### Synchronous
+    Astra 6
+    GPT-5.6 Sol
+    GPT-5.6 Terra
+    GPT-5.6 Luna
+    GPT-5.5
 
-Used when the user or provider requires an immediate response.
+### Google AI Pro environment
 
-Examples:
+    Gemini 3.8
+    Gemini 3.7
+    Gemini 3.6
+    Gemini 3.1 Pro
+    Claude Sonnet 4.6
+    Claude Opus 4.6
+    GPT-OSS 120B
 
-    GET /services
-    GET /appointments
-    POST /appointments
-    POST /auth/login
+These models are development aids, not automatically the runtime models of the product.
 
-### Asynchronous
+The runtime AI provider/model remains a separate technical decision.
 
-Used when an operation:
+* * *
 
-- may take time;
-- depends on an external provider;
-- needs retries;
-- must execute in the future;
-- should not block a webhook.
+## Messaging direction
 
-Examples:
+Initial channel:
 
-    process received message
-    query AI
-    send response
-    schedule reminder
-    synchronize calendar
-    generate analytics
+    WhatsApp
 
----
+The final provider is intentionally undecided.
 
-## 10. Webhooks
-
-Webhooks must be processed under the principle:
-
-> receive → validate → persist/deduplicate → enqueue → respond.
-
-Example:
-
-    WhatsApp Provider
-           ↓
-    Webhook
-           ↓
-    API
-           ↓
-    Validate signature/origin
-           ↓
-    Check idempotency
-           ↓
-    Persist minimum event
-           ↓
-    Create job
-           ↓
-    HTTP 200
-           ↓
-    Worker processes
-
-Long chains of AI and integration calls should not be executed before answering the webhook when unnecessary.
-
----
-
-## 11. Idempotency
-
-External systems may resend events.
-
-The platform must assume that the same event may arrive more than once.
-
-External identifiers and/or idempotency keys will be used to prevent duplicates.
-
-Critical cases:
-
-    messages
-    webhooks
-    appointments
-    jobs
-    synchronizations
-
-Example:
-
-    provider_message_id
-
-must be usable to detect previously processed messages.
-
----
-
-## 12. Redis and queues
-
-Candidate technologies:
-
-    Redis
-    BullMQ
-
-Redis will not be the source of truth for critical data.
-
-It will mainly be used for:
-
-- queues;
-- locks when appropriate;
-- worker coordination;
-- delayed jobs;
-- retries;
-- ephemeral state.
-
-Data whose loss would affect the business must be persisted in PostgreSQL.
-
----
-
-## 13. Internal events
-
-The system will use domain events to decouple secondary actions.
-
-Examples:
-
-    contact.created
-    lead.created
-    message.received
-    message.sent
-    lead.stage_changed
-    appointment.created
-    appointment.cancelled
-    conversation.handoff_requested
-    conversation.handoff_resolved
-
-During the MVP, these events may be implemented inside the monolith and the existing queues.
-
-Kafka, RabbitMQ, or a distributed streaming platform is not required.
-
----
-
-## 14. Messaging
-
-Business logic must not depend on a specific WhatsApp provider.
-
-An abstraction equivalent to the following will be defined:
-
-    interface MessagingProvider {
-      sendText(...)
-      sendMedia(...)
-      markAsRead(...)
-      normalizeInboundMessage(...)
-      getMedia(...)
-    }
-
-Future implementations may include:
+Candidates include:
 
     Meta Cloud API
     Evolution API
-    BSP
-    other providers
-
-The initial selection remains pending research.
-
----
-
-## 15. Message normalization
-
-Each provider uses different formats.
-
-Adapters must convert external messages into a common internal format.
-
-Conceptual example:
-
-    type NormalizedInboundMessage = {
-      externalMessageId: string
-      channel: string
-      senderExternalId: string
-      type: string
-      text?: string
-      media?: unknown
-      receivedAt: Date
-    }
-
-The rest of the system must work with the internal format, not the provider-specific payload.
-
----
-
-## 16. Artificial intelligence
-
-AI will be treated as a capability external to the core domain.
-
-An abstraction equivalent to the following will be defined:
-
-    interface AIProvider {
-      generate(...)
-      stream(...)
-      executeWithTools(...)
-    }
-
-The goal is to replace models or providers without changing CRM, conversation, or scheduling logic.
-
----
-
-## 17. Agent layer
-
-The agent must combine:
-
-    System/Business Context
-            +
-    Conversation Context
-            +
-    Available Tools
-            +
-    Policies
-            ↓
-           LLM
-
-The model may propose the use of tools, but the backend will execute them.
-
-Example:
-
-    Patient:
-    "I want an appointment tomorrow"
-
-            ↓
-
-    LLM requests:
-    get_available_slots(...)
-
-            ↓
-
-    Backend validates and executes
-
-            ↓
-
-    Result:
-    09:00
-    11:30
-    15:00
-
-            ↓
-
-    LLM generates response
-
----
-
-## 18. Tool execution
-
-AI tools will be application-controlled functions.
-
-Examples:
-
-    get_business_information
-    get_services
-    get_available_slots
-    create_appointment
-    update_contact
-    update_lead
-    request_human_handoff
-
-Each execution must:
-
-1. validate the tenant;
-2. validate parameters;
-3. check authorization;
-4. execute business rules;
-5. persist changes;
-6. generate events where appropriate;
-7. return only the information required by the agent.
-
-The AI will never have direct access to SQL or system secrets.
-
----
-
-## 19. Human handoff
-
-The conversation must know who has control.
-
-Conceptual example:
-
-    AI
-    HUMAN
-
-When the mode is human:
-
-    AI responses = disabled
-
-The worker must check this state before producing an automatic response.
-
-This prevents simultaneous replies from the operator and the AI.
-
----
-
-## 20. Scheduling and concurrency
-
-Availability must be calculated in the backend.
-
-Appointment creation must revalidate that the time slot is still available.
-
-Flow:
-
-    query time slots
-          ↓
-    show options
-          ↓
-    user selects
-          ↓
-    validate again
-          ↓
-    create appointment
-
-The database must help prevent incompatible bookings.
-
-The exact constraint/locking strategy will be defined when the schema is designed.
-
----
-
-## 21. Realtime
-
-Candidate use cases:
-
-    new message
-    conversation updated
-    handoff requested
-    appointment created
-
-Candidate technology:
-
-    Supabase Realtime
-
-Realtime will improve dashboard experience.
-
-It will not replace persistence or regular APIs.
-
----
-
-## 22. n8n
-
-n8n may be used as a complementary integration tool.
-
-Examples:
-
-    ia-business-platform
-            ↓
-          event
-            ↓
-           n8n
-       ↙     ↓     ↘
-    Sheets  Gmail   external CRM
-
-n8n will not be:
-
-- the source of truth;
-- the main backend;
-- the place where critical appointment logic lives;
-- the only storage for business state.
-
-The product must continue to function even if an external n8n automation fails.
-
----
-
-## 23. Monorepo
-
-Candidate structure:
-
-    ia-business-platform/
-    ├── apps/
-    │   ├── web/
-    │   ├── api/
-    │   └── worker/
-    │
-    ├── packages/
-    │   ├── database/
-    │   ├── contracts/
-    │   ├── ai/
-    │   ├── messaging/
-    │   ├── config/
-    │   └── shared/
-    │
-    ├── docs/
-    │   ├── PROJECT.md
-    │   ├── PRODUCT.md
-    │   ├── MVP.md
-    │   ├── ARCHITECTURE.md
-    │   ├── ROADMAP.md
-    │   ├── STATUS.md
-    │   └── DECISIONS.md
-    │
-    ├── infra/
-    ├── AGENTS.md
-    ├── README.md
-    └── package.json
-
-The specific tool used to manage the monorepo will be decided before initializing the applications.
-
----
-
-## 24. Shared contracts
-
-`packages/contracts` may contain types and contracts that need to be shared between web, API, and worker.
-
-It must not become a generic package where code with no clear domain is placed.
-
-Appropriate examples:
-
-    shared DTOs
-    event contracts
-    public enums
-    shared validation schemas
-
----
-
-## 25. Data access layer
-
-The ORM or query-builder tool remains pending decision.
-
-Candidates must be evaluated according to:
-
-- PostgreSQL support;
-- migrations;
-- TypeScript;
-- transactions;
-- control over SQL;
-- maintainability;
-- Supabase compatibility;
-- testing.
-
-The choice will be recorded in `docs/DECISIONS.md`.
-
----
-
-## 26. Authentication
-
-Candidate provider:
-
-    Supabase Auth
-
-Authentication identifies the user.
-
-Authorization will remain the backend's responsibility.
+    BSPs
+    other viable providers
+
+Selection must consider the needs of SMEs, especially:
+
+* onboarding complexity;
+* cost;
+* stability;
+* number requirements;
+* policy/compliance;
+* risk of blocking;
+* support;
+* operation in Colombia;
+* scalability.
+
+The application will use a provider abstraction.
 
 Conceptually:
 
-    Supabase Auth
-          ↓
-    user identity
-          ↓
-    Backend
-          ↓
-    membership + permissions + business
+    MessagingProvider
 
-Having a valid token will not be enough to access any tenant.
+* * *
 
----
+## Infrastructure currently available
 
-## 27. Security
+### Development computer
 
-Initial principles:
+    AMD Ryzen 5 5600GT
+    32 GB RAM
+    No dedicated GPU required for initial development
 
-- secrets only through environment variables or secret management;
-- no secrets in Git;
-- input validation;
-- tenant isolation;
-- webhook verification;
-- least privilege;
-- protection of administrative endpoints;
-- rate limiting where necessary;
-- auditing of sensitive operations.
+### Secondary laptop
 
-Sensitive data for each vertical must be analyzed before being incorporated.
+    Intel Core i5 10th Gen
+    20 GB RAM
 
-The dental MVP will not include clinical records.
+### Test devices
 
----
+    Android phone
+    iPhone
 
-## 28. Logs and observability
+### Current VPS
 
-Each component must produce structured logs.
-
-Useful fields:
-
-    timestamp
-    level
-    service
-    business_id
-    request_id
-    job_id
-    conversation_id
-    external_event_id
-    message
-    error
-
-Logs must not include secrets or unnecessary sensitive data.
-
-Minimum endpoints:
-
-    /health/live
-    /health/ready
-
-There must also be visibility into:
-
-- failed jobs;
-- provider errors;
-- rejected webhooks;
-- AI errors;
-- exhausted retries.
-
----
-
-## 29. Correlation IDs
-
-Whenever possible, an operation should be traceable across components.
-
-Example:
-
-    Webhook
-      ↓
-    request_id
-      ↓
-    job
-      ↓
-    AI call
-      ↓
-    send message
-
-This will make it possible to investigate errors without relying exclusively on timestamps.
-
----
-
-## 30. External error handling
-
-Every external provider may fail.
-
-Examples:
-
-    WhatsApp
-    AI provider
-    Supabase
-    Google Calendar
-    email
-
-The architecture must distinguish between:
-
-- permanent errors;
-- temporary errors;
-- retryable errors;
-- errors requiring human intervention.
-
-Not every failure should be retried automatically.
-
----
-
-## 31. Initial deployment
-
-Candidate infrastructure:
-
-    VPS
     4 vCPU
-    8 GB RAM
-    100 GB SSD
+    7.8 GiB usable RAM
+    ~96 GB root filesystem
+    Linux / KVM
 
-The VPS may initially host:
+The current VPS can support development and early deployment of the MVP, especially after the planned reinstall/cleanup.
 
-    Caddy
-    Next.js
+Heavy self-hosted LLM inference is not part of the MVP infrastructure.
+
+* * *
+
+## VPS observations
+
+Current server inspection showed:
+
+    4 vCPU
+    7.8 GiB RAM
+    ~4.2 GiB available at inspection time
+    ~36 GB disk free
+    No swap configured
+
+Docker currently contains significant reclaimable image/build cache data.
+
+Before using the server as a clean base for the project, the plan is to reinstall it and leave Moni properly deployed with a cleaner infrastructure layout.
+
+Recommended post-reinstall considerations:
+
+* swap as safety margin;
+* Docker log rotation;
+* container resource limits;
+* external backups;
+* monitoring;
+* clean `/opt` application layout.
+
+* * *
+
+## Current risks / unknowns
+
+### WhatsApp provider
+
+Status:
+
+    OPEN
+
+This is one of the most important product/infrastructure decisions.
+
+* * *
+
+### ORM / database access layer
+
+Status:
+
+    ACCEPTED
+
+Selected:
+
+    Drizzle ORM + Drizzle Kit
+
+Application schema and migrations will live under the repository database package and remain PostgreSQL-first.
+
+* * *
+
+### Monorepo tooling
+
+Status:
+
+    ACCEPTED
+
+Selected:
+
+    pnpm 12
+    pnpm workspaces
+
+No Turborepo initially. A build orchestrator will be added only if task orchestration or caching becomes a measurable need.
+
+* * *
+
+### Runtime AI provider
+
+Status:
+
+    OPEN
+
+Development model availability does not define production runtime selection.
+
+The runtime choice must consider:
+
+* tool calling;
+* latency;
+* quality;
+* cost;
+* reliability;
+* structured outputs;
+* provider limits;
+* privacy requirements.
+
+* * *
+
+### Calendar integration
+
+Status:
+
+    DEFERRED / TO VALIDATE
+
+The platform will maintain its own appointments.
+
+Google Calendar may be added depending on pilot needs.
+
+* * *
+
+## Not started
+
+The following have not been implemented yet:
+
+    Next.js app
     NestJS API
-    Worker
-    Redis
-    monitoring
+    worker
+    database schema
+    Supabase project
+    Redis queues
+    authentication
+    CRM
+    Inbox
+    appointments
+    availability engine
+    WhatsApp integration
+    AI agent
+    CI
+    deployment pipeline
+    tests
 
-Supabase will remain an external managed service.
+This is intentional.
 
-AI will be consumed through external APIs during the MVP.
+The project is still completing M0.
 
-Heavy LLM models will not run inside the VPS.
+* * *
 
----
+## Next actions
 
-## 32. Reverse proxy
+Recommended immediate order:
 
-Candidate technology:
+    1. Bootstrap pnpm workspace
+    2. Bootstrap apps/web
+    3. Bootstrap apps/api
+    4. Bootstrap apps/worker
+    5. Create packages/database with Drizzle
+    6. Add Redis development infrastructure
+    7. Establish CI quality gate
+    8. Update STATUS.md and close M0
+    9. Begin M2 domain model
 
-    Caddy
+* * *
 
-Responsibilities:
+## Current milestone completion
 
-- TLS;
-- domain/subdomain routing;
-- reverse proxy;
-- automatic certificate renewal.
+### M0 — Foundation
 
----
+    Product vision          DONE
+    MVP definition          DONE
+    Architecture draft      DONE
+    Product definition      DONE
+    Roadmap                 DONE
+    Status tracking         DONE
+    Decision log            ACTIVE
+    AGENTS.md                DONE
+    README.md                DONE
+    Bootstrap ADRs           DONE
 
-## 33. Environments
+The foundational documentation and immediate bootstrap decisions are now complete.
 
-At minimum, the following must be distinguished:
+M0 can be closed and M1 can begin.
 
-    development
-    production
+* * *
 
-Ideally, the following will be added:
+## Update rule
 
-    staging
+This file must represent the repository as it actually exists.
 
-before the real pilot.
+Update it whenever:
 
-Each environment should have its own credentials and integrations when feasible.
+* a milestone changes;
+* an important feature lands;
+* an architectural decision changes implementation direction;
+* a major blocker appears or is resolved;
+* the production/deployment state changes.
 
-Real customer data should not be used for routine local testing.
+`STATUS.md` is not a roadmap.
 
----
+It answers:
 
-## 34. Local development
-
-The local environment should be able to start the required components with a simple experience.
-
-Conceptual target:
-
-    docker compose up -d
-    pnpm dev
-
-or equivalent.
-
-Candidate local services:
-
-    Redis
-    auxiliary dependencies
-
-The managed database may use a separate development project or a local instance according to a later decision.
-
----
-
-## 35. CI
-
-Continuous integration must progressively validate:
-
-    lint
-    typecheck
-    unit tests
-    integration tests
-    build
-    migration validation
-
-No PR should depend solely on manual review.
-
----
-
-## 36. Testing strategy
-
-Several levels will be used.
-
-### Unit tests
-
-Isolated business rules.
-
-Examples:
-
-    calculate availability
-    change pipeline stage
-    validate handoff
-    normalize messages
-
-### Integration tests
-
-Interaction between modules, database, and adapters.
-
-### E2E
-
-Critical flows.
-
-First priority flow:
-
-    message
-    → agent
-    → availability
-    → appointment
-    → confirmation
-
----
-
-## 37. External adapters
-
-External providers must live behind domain ports/interfaces.
-
-Conceptual example:
-
-    Domain
-       │
-       ▼
-    MessagingPort
-       │
-       ├── MetaAdapter
-       ├── EvolutionAdapter
-       └── FutureAdapter
-
-This principle also applies to:
-
-    AI
-    Calendar
-    Email
-    Storage
-    Voice
-
----
-
-## 38. Dependency principle
-
-Core business logic should not directly import provider-specific SDKs when it can be avoided.
-
-Preferred:
-
-    Domain
-      ↓
-    Interface
-      ↓
-    Adapter
-      ↓
-    External SDK/API
-
-Not:
-
-    Domain
-      ↓
-    External SDK
-
-This makes replacement, testing, and evolution easier.
-
----
-
-## 39. Scalability
-
-The MVP will not be designed for millions of users from day one.
-
-It must, however, support progressive growth.
-
-Expected path:
-
-    1 API + 1 worker
-            ↓
-    more workers
-            ↓
-    separate web/api
-            ↓
-    dedicated VPS
-            ↓
-    additional managed services
-            ↓
-    separate components only when there is a real need
-
-Kubernetes and microservices will not be adopted in anticipation of hypothetical scale.
-
----
-
-## 40. Backup and recovery
-
-Infrastructure must consider from the beginning:
-
-- database backups;
-- configuration recovery;
-- environment variables backed up securely;
-- backups of critical volumes;
-- ability to rebuild servers from documentation and versioned infrastructure.
-
-Code will remain in Git.
-
-Persistent data must not depend solely on the VPS disk.
-
----
-
-## 41. Pending decisions
-
-Before or during the early phases, the following must be resolved:
-
-    Initial WhatsApp provider
-    ORM/query builder
-    monorepo manager
-    final package manager
-    initial AI model/provider
-    exact embedding strategy if needed
-    Google Calendar inside or after MVP
-    observability provider
-    CI/CD deployment strategy
-    backup policy
-
-Every significant decision must be documented in `docs/DECISIONS.md`.
-
----
-
-## 42. Current constraints
-
-During the MVP, the following will be deliberately avoided:
-
-    microservices
-    Kubernetes
-    Kafka
-    multi-region architectures
-    self-hosted LLMs in production
-    data warehouse
-    full event sourcing
-    complex CQRS
-    service mesh
-    unnecessarily distributed infrastructure
-
-They may be evaluated later if a real problem justifies them.
-
----
-
-## 43. Guiding principle
-
-The architecture must be robust enough to evolve, but simple enough for a small team to understand, deploy, debug, and modify.
-
-> Complexity should be introduced only when it solves a real and measurable problem.
+> What is true about the project right now?

@@ -656,7 +656,7 @@ The project needs reliability and clean boundaries, not infrastructure designed 
 
 # ADR-020 — Monorepo strategy
 
-**Status:** OPEN
+**Status:** ACCEPTED
 
 ## Context
 
@@ -667,48 +667,190 @@ The planned repository contains:
     apps/worker
     packages/*
 
-## Decision required
+The project needs shared TypeScript packages and consistent dependency management, but it should avoid adding build-system complexity before it provides measurable value.
 
-Choose:
+## Decision
 
-- package manager;
-- workspace mechanism;
-- whether a build orchestrator such as Turborepo is justified.
+Use:
 
-## Evaluation criteria
+    pnpm 12
+    +
+    pnpm workspaces
 
-- simplicity;
-- workspace support;
-- caching;
-- CI;
-- developer experience;
-- compatibility with Next.js/NestJS;
-- dependency management.
+as the initial monorepo and package-management strategy.
+
+The workspace will be defined through:
+
+    pnpm-workspace.yaml
+
+Local packages will use the `workspace:` protocol where appropriate.
+
+Turborepo will **not** be introduced initially.
+
+pnpm's native workspace and task-orchestration capabilities are sufficient for the first project stages.
+
+A build orchestrator may be added later if CI duration, task dependency management, or caching becomes a measurable problem.
+
+## Alternatives considered
+
+### npm workspaces
+
+Valid option, but pnpm provides stronger workspace ergonomics and dependency isolation for this repository.
+
+### Turborepo from day one
+
+Useful for task graphs and caching, but adds configuration that is not currently required for three applications and a small set of shared packages.
+
+### Nx
+
+Powerful, but more framework/tooling than the current project requires.
+
+## Consequences
+
+Positive:
+
+- one package manager across the repository;
+- native monorepo support;
+- single lockfile;
+- explicit workspace dependencies;
+- minimal orchestration complexity;
+- easy to introduce Turborepo later if justified.
+
+Tradeoff:
+
+- advanced remote caching is not available initially.
+
+## Revisit triggers
+
+Reconsider adding Turborepo or another orchestrator when:
+
+- CI build time becomes significant;
+- task ordering becomes difficult to manage;
+- local/remote caching would provide measurable benefit;
+- the number of applications/packages grows substantially.
 
 ---
 
 # ADR-021 — Database access layer / ORM
 
-**Status:** OPEN
+**Status:** ACCEPTED
 
 ## Context
 
-The platform needs:
+The platform requires:
 
 - PostgreSQL;
-- migrations;
+- versioned migrations;
 - transactions;
 - strong TypeScript support;
 - explicit relational modeling;
-- reliable constraints;
-- testability;
-- good developer ergonomics.
+- reliable database constraints;
+- access to PostgreSQL-specific features when required;
+- transparent SQL for debugging and review;
+- compatibility with Supabase;
+- testability.
 
-## Decision required
+Appointment consistency, tenant isolation, idempotency, and concurrency may require database-level constraints and explicit SQL behavior.
 
-Evaluate suitable ORM/query-builder options before M2.
+## Decision
 
-The tool must not prevent use of PostgreSQL features when necessary.
+Use:
+
+    Drizzle ORM
+    +
+    Drizzle Kit
+    +
+    PostgreSQL
+
+as the initial application data-access and migration layer.
+
+Application schemas will be defined in TypeScript.
+
+Schema changes will use generated, version-controlled SQL migrations.
+
+For shared application database code, the planned home is:
+
+    packages/database
+
+Drizzle will own migrations for the application-controlled PostgreSQL schemas/tables.
+
+Supabase-managed internal schemas such as Auth must not be modified or treated as Drizzle-owned application schema.
+
+## Migration policy
+
+Development may use tooling for fast local iteration when appropriate, but committed schema evolution must be represented through migration files.
+
+Production/staging schema changes must use reviewed migrations.
+
+Do not use direct schema push as the production deployment mechanism.
+
+Conceptually:
+
+    schema change
+       ↓
+    drizzle-kit generate
+       ↓
+    review SQL migration
+       ↓
+    commit migration
+       ↓
+    apply migration
+
+## Why Drizzle
+
+Drizzle provides:
+
+- direct PostgreSQL support;
+- TypeScript schema definitions;
+- SQL migration generation;
+- transactions;
+- relatively transparent SQL;
+- the ability to use lower-level SQL when PostgreSQL-specific behavior is required;
+- official PostgreSQL and Supabase setup paths.
+
+This fits a domain where database correctness is more important than hiding SQL completely.
+
+## Alternatives considered
+
+### Prisma
+
+Prisma remains a capable option and supports PostgreSQL, migrations, transactions, and lower-level SQL.
+
+It was not selected initially because the project benefits from a thinner abstraction and direct visibility into SQL/constraints, especially for appointment concurrency and tenant-aware relational design.
+
+The current Prisma major-version transition also introduces unnecessary tooling churn for a greenfield MVP.
+
+### Kysely
+
+Provides strong typed SQL and excellent control, but requires more surrounding migration/schema tooling decisions than Drizzle for the initial project.
+
+### Raw SQL / node-postgres only
+
+Provides maximum control but would require more manual type and migration infrastructure.
+
+## Consequences
+
+Positive:
+
+- schema and queries stay close to PostgreSQL;
+- migration SQL is reviewable;
+- TypeScript types can derive from schema;
+- advanced PostgreSQL features remain accessible;
+- no need to make Supabase the application data-access layer.
+
+Tradeoffs:
+
+- developers must understand relational design and SQL;
+- Drizzle exposes more database detail than higher-level ORMs;
+- complex queries still require deliberate SQL/database knowledge.
+
+## Revisit triggers
+
+Reconsider the choice only if:
+
+- Drizzle blocks a required PostgreSQL capability;
+- migration tooling becomes unreliable for the project;
+- operational evidence shows significant maintainability problems.
 
 ---
 
@@ -814,8 +956,6 @@ Define:
 
 Current unresolved decisions, roughly in implementation order:
 
-    ADR-020 Monorepo strategy
-    ADR-021 Database access layer / ORM
     ADR-022 Runtime AI model/provider
     ADR-011 WhatsApp provider
     ADR-023 Calendar integration timing

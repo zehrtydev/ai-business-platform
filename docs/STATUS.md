@@ -379,9 +379,13 @@ This is one of the most important product/infrastructure decisions.
 
 Status:
 
-    OPEN
+    ACCEPTED
 
-Must be decided before implementing the data model.
+Selected:
+
+    Drizzle ORM + Drizzle Kit
+
+Application schema and migrations will live under the repository database package and remain PostgreSQL-first.
 
 ---
 
@@ -389,13 +393,14 @@ Must be decided before implementing the data model.
 
 Status:
 
-    OPEN
+    ACCEPTED
 
-Need to choose:
+Selected:
 
-- package manager;
-- workspace strategy;
-- optional build orchestrator.
+    pnpm 12
+    pnpm workspaces
+
+No Turborepo initially. A build orchestrator will be added only if task orchestration or caching becomes a measurable need.
 
 ---
 
@@ -463,18 +468,15 @@ The project is still completing M0.
 
 Recommended immediate order:
 
-    1. Finalize DECISIONS.md
-    2. Define AGENTS.md
-    3. Define README.md
-    4. Close immediate ADRs required for bootstrap
-    5. Choose package manager / monorepo approach
-    6. Choose database access layer
-    7. Bootstrap apps/web
-    8. Bootstrap apps/api
-    9. Bootstrap apps/worker
-    10. Add Redis development infrastructure
-    11. Establish CI quality gate
-    12. Begin M2 domain model
+    1. Bootstrap pnpm workspace
+    2. Bootstrap apps/web
+    3. Bootstrap apps/api
+    4. Bootstrap apps/worker
+    5. Create packages/database with Drizzle
+    6. Add Redis development infrastructure
+    7. Establish CI quality gate
+    8. Update STATUS.md and close M0
+    9. Begin M2 domain model
 
 ---
 
@@ -488,11 +490,14 @@ Recommended immediate order:
     Product definition      DONE
     Roadmap                 DONE
     Status tracking         DONE
-    Decision log            INITIALIZED
-    AGENTS.md                PENDING
-    README.md                PENDING
+    Decision log            ACTIVE
+    AGENTS.md                DONE
+    README.md                DONE
+    Bootstrap ADRs           DONE
 
-Once `AGENTS.md`, `README.md`, and the immediate bootstrap decisions are complete, M0 can be closed and M1 can begin.
+The foundational documentation and immediate bootstrap decisions are now complete.
+
+M0 can be closed and M1 can begin.
 
 ---
 
