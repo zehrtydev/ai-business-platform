@@ -12,11 +12,14 @@ The first real use case is a dental office, but the product is intentionally des
 
 Current phase:
 
-    M1 — Technical base
+    M2 — Domain and persistence
 
-The foundational product, architecture, roadmap, and bootstrap decisions are complete.
+M1 — Technical base is complete.
 
-Implementation is beginning with the monorepo and technical foundation.
+The monorepo, applications, shared packages, local Redis environment, health checks,
+formatting, testing, and CI quality gate are now established.
+
+Implementation now moves to the core domain, persistence, and multi-tenant rules.
 
 See:
 

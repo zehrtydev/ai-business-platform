@@ -62,11 +62,12 @@ When code and documentation disagree:
 
 Current project phase:
 
-    M1 — Technical base
+    M2 — Domain and persistence
 
-The foundational documentation and bootstrap architecture decisions are complete.
+M1 — Technical base is complete.
 
-Implementation begins with the monorepo and technical foundation.
+The current implementation focus is the minimum persistent domain model,
+database foundation, and multi-tenant authorization rules.
 
 Agents must inspect `docs/STATUS.md` before assuming this is still true.
 
@@ -108,7 +109,10 @@ Accepted initial technologies include:
     Frontend        Next.js + TypeScript
     Backend         NestJS + Fastify
     Worker          Node.js
+    Package manager pnpm 12
+    Monorepo        pnpm workspaces
     Database        PostgreSQL
+    ORM             Drizzle ORM + Drizzle Kit
     Managed infra   Supabase
     Queue           BullMQ
     Queue backend   Redis
@@ -117,11 +121,10 @@ Accepted initial technologies include:
 
 Some choices are still intentionally open.
 
-Always check `docs/DECISIONS.md` before selecting:
+Always check `docs/DECISIONS.md` before selecting or changing significant infrastructure.
 
-- ORM/query builder;
-- monorepo tooling;
-- package manager;
+The following remain intentionally open:
+
 - WhatsApp provider;
 - runtime AI model/provider;
 - observability provider;

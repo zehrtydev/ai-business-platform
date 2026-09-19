@@ -10,39 +10,60 @@ Temporary project name.
 
 ## Current phase
 
-    M1 — Technical base
+    M2 — Domain and persistence
 
 Status:
 
     IN PROGRESS
 
-The foundational documentation and bootstrap architecture decisions are complete.
+M1 — Technical base is complete.
 
-Implementation is now starting with the monorepo and technical foundation.
+The repository now has an executable monorepo foundation, local Redis infrastructure,
+health checks, shared packages, automated testing, formatting, and a GitHub Actions
+quality gate.
 
-No product code has been implemented yet.
+Implementation now moves to the minimum persistent domain model and multi-tenant rules.
 
 ---
 
 ## Current objective
 
-Bootstrap the technical foundation defined for M1.
+Establish the domain and persistence foundation defined for M2.
 
 Immediate target:
 
-    pnpm workspace
+    Drizzle database foundation
             ↓
-    apps/web + apps/api + apps/worker
+    development Supabase project
             ↓
-    shared packages
+    Business + User/Auth mapping + BusinessMembership
             ↓
-    Redis + CI quality gate
+    core operational schemas
             ↓
-    M2 — Domain and persistence
+    versioned migrations
+            ↓
+    tenant isolation tests
+            ↓
+    M3 — Administrative dashboard
 
 ---
 
 ## Completed
+
+### M1 — Technical base
+
+- [x] pnpm workspace initialized.
+- [x] `apps/web` initialized with Next.js.
+- [x] `apps/api` initialized with NestJS + Fastify.
+- [x] `apps/worker` initialized with Node.js + TypeScript.
+- [x] Shared workspace packages initialized.
+- [x] TypeScript, linting, formatting, unit tests, and E2E tests configured.
+- [x] Environment variable template added.
+- [x] Redis local development environment added through Docker Compose.
+- [x] `/health/live` and `/health/ready` endpoints added.
+- [x] Repository-wide quality scripts added.
+- [x] GitHub Actions quality gate added and verified successfully.
+- [x] M1 exit criterion satisfied.
 
 ### Product definition
 
@@ -106,7 +127,8 @@ Confirmed foundational commit:
 
     b519e75 docs: define project and initial architecture
 
-The repository currently contains documentation and empty/initial structural directories.
+The repository now contains the initial executable monorepo foundation for web, API,
+worker, shared packages, local Redis infrastructure, and CI validation.
 
 ---
 
@@ -183,7 +205,10 @@ Candidate/selected technologies:
     Frontend        Next.js + TypeScript
     Backend         NestJS + Fastify
     Worker          Node.js
+    Package manager pnpm 12
+    Monorepo        pnpm workspaces
     Database        PostgreSQL
+    ORM             Drizzle ORM + Drizzle Kit
     DB/Auth infra   Supabase
     Queue           BullMQ
     Queue backend   Redis
@@ -508,14 +533,28 @@ M0 is closed.
 
 ### M1 — Technical base
 
+    Status                  DONE
+    Workspace bootstrap     DONE
+    apps/web                DONE
+    apps/api                DONE
+    apps/worker             DONE
+    Shared packages         DONE
+    Redis                   DONE
+    Health checks           DONE
+    CI quality gate         DONE
+
+M1 is closed.
+
+### M2 — Domain and persistence
+
     Status                  IN PROGRESS
-    Workspace bootstrap     NEXT
-    apps/web                NOT STARTED
-    apps/api                NOT STARTED
-    apps/worker             NOT STARTED
-    packages/database       NOT STARTED
-    Redis                   NOT STARTED
-    CI quality gate         NOT STARTED
+    ORM/migration decision  DONE
+    packages/database       INITIALIZED
+    Drizzle foundation      NEXT
+    Development Supabase    NOT STARTED
+    Core schemas            NOT STARTED
+    Versioned migrations    NOT STARTED
+    Tenant isolation tests  NOT STARTED
 
 ---
 
