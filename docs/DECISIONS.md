@@ -1251,6 +1251,113 @@ Tradeoffs:
 
 ---
 
+# ADR-030 — Conversation and message persistence model
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires persistent conversations and messages that support the Inbox, human handoff, later AI processing, and provider webhook idempotency.
+
+The product must remain independent from a specific messaging provider or channel.
+
+## Decision
+
+The initial messaging entities are:
+
+    Conversation
+    Message
+
+Every conversation and message is explicitly tenant-scoped by `business_id`.
+
+A Conversation belongs to one Contact and records:
+
+    channel
+    status
+    optional assigned user
+    ai_enabled
+
+Initial conversation lifecycle states are:
+
+    OPEN
+    HUMAN_REQUIRED
+    CLOSED
+
+AI control is represented independently with `ai_enabled`.
+
+The initial operational interpretation is:
+
+    OPEN + ai_enabled=true  -> AI controlled
+    OPEN + ai_enabled=false -> human controlled
+    HUMAN_REQUIRED          -> AI paused
+    CLOSED                  -> AI paused
+
+Database constraints require `ai_enabled = false` whenever the conversation is not OPEN.
+
+An optional assigned user must have a BusinessMembership in the same business. Assignment therefore cannot cross tenant boundaries.
+
+`channel` remains text rather than a database enum so future channels can be introduced without coupling persistence to the first WhatsApp integration. Channel normalization is application logic.
+
+A Message belongs to one Conversation and records:
+
+    direction
+    sender
+    content
+    message type
+    optional provider message identifier
+
+Initial directions are:
+
+    INBOUND
+    OUTBOUND
+
+Initial senders are:
+
+    CONTACT
+    AI
+    HUMAN
+
+Initial persisted message type is:
+
+    TEXT
+
+The schema can later evolve for image, audio, video, document, and location payloads.
+
+Inbound messages must use CONTACT as sender.
+
+Outbound messages must use AI or HUMAN as sender.
+
+Human-authored messages must reference an application user who has a BusinessMembership in the same business.
+
+`provider_message_id` is nullable for internal or not-yet-sent messages. When present, it is unique within one business and may be used to reject duplicate provider deliveries.
+
+The initial uniqueness scope assumes one provider message namespace per business. If one business later uses multiple providers whose identifiers can collide, idempotency will move to an integration/provider-scoped key.
+
+Messages are durable conversation history. Application flows should not delete conversations during normal operation.
+
+Row-Level Security remains enabled without direct client policies while NestJS is the authorization boundary.
+
+## Consequences
+
+Positive:
+
+- conversations and messages are tenant-scoped at the database level;
+- contacts and assigned users cannot cross businesses;
+- human-authored messages are attributable to a valid business member;
+- provider message identifiers support inbound webhook deduplication;
+- human takeover can disable AI without closing the conversation;
+- the persistence model is not tied to WhatsApp or a specific provider.
+
+Tradeoffs:
+
+- only TEXT payloads are modeled initially;
+- channel normalization remains application logic;
+- one active conversation per contact/channel is not enforced by the database;
+- provider message uniqueness is business-scoped until integration identity is modeled;
+- conversation `updated_at` must be maintained by application logic when activity occurs.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:

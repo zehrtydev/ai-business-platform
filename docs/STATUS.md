@@ -22,7 +22,9 @@ The repository now has an executable monorepo foundation, local Redis infrastruc
 health checks, shared packages, automated testing, formatting, and a GitHub Actions
 quality gate.
 
-Implementation now moves to the minimum persistent domain model and multi-tenant rules.
+The minimum M2 operational schema is now implemented and applied to the development database.
+
+Implementation now moves to automated tenant isolation tests and backend tenant resolution.
 
 ---
 
@@ -32,9 +34,11 @@ Establish the domain and persistence foundation defined for M2.
 
 Immediate target:
 
-    core operational schemas
+    automated tenant isolation tests
             ↓
-    tenant isolation tests
+    authenticated tenant resolution
+            ↓
+    complete M2 persistence validation
             ↓
     M3 — Administrative dashboard
 
@@ -464,13 +468,12 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    core operational database schemas
-    tenant isolation tests
+    automated tenant isolation tests
     authentication application flow
+    authenticated tenant resolution
     Redis queues
-    CRM
-    Inbox
-    appointments
+    CRM application layer
+    Inbox application layer
     availability engine
     WhatsApp integration
     AI agent
@@ -486,11 +489,10 @@ M2 is in progress.
 
 Recommended immediate order:
 
-    1. Add remaining M2 operational schemas
-    2. Add tenant isolation tests
-    3. Integrate authenticated tenant resolution in the backend
-    4. Complete M2 persistence validation
-    5. Begin M3 administrative dashboard
+    1. Add automated tenant isolation tests
+    2. Integrate authenticated tenant resolution in the backend
+    3. Complete M2 persistence validation
+    4. Begin M3 administrative dashboard
 
 ---
 
@@ -535,9 +537,9 @@ M1 is closed.
     Drizzle foundation      DONE
     Development Supabase    DONE
     Identity/tenancy schema DONE
-    First migration         APPLIED
-    Core schemas            IN PROGRESS
-    Tenant isolation tests  NOT STARTED
+    Development migrations  APPLIED
+    Core schemas            DONE
+    Tenant isolation tests  MANUAL VALIDATION
 
 ---
 

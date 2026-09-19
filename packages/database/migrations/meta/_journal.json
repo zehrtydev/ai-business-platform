@@ -36,6 +36,13 @@
       "when": 1789831191321,
       "tag": "0004_appointment_service_index",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789832039289,
+      "tag": "0005_conversation_domain",
+      "breakpoints": true
     }
   ]
 }

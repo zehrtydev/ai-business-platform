@@ -1,3 +1,10 @@
+export { conversationStatus, conversations } from './conversation.js';
+export {
+  messageDirection,
+  messageSender,
+  messageType,
+  messages,
+} from './message.js';
 export { appointmentStatus, appointments } from './appointment.js';
 export { appUsers } from './app-user.js';
 export { availabilityRules } from './availability-rule.js';
