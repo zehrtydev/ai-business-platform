@@ -10,13 +10,15 @@ Temporary project name.
 
 ## Current phase
 
-    M0 — Project foundation
+    M1 — Technical base
 
 Status:
 
     IN PROGRESS
 
-The project is currently in the documentation and technical-definition stage.
+The foundational documentation and bootstrap architecture decisions are complete.
+
+Implementation is now starting with the monorepo and technical foundation.
 
 No product code has been implemented yet.
 
@@ -24,17 +26,19 @@ No product code has been implemented yet.
 
 ## Current objective
 
-Complete the foundational documentation and resolve the technical decisions required before bootstrapping the monorepo.
+Bootstrap the technical foundation defined for M1.
 
 Immediate target:
 
-    Documentation foundation
+    pnpm workspace
             ↓
-    Technical decisions
+    apps/web + apps/api + apps/worker
             ↓
-    Monorepo bootstrap
+    shared packages
             ↓
-    M1 — Technical base
+    Redis + CI quality gate
+            ↓
+    M2 — Domain and persistence
 
 ---
 
@@ -79,10 +83,12 @@ Current state:
 | `STATUS.md`       | Active                       |
 | `DECISIONS.md`    | Active                       |
 
-Additional root documentation still to refine:
+Additional root documentation:
 
     AGENTS.md
     README.md
+
+Both are defined and active.
 
 ---
 
@@ -460,7 +466,9 @@ The following have not been implemented yet:
 
 This is intentional.
 
-The project is still completing M0.
+M0 is complete.
+
+M1 is now in progress.
 
 ---
 
@@ -475,8 +483,7 @@ Recommended immediate order:
     5. Create packages/database with Drizzle
     6. Add Redis development infrastructure
     7. Establish CI quality gate
-    8. Update STATUS.md and close M0
-    9. Begin M2 domain model
+    8. Begin M2 domain model
 
 ---
 
@@ -495,9 +502,20 @@ Recommended immediate order:
     README.md                DONE
     Bootstrap ADRs           DONE
 
-The foundational documentation and immediate bootstrap decisions are now complete.
+The foundational documentation and immediate bootstrap decisions are complete.
 
-M0 can be closed and M1 can begin.
+M0 is closed.
+
+### M1 — Technical base
+
+    Status                  IN PROGRESS
+    Workspace bootstrap     NEXT
+    apps/web                NOT STARTED
+    apps/api                NOT STARTED
+    apps/worker             NOT STARTED
+    packages/database       NOT STARTED
+    Redis                   NOT STARTED
+    CI quality gate         NOT STARTED
 
 ---
 

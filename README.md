@@ -12,9 +12,11 @@ The first real use case is a dental office, but the product is intentionally des
 
 Current phase:
 
-    M0 — Project foundation
+    M1 — Technical base
 
-The project is currently defining product scope, architecture and engineering decisions before implementation begins.
+The foundational product, architecture, roadmap, and bootstrap decisions are complete.
+
+Implementation is beginning with the monorepo and technical foundation.
 
 See:
 

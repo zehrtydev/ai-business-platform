@@ -62,9 +62,11 @@ When code and documentation disagree:
 
 Current project phase:
 
-    M0 — Project foundation
+    M1 — Technical base
 
-At the time this file was introduced, product code had not yet been implemented.
+The foundational documentation and bootstrap architecture decisions are complete.
+
+Implementation begins with the monorepo and technical foundation.
 
 Agents must inspect `docs/STATUS.md` before assuming this is still true.
 
