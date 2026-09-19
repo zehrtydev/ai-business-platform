@@ -952,6 +952,72 @@ Define:
 
 ---
 
+# ADR-026 — Authentication identity and business membership model
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires a stable relationship between authentication identity, application users, businesses, and tenant membership.
+
+Supabase Auth owns authentication identities in the managed `auth` schema, while application-controlled domain data belongs in application tables.
+
+The platform must support users belonging to one or more businesses without conflating authenticated users with schedulable staff members.
+
+## Decision
+
+Supabase Auth remains the source of truth for authentication identity.
+
+Application user data will be represented by:
+
+    public.app_users
+
+The primary key of `app_users` is the same UUID as `auth.users.id`.
+
+The application table references the Supabase-managed primary key with `ON DELETE CASCADE`, but Drizzle does not own or migrate the `auth` schema.
+
+The root tenant entity is:
+
+    public.businesses
+
+Business access is represented by:
+
+    public.business_memberships
+
+Memberships connect an application user to a business and require one explicit role:
+
+    owner
+    admin
+    member
+
+Each user may have at most one membership per business.
+
+`StaffMember` remains a separate domain concept. An authenticated application user is not automatically a schedulable staff member.
+
+The backend derives and validates tenant context from the authenticated user and business membership. It must not trust a freely supplied frontend `business_id`.
+
+Initial application tables have Row-Level Security enabled without client policies. Direct client access therefore remains default-deny while NestJS is the application authorization boundary.
+
+## Consequences
+
+Positive:
+
+- authentication data remains owned by Supabase Auth;
+- JWT subject UUIDs map directly to application users;
+- users can belong to multiple businesses;
+- tenant membership is explicit and constrained;
+- business roles are database-constrained;
+- accidental direct client access to application tables is denied by default;
+- staff scheduling remains independent from SaaS account access.
+
+Tradeoffs:
+
+- application user rows must be provisioned for authenticated users that participate in the SaaS;
+- role changes require explicit application logic;
+- RLS policies will need to be designed later if direct authenticated Supabase data access is introduced.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:

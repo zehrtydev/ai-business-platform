@@ -32,15 +32,7 @@ Establish the domain and persistence foundation defined for M2.
 
 Immediate target:
 
-    Drizzle database foundation
-            ↓
-    development Supabase project
-            ↓
-    Business + User/Auth mapping + BusinessMembership
-            ↓
     core operational schemas
-            ↓
-    versioned migrations
             ↓
     tenant isolation tests
             ↓
@@ -468,32 +460,25 @@ Google Calendar may be added depending on pilot needs.
 
 ---
 
-## Not started
+## Remaining implementation
 
-The following have not been implemented yet:
+Major areas still not implemented include:
 
-    Next.js app
-    NestJS API
-    worker
-    database schema
-    Supabase project
+    core operational database schemas
+    tenant isolation tests
+    authentication application flow
     Redis queues
-    authentication
     CRM
     Inbox
     appointments
     availability engine
     WhatsApp integration
     AI agent
-    CI
     deployment pipeline
-    tests
 
-This is intentional.
+M0 and M1 are complete.
 
-M0 is complete.
-
-M1 is now in progress.
+M2 is in progress.
 
 ---
 
@@ -501,14 +486,11 @@ M1 is now in progress.
 
 Recommended immediate order:
 
-    1. Bootstrap pnpm workspace
-    2. Bootstrap apps/web
-    3. Bootstrap apps/api
-    4. Bootstrap apps/worker
-    5. Create packages/database with Drizzle
-    6. Add Redis development infrastructure
-    7. Establish CI quality gate
-    8. Begin M2 domain model
+    1. Add remaining M2 operational schemas
+    2. Add tenant isolation tests
+    3. Integrate authenticated tenant resolution in the backend
+    4. Complete M2 persistence validation
+    5. Begin M3 administrative dashboard
 
 ---
 
@@ -549,11 +531,12 @@ M1 is closed.
 
     Status                  IN PROGRESS
     ORM/migration decision  DONE
-    packages/database       INITIALIZED
-    Drizzle foundation      NEXT
-    Development Supabase    NOT STARTED
-    Core schemas            NOT STARTED
-    Versioned migrations    NOT STARTED
+    packages/database       FOUNDATION COMPLETE
+    Drizzle foundation      DONE
+    Development Supabase    DONE
+    Identity/tenancy schema DONE
+    First migration         APPLIED
+    Core schemas            IN PROGRESS
     Tenant isolation tests  NOT STARTED
 
 ---
