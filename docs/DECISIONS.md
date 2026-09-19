@@ -1018,56 +1018,6 @@ Tradeoffs:
 
 ---
 
-# Decision backlog
-
-Current unresolved decisions, roughly in implementation order:
-
-    ADR-022 Runtime AI model/provider
-    ADR-011 WhatsApp provider
-    ADR-023 Calendar integration timing
-    ADR-024 Observability provider
-    ADR-025 Backup strategy
-
-Not all must be resolved before coding.
-
-The decisions that directly affect M1 and M2 should be resolved first.
-
----
-
-# How to add a decision
-
-Use this structure:
-
-    # ADR-XXX — Title
-
-    Status: PROPOSED | ACCEPTED | SUPERSEDED | REJECTED | OPEN
-
-    ## Context
-
-    Why does this decision exist?
-
-    ## Decision
-
-    What are we doing?
-
-    ## Alternatives
-
-    What else was considered?
-
-    ## Consequences
-
-    What do we gain and what does it cost?
-
-When a decision changes, do not erase its history.
-
-Mark the old ADR as:
-
-    SUPERSEDED
-
-and reference the replacement decision.
-
----
-
 # ADR-027 — Initial scheduling domain model
 
 **Status:** ACCEPTED
@@ -1134,3 +1084,132 @@ Tradeoffs:
 - exception dates, holidays, time off, and temporary overrides require later entities;
 - service pricing is intentionally deferred from this scheduling-focused schema;
 - IANA timezone validity is enforced by application validation rather than a database constraint.
+
+# ADR-028 — Initial CRM and pipeline domain model
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires a tenant-safe CRM model for contacts and commercial opportunities.
+
+The product must support multiple opportunities for the same contact and must evolve toward configurable pipelines rather than hardcoded sector-specific lead statuses.
+
+## Decision
+
+The initial CRM entities are:
+
+    Contact
+    Lead
+    Pipeline
+    PipelineStage
+
+All CRM entities are tenant-scoped by `business_id`.
+
+A Contact represents a person known to the business.
+
+Initial contact information includes:
+
+    name
+    phone
+    email
+    source
+    last interaction timestamp
+
+At least one of name, phone, or email must be present.
+
+Phone and email are indexed for tenant-scoped lookup but are not database-unique. Shared contact details are valid in some service-business workflows, and deduplication remains application logic.
+
+A Pipeline belongs to one business and contains ordered PipelineStage records.
+
+Pipeline stages use a positive integer position. Position is unique within each pipeline.
+
+At most one pipeline may be marked as the default for a business.
+
+Lead status is represented by the associated PipelineStage rather than a hardcoded status enum.
+
+A Lead belongs to:
+
+    one business
+    one contact
+    one pipeline stage
+
+and may optionally reference one service of interest.
+
+A contact may have multiple leads over time.
+
+Cross-tenant relationships between leads, contacts, pipeline stages, pipelines, and services are prevented with composite foreign keys containing `business_id`.
+
+Historical lead relationships are not cascade-deleted when contacts, stages, or services are removed. Application flows should normally deactivate referenced configuration instead of deleting it.
+
+Row-Level Security remains enabled without direct client policies while NestJS is the authorization boundary.
+
+## Consequences
+
+Positive:
+
+- CRM data is tenant-scoped at the database level;
+- the same contact can have multiple commercial opportunities;
+- pipelines are configurable by business;
+- lead status is not tied to dentistry or another vertical;
+- cross-tenant contact, stage, and service references are rejected by PostgreSQL;
+- shared phone numbers or email addresses do not prevent valid contacts.
+
+Tradeoffs:
+
+- phone and email normalization and deduplication remain application responsibilities;
+- the schema guarantees at most one default pipeline but not that a default always exists;
+- deleting referenced contacts, stages, or services requires resolving their leads first;
+- richer acquisition attribution and custom fields remain future work.
+
+---
+
+# Decision backlog
+
+Current unresolved decisions, roughly in implementation order:
+
+    ADR-022 Runtime AI model/provider
+    ADR-011 WhatsApp provider
+    ADR-023 Calendar integration timing
+    ADR-024 Observability provider
+    ADR-025 Backup strategy
+
+Not all must be resolved before coding.
+
+The decisions that directly affect M1 and M2 should be resolved first.
+
+---
+
+# How to add a decision
+
+Use this structure:
+
+    # ADR-XXX — Title
+
+    Status: PROPOSED | ACCEPTED | SUPERSEDED | REJECTED | OPEN
+
+    ## Context
+
+    Why does this decision exist?
+
+    ## Decision
+
+    What are we doing?
+
+    ## Alternatives
+
+    What else was considered?
+
+    ## Consequences
+
+    What do we gain and what does it cost?
+
+When a decision changes, do not erase its history.
+
+Mark the old ADR as:
+
+    SUPERSEDED
+
+and reference the replacement decision.
+
+---
