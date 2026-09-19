@@ -1065,3 +1065,72 @@ Mark the old ADR as:
     SUPERSEDED
 
 and reference the replacement decision.
+
+---
+
+# ADR-027 — Initial scheduling domain model
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires a scheduling model that can support services, schedulable staff, recurring availability, and future appointments without allowing relationships to cross tenant boundaries.
+
+Availability also requires an explicit timezone context.
+
+## Decision
+
+Each business stores an IANA timezone identifier.
+
+Initial scheduling entities are:
+
+    Service
+    StaffMember
+    StaffService
+    AvailabilityRule
+
+All scheduling entities belong explicitly to a business.
+
+Services define a positive duration in minutes and may be enabled or disabled.
+
+Staff members are independent from authenticated application users. A staff member represents a schedulable service provider, not necessarily a SaaS account.
+
+StaffService explicitly defines which staff members can provide which services.
+
+AvailabilityRule defines recurring weekly availability for one staff member in the business timezone.
+
+Weekdays use ISO numbering:
+
+    1 = Monday
+    2 = Tuesday
+    3 = Wednesday
+    4 = Thursday
+    5 = Friday
+    6 = Saturday
+    7 = Sunday
+
+Availability intervals require:
+
+    start_time < end_time
+
+Cross-tenant relationships are prevented at the database level with composite foreign keys that include `business_id`.
+
+Row-Level Security remains enabled without direct client policies while NestJS is the authorization boundary.
+
+## Consequences
+
+Positive:
+
+- scheduling data is tenant-scoped at the database level;
+- staff/service assignments cannot cross businesses;
+- availability cannot reference staff from another tenant;
+- recurring weekly schedules are simple enough for the MVP;
+- timezone interpretation is explicit;
+- staff accounts remain independent from authenticated users.
+
+Tradeoffs:
+
+- overnight availability intervals are not represented by a single rule and must be split into two rules;
+- exception dates, holidays, time off, and temporary overrides require later entities;
+- service pricing is intentionally deferred from this scheduling-focused schema;
+- IANA timezone validity is enforced by application validation rather than a database constraint.

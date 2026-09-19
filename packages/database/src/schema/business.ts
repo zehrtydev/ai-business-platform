@@ -6,6 +6,7 @@ export const businesses = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     name: text('name').notNull(),
+    timezone: text('timezone').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -15,5 +16,9 @@ export const businesses = pgTable(
   },
   (table) => [
     check('businesses_name_not_blank', sql`length(trim(${table.name})) > 0`),
+    check(
+      'businesses_timezone_not_blank',
+      sql`length(trim(${table.timezone})) > 0`,
+    ),
   ],
 ).enableRLS();
