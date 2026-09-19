@@ -1,3 +1,4 @@
+export { appointmentStatus, appointments } from './appointment.js';
 export { appUsers } from './app-user.js';
 export { availabilityRules } from './availability-rule.js';
 export { businesses } from './business.js';

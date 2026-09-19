@@ -22,6 +22,20 @@
       "when": 1789830384627,
       "tag": "0002_crm_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789831032353,
+      "tag": "0003_appointment_domain",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789831191321,
+      "tag": "0004_appointment_service_index",
+      "breakpoints": true
     }
   ]
 }

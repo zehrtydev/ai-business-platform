@@ -1,0 +1,1 @@
+CREATE INDEX "appointments_business_service_idx" ON "appointments" USING btree ("business_id","service_id");

@@ -1164,6 +1164,93 @@ Tradeoffs:
 
 ---
 
+# ADR-029 — Appointment lifecycle and conflict prevention
+
+**Status:** ACCEPTED
+
+## Context
+
+Appointments are an internal source of truth and must remain tenant-safe while preventing incompatible bookings under concurrent requests.
+
+Application-level availability checks alone are insufficient because two requests may validate the same time slot before either writes its appointment.
+
+## Decision
+
+The initial appointment entity is:
+
+    Appointment
+
+Each appointment belongs to one business and references:
+
+    Contact
+    Service
+    StaffMember
+
+Appointments store absolute timestamps:
+
+    starts_at
+    ends_at
+
+with the invariant:
+
+    starts_at < ends_at
+
+The initial lifecycle is:
+
+    SCHEDULED
+    CANCELLED
+    COMPLETED
+    NO_SHOW
+
+`SCHEDULED` is the default state.
+
+Cross-tenant contact, service, and staff relationships are prevented with composite foreign keys containing `business_id`.
+
+Contact, service, and staff deletion does not cascade into appointment history. Referenced domain records must normally be retained or deactivated while appointments exist.
+
+Business deletion remains cascading because the business is the tenant root.
+
+PostgreSQL provides the final protection against double booking.
+
+The migration enables the `btree_gist` extension and creates an exclusion constraint for scheduled appointments using:
+
+    business_id WITH =
+    staff_member_id WITH =
+    tstzrange(starts_at, ends_at, '[)') WITH &&
+
+The exclusion applies only while:
+
+    status = 'SCHEDULED'
+
+The half-open interval `[)` allows one appointment to begin exactly when another ends.
+
+The backend must still calculate availability and revalidate before creating an appointment. The database exclusion constraint is the final concurrency guard, not a replacement for application validation.
+
+The exclusion constraint and `btree_gist` extension are maintained as reviewed custom migration SQL because they are not represented in the current Drizzle schema snapshot. Future migrations that modify appointment scheduling columns must preserve this constraint explicitly.
+
+Row-Level Security remains enabled without direct client policies while NestJS is the authorization boundary.
+
+## Consequences
+
+Positive:
+
+- appointments cannot reference contact, service, or staff from another tenant;
+- invalid zero-length or negative appointment ranges are rejected;
+- concurrent scheduled appointments cannot overlap for the same staff member;
+- cancelled appointments release their reserved interval;
+- adjacent appointments are allowed;
+- appointment history is protected from accidental cascade deletion.
+
+Tradeoffs:
+
+- the scheduling model currently requires a staff member for every appointment;
+- generalized schedulable resources such as rooms or equipment remain future work;
+- changing conflict semantics requires coordinated schema and migration changes;
+- the exclusion constraint is PostgreSQL-specific;
+- historical appointments remain linked to their original contact, service, and staff records.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:
