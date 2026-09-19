@@ -1,170 +1,170 @@
 # PRODUCT.md
 
-## Estado
+## Status
 
-Draft inicial.
+Initial draft.
 
-Este documento define el producto desde la perspectiva funcional: quién lo usa, qué problemas resuelve, qué módulos existen y cómo deben comportarse.
+This document defines the product from a functional perspective: who uses it, what problems it solves, what modules exist, and how they should behave.
 
-Las decisiones técnicas pertenecen principalmente a `ARCHITECTURE.md`.El alcance mínimo de la primera versión pertenece a `MVP.md`.
+Technical decisions belong mainly in `ARCHITECTURE.md`.The minimum scope of the first version belongs in `MVP.md`.
 
 ---
 
-## 1. Producto
+## 1. Product
 
-**ia-business-platform** es una plataforma SaaS multiempresa para centralizar, automatizar y supervisar la atención comercial de negocios de servicios.
+**ia-business-platform** is a multi-tenant SaaS platform for centralizing, automating, and supervising commercial attention for service businesses.
 
-Su función principal es ayudar a convertir conversaciones entrantes en resultados medibles, especialmente:
+Its main function is to help convert incoming conversations into measurable outcomes, especially:
 
-- citas;
-- oportunidades;
-- seguimientos;
-- intervenciones humanas;
-- clientes.
+- appointments;
+- opportunities;
+- follow-ups;
+- human interventions;
+- customers.
 
-El producto combina:
+The product combines:
 
-    Canales
+    Channels
       +
     CRM
       +
-    Agenda
+    Scheduling
       +
-    IA
+    AI
       +
-    Automatizaciones
+    Automations
       +
-    Analítica
+    Analytics
 
-en una sola operación.
+into a single operation.
 
 ---
 
-## 2. Problema que resuelve
+## 2. Problem it solves
 
-Muchos negocios reciben leads por mensajería, pero los gestionan de forma manual y fragmentada.
+Many businesses receive leads through messaging channels but manage them manually and in a fragmented way.
 
-Problemas frecuentes:
+Common problems:
 
-- respuestas tardías;
-- conversaciones perdidas;
-- leads que se enfrían;
-- citas coordinadas manualmente;
-- información distribuida entre chats;
-- poca visibilidad del estado comercial;
-- seguimiento inconsistente;
-- dependencia de una persona para responder;
-- ausencia de métricas;
-- falta de continuidad cuando cambia el encargado.
+- delayed responses;
+- lost conversations;
+- leads that go cold;
+- appointments coordinated manually;
+- information scattered across chats;
+- little visibility into commercial status;
+- inconsistent follow-up;
+- dependence on one person to respond;
+- lack of metrics;
+- lack of continuity when the person in charge changes.
 
-ia-business-platform busca reducir estas pérdidas mediante una operación centralizada y asistida por IA.
-
----
-
-## 3. Cliente objetivo inicial
-
-El primer cliente será un consultorio odontológico.
-
-Sin embargo, el producto no se diseñará exclusivamente para odontología.
-
-El cliente objetivo general es:
-
-> Negocio de servicios que recibe leads por canales digitales y necesita atender, calificar, agendar o hacer seguimiento de forma repetitiva.
-
-Ejemplos potenciales:
-
-- odontología;
-- medicina estética;
-- fisioterapia;
-- psicología;
-- veterinaria;
-- barberías y salones;
-- inmobiliarias;
-- academias;
-- talleres;
-- servicios profesionales;
-- otros negocios con procesos de atención y agenda.
+ia-business-platform aims to reduce these losses through a centralized, AI-assisted operation.
 
 ---
 
-## 4. Usuario final externo
+## 3. Initial target customer
 
-El usuario externo es la persona que contacta al negocio.
+The first customer will be a dental office.
 
-Dependiendo del vertical podrá llamarse:
+However, the product will not be designed exclusively for dentistry.
 
-    paciente
-    cliente
+The general target customer is:
+
+> A service business that receives leads through digital channels and repeatedly needs to assist, qualify, schedule, or follow up.
+
+Potential examples:
+
+- dentistry;
+- aesthetic medicine;
+- physiotherapy;
+- psychology;
+- veterinary care;
+- barbershops and salons;
+- real estate agencies;
+- academies;
+- workshops;
+- professional services;
+- other businesses with customer-service and scheduling processes.
+
+---
+
+## 4. External end user
+
+The external user is the person who contacts the business.
+
+Depending on the vertical, they may be called:
+
+    patient
+    customer
     lead
-    prospecto
-    interesado
-    usuario
+    prospect
+    interested person
+    user
 
-Dentro del núcleo del producto será representado principalmente como:
+Within the product core, they will primarily be represented as:
 
     Contact
 
-y, cuando exista una oportunidad comercial:
+and, when a commercial opportunity exists:
 
     Lead
 
 ---
 
-## 5. Usuarios internos
+## 5. Internal users
 
 ### 5.1 Owner
 
-Responsable principal del negocio dentro de la plataforma.
+The main person responsible for the business inside the platform.
 
-Puede:
+Can:
 
-- configurar el negocio;
-- administrar usuarios;
-- administrar servicios;
-- administrar profesionales;
-- configurar horarios;
-- configurar integraciones;
-- configurar IA;
-- revisar conversaciones;
-- gestionar leads;
-- revisar citas;
-- revisar métricas.
+- configure the business;
+- manage users;
+- manage services;
+- manage staff;
+- configure schedules;
+- configure integrations;
+- configure AI;
+- review conversations;
+- manage leads;
+- review appointments;
+- review metrics.
 
 ---
 
 ### 5.2 Member
 
-Usuario operativo.
+Operational user.
 
-Puede, según permisos futuros:
+May, according to future permissions:
 
-- revisar conversaciones;
-- responder manualmente;
-- gestionar leads;
-- consultar agenda;
-- atender handoffs;
-- consultar contactos.
+- review conversations;
+- respond manually;
+- manage leads;
+- view the schedule;
+- handle handoffs;
+- view contacts.
 
-Durante el MVP los permisos serán simples.
+During the MVP, permissions will remain simple.
 
 ---
 
-## 6. Principio central de experiencia
+## 6. Core experience principle
 
-El negocio no debería tener que aprender conceptos de IA para usar el sistema.
+The business should not need to learn AI concepts to use the system.
 
-La configuración deberá expresarse en términos del negocio.
+Configuration should be expressed in business terms.
 
-Preferencia:
+Preferred:
 
-    Servicios
-    Horarios
-    Profesionales
-    Preguntas frecuentes
-    Objetivo de conversación
-    Políticas
+    Services
+    Schedules
+    Staff
+    Frequently asked questions
+    Conversation objective
+    Policies
 
-No:
+Not:
 
     temperature
     top_p
@@ -172,192 +172,192 @@ No:
     function schemas
     vector indexes
 
-Los detalles técnicos deberán permanecer ocultos salvo en áreas avanzadas futuras.
+Technical details should remain hidden except in future advanced areas.
 
 ---
 
-# 7. Módulos del producto
+# 7. Product modules
 
 ## 7.1 Dashboard
 
-Objetivo:
+Objective:
 
-Dar una vista rápida del estado comercial y operativo.
+Provide a quick view of commercial and operational status.
 
-Información inicial:
+Initial information:
 
-- leads recibidos;
-- conversaciones activas;
-- citas agendadas;
-- conversaciones que requieren humano;
-- conversión básica;
-- actividad reciente.
+- leads received;
+- active conversations;
+- appointments scheduled;
+- conversations requiring a human;
+- basic conversion;
+- recent activity.
 
-El dashboard debe responder rápidamente:
+The dashboard should quickly answer:
 
-    ¿Qué está pasando?
-    ¿Qué requiere atención?
-    ¿Cuántas oportunidades estamos convirtiendo?
+    What is happening?
+    What requires attention?
+    How many opportunities are we converting?
 
-No debe convertirse en un panel saturado de métricas durante el MVP.
+It should not become an overloaded metrics panel during the MVP.
 
 ---
 
 ## 7.2 Inbox
 
-Objetivo:
+Objective:
 
-Centralizar las conversaciones del negocio.
+Centralize the business's conversations.
 
-La bandeja deberá permitir:
+The inbox must allow users to:
 
-- listar conversaciones;
-- identificar canal;
-- ver contacto;
-- ver último mensaje;
-- conocer estado;
-- conocer si responde IA o humano;
-- identificar conversaciones que requieren atención;
-- abrir historial completo;
-- responder manualmente.
+- list conversations;
+- identify the channel;
+- see the contact;
+- see the last message;
+- know the status;
+- know whether AI or a human is responding;
+- identify conversations that require attention;
+- open the full history;
+- respond manually.
 
-Ejemplo conceptual:
+Conceptual example:
 
     Inbox
 
     [●] Carlos Pérez
-        "Quisiera una valoración mañana"
-        WhatsApp · IA activa · Hace 2 min
+        "I would like an evaluation tomorrow"
+        WhatsApp · AI active · 2 min ago
 
     [!] Laura Gómez
-        "Necesito hablar con alguien"
-        WhatsApp · Requiere humano · Hace 5 min
+        "I need to speak with someone"
+        WhatsApp · Human required · 5 min ago
 
 ---
 
-## 7.3 Conversación
+## 7.3 Conversation
 
-La vista de conversación deberá combinar:
+The conversation view must combine:
 
-    mensajes
+    messages
     +
-    información del contacto
+    contact information
     +
-    estado comercial
+    commercial status
     +
-    acciones operativas
+    operational actions
 
-Acciones mínimas:
+Minimum actions:
 
-- enviar mensaje;
-- tomar control;
-- devolver control a IA;
-- ver servicio de interés;
-- ver estado del lead;
-- consultar cita;
-- acceder al contacto.
+- send message;
+- take control;
+- return control to AI;
+- view service of interest;
+- view lead status;
+- view appointment;
+- open the contact.
 
 ---
 
 ## 7.4 Human handoff
 
-El negocio siempre podrá intervenir.
+The business must always be able to intervene.
 
-Estados conceptuales:
+Conceptual states:
 
     AI_CONTROLLED
     HUMAN_CONTROLLED
     HUMAN_REQUIRED
 
-Casos de handoff:
+Handoff cases:
 
-- el usuario solicita una persona;
-- la IA no tiene suficiente información;
-- existe una excepción;
-- la conversación contiene una situación que requiere revisión;
-- un operador decide intervenir.
+- the user asks for a person;
+- the AI does not have enough information;
+- an exception occurs;
+- the conversation contains a situation requiring review;
+- an operator decides to intervene.
 
-Regla:
+Rule:
 
-> Mientras la conversación esté bajo control humano, la IA no deberá responder automáticamente.
+> While the conversation is under human control, the AI must not respond automatically.
 
 ---
 
 ## 7.5 CRM
 
-Objetivo:
+Objective:
 
-Dar contexto comercial sobre cada persona.
+Provide commercial context about each person.
 
-El CRM inicial deberá incluir:
+The initial CRM must include:
 
-    Contactos
+    Contacts
     Leads
-    Estado
-    Fuente
-    Servicio de interés
-    Última interacción
-    Citas
+    Status
+    Source
+    Service of interest
+    Last interaction
+    Appointments
 
-No se pretende competir inicialmente con un CRM empresarial completo.
+The initial goal is not to compete with a full enterprise CRM.
 
 ---
 
-## 7.6 Contactos
+## 7.6 Contacts
 
-Cada persona identificable será un contacto.
+Every identifiable person will be a contact.
 
-Información mínima:
+Minimum information:
 
-- nombre;
-- teléfono;
-- email opcional;
-- fuente;
-- fecha de creación;
-- última interacción.
+- name;
+- phone;
+- optional email;
+- source;
+- creation date;
+- last interaction.
 
-Posteriormente podrá incluir:
+Later, it may include:
 
-- etiquetas;
-- notas;
-- campos personalizados;
-- historial completo;
-- múltiples canales;
-- consentimiento;
-- preferencias.
+- tags;
+- notes;
+- custom fields;
+- complete history;
+- multiple channels;
+- consent;
+- preferences.
 
 ---
 
 ## 7.7 Leads
 
-Un lead representa una oportunidad comercial asociada a un contacto.
+A lead represents a commercial opportunity associated with a contact.
 
-Un mismo contacto podrá tener diferentes oportunidades a lo largo del tiempo.
+The same contact may have different opportunities over time.
 
-Ejemplo futuro:
+Future example:
 
-    Contacto:
+    Contact:
     Ana Gómez
 
     Lead 1:
-    Valoración odontológica
-    Cerrado
+    Dental evaluation
+    Closed
 
     Lead 2:
-    Ortodoncia
-    Activo
+    Orthodontics
+    Active
 
-Durante el MVP podrá utilizarse un modelo más simple, pero el diseño no deberá impedir esta evolución.
+During the MVP, a simpler model may be used, but the design must not block this evolution.
 
 ---
 
 ## 7.8 Pipeline
 
-Objetivo:
+Objective:
 
-Mostrar en qué etapa comercial se encuentra cada lead.
+Show which commercial stage each lead is in.
 
-Pipeline inicial:
+Initial pipeline:
 
     NEW
     ↓
@@ -371,189 +371,189 @@ Pipeline inicial:
     ↓
     COMPLETED
 
-La plataforma deberá evolucionar hacia pipelines configurables por negocio.
+The platform must evolve toward configurable pipelines per business.
 
-El pipeline no deberá depender del sector odontológico.
-
----
-
-## 7.9 Servicios
-
-Cada negocio podrá configurar lo que ofrece.
-
-Información candidata:
-
-    Nombre
-    Descripción
-    Duración
-    Precio
-    Estado
-    Profesionales asociados
-    Instrucciones
-
-Ejemplos:
-
-    Valoración
-    Limpieza
-    Ortodoncia
-    Consulta psicológica
-    Visita inmobiliaria
-    Diagnóstico técnico
+The pipeline must not depend on the dental sector.
 
 ---
 
-## 7.10 Profesionales / Staff
+## 7.9 Services
 
-Representan personas que prestan servicios o reciben citas.
+Each business can configure what it offers.
 
-Información básica:
+Candidate information:
 
-- nombre;
-- estado;
-- servicios;
-- horarios;
-- citas.
+    Name
+    Description
+    Duration
+    Price
+    Status
+    Associated staff
+    Instructions
 
-No todo negocio requerirá profesionales individuales.
+Examples:
 
-La arquitectura deberá permitir posteriormente recursos alternativos como:
-
-    salas
-    equipos
-    vehículos
-    espacios
-
-sin incorporarlos al MVP.
-
----
-
-## 7.11 Agenda
-
-Objetivo:
-
-Gestionar disponibilidad y citas.
-
-Funciones:
-
-- consultar agenda;
-- configurar disponibilidad;
-- crear cita;
-- cancelar cita;
-- cambiar estado;
-- evitar conflictos;
-- relacionar cita con contacto, servicio y profesional.
-
-Vista inicial candidata:
-
-    Día
-    Semana
-    Lista
-
-Durante el MVP basta con una experiencia funcional.
+    Evaluation
+    Cleaning
+    Orthodontics
+    Psychology consultation
+    Real estate visit
+    Technical diagnosis
 
 ---
 
-## 7.12 Citas
+## 7.10 Staff
 
-Una cita deberá tener ciclo de vida.
+Represents people who provide services or receive appointments.
 
-Estados iniciales:
+Basic information:
+
+- name;
+- status;
+- services;
+- schedules;
+- appointments.
+
+Not every business will require individual staff members.
+
+The architecture should later allow alternative resources such as:
+
+    rooms
+    equipment
+    vehicles
+    spaces
+
+without including them in the MVP.
+
+---
+
+## 7.11 Scheduling
+
+Objective:
+
+Manage availability and appointments.
+
+Functions:
+
+- view schedule;
+- configure availability;
+- create appointment;
+- cancel appointment;
+- change status;
+- prevent conflicts;
+- relate the appointment to contact, service, and staff member.
+
+Initial candidate views:
+
+    Day
+    Week
+    List
+
+A functional experience is sufficient during the MVP.
+
+---
+
+## 7.12 Appointments
+
+An appointment must have a lifecycle.
+
+Initial states:
 
     SCHEDULED
     CANCELLED
     COMPLETED
     NO_SHOW
 
-Posteriormente podrán añadirse:
+Later, the following may be added:
 
     RESCHEDULED
     CONFIRMED
     PENDING_CONFIRMATION
 
-La cita interna será la fuente principal de verdad.
+The internal appointment will be the primary source of truth.
 
 ---
 
 ## 7.13 AI Agent
 
-El agente es responsable de atender conversaciones automáticamente.
+The agent is responsible for automatically handling conversations.
 
-Debe ser capaz de:
+It must be able to:
 
-- entender intención;
-- responder preguntas;
-- utilizar información del negocio;
-- identificar servicio de interés;
-- recopilar datos faltantes;
-- consultar disponibilidad;
-- proponer horarios;
-- crear citas mediante herramientas;
-- actualizar contexto comercial;
-- solicitar handoff.
+- understand intent;
+- answer questions;
+- use business information;
+- identify service of interest;
+- collect missing data;
+- check availability;
+- propose time slots;
+- create appointments through tools;
+- update commercial context;
+- request handoff.
 
-No deberá:
+It must not:
 
-- inventar precios;
-- inventar disponibilidad;
-- modificar directamente la base de datos;
-- realizar acciones sin validación del backend;
-- continuar respondiendo durante un handoff humano.
+- invent prices;
+- invent availability;
+- modify the database directly;
+- perform actions without backend validation;
+- continue responding during a human handoff.
 
 ---
 
 ## 7.14 Business Knowledge
 
-Cada negocio deberá poder proporcionar conocimiento al agente.
+Each business must be able to provide knowledge to the agent.
 
-Información inicial:
+Initial information:
 
-- descripción del negocio;
-- servicios;
-- precios;
-- horarios;
-- dirección;
-- profesionales;
-- preguntas frecuentes;
-- políticas;
-- información comercial relevante.
+- business description;
+- services;
+- prices;
+- schedules;
+- address;
+- staff;
+- frequently asked questions;
+- policies;
+- relevant commercial information.
 
-Posteriormente podrá ampliarse a:
+Later, it may expand to:
 
-- documentos;
-- páginas web;
-- catálogos;
-- archivos;
-- instrucciones por servicio.
+- documents;
+- web pages;
+- catalogs;
+- files;
+- service-specific instructions.
 
 ---
 
-## 7.15 Configuración de IA
+## 7.15 AI configuration
 
-La configuración visible para el negocio deberá mantenerse simple.
+The AI configuration visible to the business should remain simple.
 
-Ejemplos:
+Examples:
 
-    Nombre del asistente
-    Tono
-    Objetivo principal
-    Saludo
-    Cuándo escalar a humano
-    Información permitida
-    Información restringida
+    Assistant name
+    Tone
+    Main objective
+    Greeting
+    When to escalate to a human
+    Allowed information
+    Restricted information
 
-La selección técnica de modelos podrá permanecer bajo control de la plataforma.
+Technical model selection may remain under platform control.
 
 ---
 
 ## 7.16 Messaging
 
-La mensajería será una capacidad común del producto.
+Messaging will be a shared product capability.
 
-Canal inicial:
+Initial channel:
 
     WhatsApp
 
-Canales futuros:
+Future channels:
 
     Instagram
     Facebook Messenger
@@ -562,15 +562,15 @@ Canales futuros:
     Email
     Voice
 
-El producto no deberá asumir que toda conversación proviene de WhatsApp.
+The product must not assume every conversation comes from WhatsApp.
 
 ---
 
-## 7.17 Integraciones
+## 7.17 Integrations
 
-El negocio podrá conectar servicios externos.
+The business may connect external services.
 
-Candidatos:
+Candidates:
 
     WhatsApp providers
     Google Calendar
@@ -580,338 +580,338 @@ Candidatos:
     n8n
     webhooks
 
-Las integraciones deberán estar aisladas de la lógica central del producto.
+Integrations must remain isolated from core product logic.
 
 ---
 
-## 7.18 Automatizaciones
+## 7.18 Automations
 
-Objetivo:
+Objective:
 
-Ejecutar acciones cuando ocurre algo.
+Execute actions when something happens.
 
-Ejemplo:
+Example:
 
     appointment.created
           ↓
-    programar recordatorio
+    schedule reminder
 
-Otro ejemplo futuro:
+Another future example:
 
     lead.created
           ↓
-    esperar 2 horas
+    wait 2 hours
           ↓
-    si no tiene cita
+    if there is no appointment
           ↓
-    enviar seguimiento
+    send follow-up
 
-Durante el MVP las reglas podrán estar definidas por el sistema.
+During the MVP, rules may be defined by the system.
 
-Más adelante podrán ser configurables por el negocio.
+Later, they may become configurable by the business.
 
 ---
 
 ## 7.19 Analytics
 
-El sistema debe medir resultados reales.
+The system must measure real outcomes.
 
-Métricas iniciales:
+Initial metrics:
 
-- leads recibidos;
-- conversaciones;
-- citas;
-- conversión;
+- leads received;
+- conversations;
+- appointments;
+- conversion;
 - handoffs;
-- tiempo de primera respuesta;
-- errores.
+- time to first response;
+- errors.
 
-Métricas futuras:
+Future metrics:
 
-- conversión por canal;
-- conversión por servicio;
-- conversión por campaña;
-- conversión por agente;
+- conversion by channel;
+- conversion by service;
+- conversion by campaign;
+- conversion by agent;
 - no-show rate;
-- recuperación de leads;
-- ingresos atribuidos;
-- tiempo promedio de cierre.
+- lead recovery;
+- attributed revenue;
+- average time to close.
 
 ---
 
-# 8. Flujo principal del producto
+# 8. Main product flow
 
-## 8.1 Entrada
+## 8.1 Entry
 
-    Usuario externo
+    External user
           ↓
-    Canal
+    Channel
           ↓
-    Mensaje
+    Message
 
 ---
 
-## 8.2 Identificación
+## 8.2 Identification
 
-    Mensaje
+    Message
        ↓
-    ¿Existe contacto?
-       ├── Sí → utilizar contacto
-       └── No → crear contacto
+    Does contact exist?
+       ├── Yes → use contact
+       └── No → create contact
 
 ---
 
-## 8.3 Conversación
+## 8.3 Conversation
 
-    Contacto
+    Contact
        ↓
-    Crear/recuperar conversación
+    Create/retrieve conversation
        ↓
-    Persistir mensaje
+    Persist message
 
 ---
 
-## 8.4 Atención
+## 8.4 Assistance
 
-    ¿Control humano?
-       ├── Sí → no ejecutar agente
+    Human control?
+       ├── Yes → do not run agent
        └── No
             ↓
-          agente IA
+          AI agent
 
 ---
 
-## 8.5 Conversión
+## 8.5 Conversion
 
-    IA identifica intención
+    AI identifies intent
             ↓
-    Servicio
+    Service
             ↓
-    Disponibilidad
+    Availability
             ↓
-    Opciones
+    Options
             ↓
-    Selección
+    Selection
             ↓
-    Validación
+    Validation
             ↓
-    Cita
+    Appointment
 
 ---
 
-## 8.6 Confirmación
+## 8.6 Confirmation
 
     Appointment created
             ↓
     Lead updated
             ↓
-    Mensaje de confirmación
+    Confirmation message
             ↓
-    Recordatorio programado
+    Reminder scheduled
 
 ---
 
-# 9. Journey inicial del negocio
+# 9. Initial business journey
 
 ## 9.1 Onboarding
 
-El negocio deberá completar progresivamente:
+The business must progressively complete:
 
-    Crear cuenta
+    Create account
        ↓
-    Crear/configurar negocio
+    Create/configure business
        ↓
-    Registrar servicios
+    Register services
        ↓
-    Registrar profesionales
+    Register staff
        ↓
-    Configurar disponibilidad
+    Configure availability
        ↓
-    Agregar conocimiento
+    Add knowledge
        ↓
-    Conectar mensajería
+    Connect messaging
        ↓
-    Probar agente
+    Test agent
        ↓
-    Activar
+    Activate
 
-Durante el piloto este proceso podrá ser acompañado manualmente.
+During the pilot, this process may be assisted manually.
 
-No se requiere onboarding completamente autoservicio para el MVP.
+Fully self-service onboarding is not required for the MVP.
 
 ---
 
-## 9.2 Operación diaria
+## 9.2 Daily operation
 
-Una vez configurado:
+Once configured:
 
-    Entrar al dashboard
+    Open dashboard
             ↓
-    Revisar actividad
+    Review activity
             ↓
-    Atender handoffs
+    Handle handoffs
             ↓
-    Consultar citas
+    Review appointments
             ↓
-    Revisar conversaciones si es necesario
+    Review conversations if needed
 
-La meta del producto es reducir, no aumentar, la carga operativa.
+The product's goal is to reduce, not increase, operational workload.
 
 ---
 
-# 10. Journey inicial del lead
+# 10. Initial lead journey
 
-Ejemplo odontológico:
+Dental example:
 
-    Paciente:
-    Hola, quisiera saber cuánto cuesta una limpieza.
+    Patient:
+    Hi, I would like to know how much a cleaning costs.
 
-    IA:
-    Responde con información válida.
+    AI:
+    Responds with valid information.
 
-    Paciente:
-    ¿Tienen disponibilidad mañana?
+    Patient:
+    Do you have availability tomorrow?
 
-    IA:
-    Consulta disponibilidad real.
+    AI:
+    Checks real availability.
 
-    Sistema:
-    Devuelve horarios.
+    System:
+    Returns time slots.
 
-    IA:
-    Presenta opciones.
+    AI:
+    Presents options.
 
-    Paciente:
-    A las 11:30.
+    Patient:
+    At 11:30.
 
-    Sistema:
-    Valida horario.
+    System:
+    Validates time slot.
 
-    Sistema:
-    Crea cita.
+    System:
+    Creates appointment.
 
-    IA:
-    Confirma.
+    AI:
+    Confirms.
 
-    Sistema:
-    Programa recordatorio.
+    System:
+    Schedules reminder.
 
-Este flujo representa la experiencia central del MVP.
-
----
-
-# 11. Principios de UX
-
-## 11.1 Claridad
-
-El usuario interno deberá entender rápidamente qué está ocurriendo.
-
-Priorizar:
-
-    estado
-    acción pendiente
-    responsable
-    resultado
+This flow represents the core MVP experience.
 
 ---
 
-## 11.2 Supervisión
+# 11. UX principles
 
-La automatización nunca deberá sentirse invisible para el negocio.
+## 11.1 Clarity
 
-El usuario podrá revisar:
+The internal user must quickly understand what is happening.
 
-- qué respondió la IA;
-- qué acciones ejecutó;
-- qué citas creó;
-- qué conversaciones escaló.
+Prioritize:
+
+    status
+    pending action
+    responsible party
+    result
+
+---
+
+## 11.2 Supervision
+
+Automation must never feel invisible to the business.
+
+The user must be able to review:
+
+- what the AI responded;
+- what actions it executed;
+- what appointments it created;
+- what conversations it escalated.
 
 ---
 
 ## 11.3 Control
 
-El negocio podrá intervenir cuando lo considere necesario.
+The business may intervene whenever it considers necessary.
 
-Automatización no significa pérdida de control.
+Automation does not mean loss of control.
 
 ---
 
-## 11.4 Configuración progresiva
+## 11.4 Progressive configuration
 
-El sistema deberá funcionar con una configuración inicial razonablemente pequeña.
+The system should work with a reasonably small initial configuration.
 
-No exigir decenas de pantallas antes de obtener valor.
+It should not require dozens of screens before delivering value.
 
 ---
 
 ## 11.5 Mobile-friendly
 
-El dashboard será web, pero deberá funcionar correctamente desde dispositivos móviles.
+The dashboard will be web-based but must work correctly on mobile devices.
 
-No se requiere app nativa para el MVP.
-
----
-
-# 12. Reglas del producto
-
-## 12.1 La IA no inventa datos operativos
-
-No inventar:
-
-    precios
-    horarios
-    disponibilidad
-    profesionales
-    citas
-    políticas
-
-Si la información no existe:
-
-    preguntar
-    escalar
-    o reconocer que no está disponible
+A native app is not required for the MVP.
 
 ---
 
-## 12.2 La cita debe confirmarse en backend
+# 12. Product rules
 
-Una respuesta del modelo diciendo:
+## 12.1 AI does not invent operational data
 
-> Tu cita quedó agendada.
+Do not invent:
 
-solo podrá enviarse después de que el backend haya confirmado la creación real.
+    prices
+    schedules
+    availability
+    staff
+    appointments
+    policies
+
+If the information does not exist:
+
+    ask
+    escalate
+    or acknowledge that it is unavailable
 
 ---
 
-## 12.3 El humano tiene prioridad
+## 12.2 Appointment must be confirmed by the backend
 
-Si un humano toma control:
+A model response saying:
 
-    automatización conversacional pausada
+> Your appointment has been scheduled.
+
+may only be sent after the backend has confirmed the real creation of the appointment.
 
 ---
 
-## 12.4 Los mensajes se registran
+## 12.3 Human has priority
 
-Los mensajes relevantes del flujo deberán persistirse para:
+If a human takes control:
 
-- historial;
-- soporte;
-- auditoría;
-- contexto;
+    conversational automation paused
+
+---
+
+## 12.4 Messages are recorded
+
+Relevant messages in the flow must be persisted for:
+
+- history;
+- support;
+- auditing;
+- context;
 - analytics.
 
 ---
 
-## 12.5 El tenant siempre está definido
+## 12.5 Tenant is always defined
 
-Toda acción operativa debe ejecutarse dentro del contexto de un negocio.
+Every operational action must execute within the context of a business.
 
 ---
 
-# 13. Estados importantes
+# 13. Important states
 
-## Conversación
+## Conversation
 
     OPEN
     HUMAN_REQUIRED
@@ -935,7 +935,7 @@ Control:
 
 ## Lead
 
-Estado comercial inicial:
+Initial commercial status:
 
     NEW
     CONTACTED
@@ -946,42 +946,42 @@ Estado comercial inicial:
 
 ---
 
-# 14. Notificaciones
+# 14. Notifications
 
-Durante el MVP las notificaciones estarán centradas en eventos de alto valor.
+During the MVP, notifications will focus on high-value events.
 
-Ejemplos:
+Examples:
 
-- handoff requerido;
-- error crítico de integración;
-- cita creada;
-- job agotó reintentos.
+- handoff required;
+- critical integration error;
+- appointment created;
+- job exhausted retries.
 
-No se requiere un centro completo de notificaciones inicialmente.
-
----
-
-# 15. Acciones del operador
-
-Desde el panel, un usuario podrá progresivamente:
-
-    ver
-    crear
-    editar
-    responder
-    tomar control
-    cerrar
-    cancelar
-    reagendar
-    consultar
-
-Las acciones concretas dependerán del módulo.
+A complete notification center is not required initially.
 
 ---
 
-# 16. Configuración del negocio
+# 15. Operator actions
 
-Área candidata:
+From the panel, a user will progressively be able to:
+
+    view
+    create
+    edit
+    reply
+    take control
+    close
+    cancel
+    reschedule
+    query
+
+Specific actions will depend on the module.
+
+---
+
+# 16. Business settings
+
+Candidate area:
 
     Settings
     ├── Business
@@ -993,73 +993,73 @@ Las acciones concretas dependerán del módulo.
     ├── Integrations
     └── Messaging
 
-La configuración avanzada podrá aparecer posteriormente.
+Advanced configuration may appear later.
 
 ---
 
-# 17. Diseño multiindustria
+# 17. Multi-industry design
 
-El producto deberá evitar nombres específicos de odontología en el núcleo.
+The product must avoid dental-specific names in the core.
 
-Preferir:
+Prefer:
 
     Service
 
-en lugar de:
+instead of:
 
     DentalTreatment
 
-Preferir:
+Prefer:
 
     StaffMember
 
-en lugar de:
+instead of:
 
     Dentist
 
-Preferir:
+Prefer:
 
     Appointment
 
-en lugar de:
+instead of:
 
     DentalAppointment
 
-La especialización deberá llegar mediante configuración o módulos verticales.
+Specialization should come through configuration or vertical modules.
 
 ---
 
-# 18. Verticales
+# 18. Verticals
 
-Un vertical podrá aportar:
+A vertical may provide:
 
 - presets;
-- terminología;
-- automatizaciones;
-- campos;
-- plantillas;
-- conocimiento;
-- integraciones específicas.
+- terminology;
+- automations;
+- fields;
+- templates;
+- knowledge;
+- specific integrations.
 
-Ejemplo futuro:
+Future example:
 
-    Vertical: Odontología
+    Vertical: Dentistry
 
     Preset:
-    - valoración
-    - limpieza
-    - ortodoncia
-    - recordatorio de control
+    - evaluation
+    - cleaning
+    - orthodontics
+    - follow-up reminder
 
-Esto no deberá cambiar el núcleo.
+This must not change the core.
 
 ---
 
-# 19. Funciones futuras importantes
+# 19. Important future features
 
-No forman parte necesariamente del MVP, pero forman parte de la visión.
+These are not necessarily part of the MVP, but they are part of the vision.
 
-### Omnicanal
+### Omnichannel
 
     WhatsApp
     Instagram
@@ -1067,214 +1067,214 @@ No forman parte necesariamente del MVP, pero forman parte de la visión.
     Email
     Voice
 
-en una sola bandeja.
+in a single inbox.
 
-### Follow-up comercial
+### Commercial follow-up
 
-Recuperar automáticamente leads que no convirtieron.
+Automatically recover leads that did not convert.
 
-### Postventa
+### Post-sale
 
-Mantener contacto después de la cita o venta.
+Maintain contact after the appointment or sale.
 
 ### Recall
 
-Contactar clientes después de períodos configurables.
+Contact customers after configurable periods.
 
-### Campañas
+### Campaigns
 
-Segmentar y contactar grupos de usuarios bajo reglas y consentimiento.
+Segment and contact groups of users under rules and consent.
 
 ### Voice Agent
 
-Realizar o recibir llamadas mediante IA.
+Make or receive calls through AI.
 
 ### Payments
 
-Permitir anticipos o pagos relacionados con servicios.
+Allow deposits or payments related to services.
 
 ### Advanced Analytics
 
-Medir atribución, rendimiento y retorno.
+Measure attribution, performance, and return.
 
 ---
 
-# 20. Diferenciador esperado
+# 20. Expected differentiator
 
-El producto no busca diferenciarse únicamente por:
+The product does not aim to differentiate itself only by:
 
-> Tener un chatbot con IA.
+> Having an AI chatbot.
 
-La combinación deseada es:
+The desired combination is:
 
-    conversación
+    conversation
     +
-    contexto del negocio
+    business context
     +
-    acciones reales
+    real actions
     +
     CRM
     +
-    agenda
+    scheduling
     +
-    seguimiento
+    follow-up
     +
-    supervisión humana
+    human supervision
     +
-    métricas
+    metrics
 
-La IA debe ser una parte del sistema, no el producto completo.
+AI must be one part of the system, not the entire product.
 
 ---
 
-# 21. Indicadores de valor
+# 21. Value indicators
 
-El producto será valioso si logra mejorar variables como:
+The product will be valuable if it improves variables such as:
 
-    menor tiempo de respuesta
-    menos leads sin atender
-    más citas agendadas
-    menos trabajo manual
-    mayor seguimiento
-    mayor visibilidad comercial
+    lower response time
+    fewer unattended leads
+    more scheduled appointments
+    less manual work
+    better follow-up
+    greater commercial visibility
 
-Estas métricas deberán medirse durante los pilotos.
+These metrics must be measured during pilots.
 
 ---
 
-# 22. Métrica principal candidata
+# 22. Candidate primary metric
 
-La métrica de producto principal durante el piloto será:
+The main product metric during the pilot will be:
 
-    Leads que terminan en cita agendada
-    -----------------------------------
-              Leads recibidos
+    Leads that end in a scheduled appointment
+    -----------------------------------------
+                  Leads received
 
-Esta métrica no deberá interpretarse sola.
+This metric must not be interpreted alone.
 
-También deberán observarse:
+Also observe:
 
-- volumen;
-- calidad de lead;
+- volume;
+- lead quality;
 - handoffs;
 - no-shows;
-- errores;
-- tiempo de respuesta.
+- errors;
+- response time.
 
 ---
 
-# 23. Riesgos de producto
+# 23. Product risks
 
-## Sobreautomatización
+## Over-automation
 
-Intentar que la IA resuelva situaciones donde debería intervenir una persona.
+Trying to make AI solve situations where a person should intervene.
 
-Mitigación:
+Mitigation:
 
-    handoff claro
-    políticas
-    herramientas limitadas
-    supervisión
+    clear handoff
+    policies
+    limited tools
+    supervision
 
 ---
 
-## Mala configuración
+## Poor configuration
 
-Una IA solo puede trabajar correctamente si el negocio proporciona información válida.
+An AI can only work correctly if the business provides valid information.
 
-Mitigación:
+Mitigation:
 
 - onboarding;
-- validaciones;
-- pruebas antes de activar;
-- configuración guiada.
+- validations;
+- testing before activation;
+- guided configuration.
 
 ---
 
-## Dependencia de canales
+## Channel dependency
 
-Cambios en WhatsApp u otros proveedores pueden afectar la operación.
+Changes in WhatsApp or other providers may affect operations.
 
-Mitigación:
+Mitigation:
 
-    MessagingProvider + adaptadores
+    MessagingProvider + adapters
 
 ---
 
-## Respuestas incorrectas
+## Incorrect responses
 
-El modelo puede interpretar mal o generar información no deseada.
+The model may misinterpret or generate undesired information.
 
-Mitigación:
+Mitigation:
 
 - grounding;
 - tools;
-- restricciones;
-- trazabilidad;
+- restrictions;
+- traceability;
 - handoff;
-- pruebas.
+- testing.
 
 ---
 
-## Complejidad excesiva
+## Excessive complexity
 
-Intentar construir demasiadas capacidades antes de validar el flujo central.
+Trying to build too many capabilities before validating the core flow.
 
-Mitigación:
+Mitigation:
 
     MVP.md
     +
     ROADMAP.md
     +
-    criterios explícitos de alcance
+    explicit scope criteria
 
 ---
 
-# 24. No objetivos actuales
+# 24. Current non-goals
 
-ia-business-platform no pretende ser inicialmente:
+ia-business-platform is not initially intended to be:
 
-- software clínico;
-- historia clínica;
+- clinical software;
+- medical record software;
 - ERP;
-- software contable;
-- pasarela de pagos;
-- sistema de facturación;
-- call center completo;
-- CRM empresarial generalista;
-- constructor no-code universal;
-- plataforma de marketing completa.
+- accounting software;
+- payment gateway;
+- billing system;
+- complete call center;
+- general-purpose enterprise CRM;
+- universal no-code builder;
+- complete marketing platform.
 
-Puede integrarse con productos de estas categorías en el futuro.
-
----
-
-# 25. Definición de éxito del producto inicial
-
-La primera versión será considerada exitosa si un negocio piloto puede:
-
-1. configurar su operación;
-2. conectar un canal real;
-3. recibir leads;
-4. dejar que la IA atienda conversaciones básicas;
-5. agendar citas automáticamente;
-6. intervenir manualmente cuando sea necesario;
-7. consultar contactos, conversaciones y citas;
-8. recibir recordatorios;
-9. medir resultados básicos;
-10. utilizar el sistema de forma estable en operación real.
+It may integrate with products in these categories in the future.
 
 ---
 
-## 26. Principio rector
+# 25. Definition of initial product success
 
-> El producto debe automatizar trabajo repetitivo sin quitarle al negocio visibilidad ni control.
+The first version will be considered successful if a pilot business can:
 
-Cada nueva funcionalidad deberá evaluarse según si mejora al menos una de estas dimensiones:
+1. configure its operation;
+2. connect a real channel;
+3. receive leads;
+4. let AI handle basic conversations;
+5. schedule appointments automatically;
+6. intervene manually when necessary;
+7. view contacts, conversations, and appointments;
+8. receive reminders;
+9. measure basic results;
+10. use the system stably in real operations.
 
-    conversión
-    eficiencia
-    seguimiento
+---
+
+## 26. Guiding principle
+
+> The product must automate repetitive work without taking visibility or control away from the business.
+
+Every new feature should be evaluated according to whether it improves at least one of these dimensions:
+
+    conversion
+    efficiency
+    follow-up
     control
-    experiencia del cliente
-    visibilidad
+    customer experience
+    visibility

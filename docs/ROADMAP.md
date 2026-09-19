@@ -1,80 +1,80 @@
 # ROADMAP.md
 
-## Estado
+## Status
 
-Roadmap inicial de **ia-business-platform**.
+Initial roadmap for **ia-business-platform**.
 
-Este documento organiza el desarrollo por fases y milestones. Su propósito es definir el orden de ejecución y evitar que funcionalidades futuras entren prematuramente al MVP.
+This document organizes development by phases and milestones. Its purpose is to define the execution order and prevent future functionality from entering the MVP prematurely.
 
-El alcance funcional del MVP se define en `MVP.md`.
+The functional scope of the MVP is defined in `MVP.md`.
 
-La arquitectura candidata se define en `ARCHITECTURE.md`.
+The candidate architecture is defined in `ARCHITECTURE.md`.
 
-Las decisiones técnicas definitivas deberán registrarse en `DECISIONS.md`.
-
----
-
-# 1. Principio del roadmap
-
-El desarrollo seguirá una secuencia basada en riesgo y dependencia.
-
-La prioridad será validar primero el flujo central:
-
-    mensaje
-    → contacto
-    → conversación
-    → IA
-    → disponibilidad
-    → cita
-    → confirmación
-    → seguimiento
-
-Las funcionalidades que no ayuden directamente a validar este recorrido deberán esperar.
+Final technical decisions must be recorded in `DECISIONS.md`.
 
 ---
 
-# 2. Objetivo general
+# 1. Roadmap principle
 
-Llegar a un piloto real donde un negocio pueda:
+Development will follow a sequence based on risk and dependency.
 
-1. recibir un lead por WhatsApp;
-2. identificarlo automáticamente;
-3. registrar la conversación;
-4. responder mediante IA;
-5. consultar disponibilidad;
-6. agendar una cita;
-7. confirmar la cita;
-8. programar un recordatorio;
-9. permitir intervención humana;
-10. visualizar todo desde el panel.
+The priority will be to validate the core flow first:
+
+    message
+    → contact
+    → conversation
+    → AI
+    → availability
+    → appointment
+    → confirmation
+    → follow-up
+
+Features that do not directly help validate this journey must wait.
 
 ---
 
-# 3. Milestones principales
+# 2. General objective
 
-    M0  Fundación del proyecto
-    M1  Base técnica
-    M2  Dominio y persistencia
-    M3  Dashboard administrativo
+Reach a real pilot where a business can:
+
+1. receive a lead through WhatsApp;
+2. identify it automatically;
+3. register the conversation;
+4. respond through AI;
+5. check availability;
+6. schedule an appointment;
+7. confirm the appointment;
+8. schedule a reminder;
+9. allow human intervention;
+10. visualize everything from the panel.
+
+---
+
+# 3. Main milestones
+
+    M0  Project foundation
+    M1  Technical base
+    M2  Domain and persistence
+    M3  Administrative dashboard
     M4  CRM + Inbox
-    M5  Agenda
-    M6  Integración de mensajería
-    M7  Agente de IA
-    M8  Flujo end-to-end
-    M9  Automatizaciones y recordatorios
-    M10 Observabilidad y hardening
-    M11 Piloto odontológico
-    M12 Validación del producto
+    M5  Scheduling
+    M6  Messaging integration
+    M7  AI Agent
+    M8  End-to-end flow
+    M9  Automations and reminders
+    M10 Observability and hardening
+    M11 Dental pilot
+    M12 Product validation
 
 ---
 
-# 4. M0 — Fundación del proyecto
+# 4. M0 — Project foundation
 
-## Objetivo
+## Objective
 
-Establecer documentación, alcance, estructura y reglas antes de desarrollar funcionalidades.
+Establish documentation, scope, structure, and rules before developing functionality.
 
-## Entregables
+## Deliverables
 
 - `PROJECT.md`
 - `PRODUCT.md`
@@ -86,31 +86,31 @@ Establecer documentación, alcance, estructura y reglas antes de desarrollar fun
 - `AGENTS.md`
 - `README.md`
 
-## Estado esperado
+## Expected state
 
-    Visión definida
-    Alcance definido
-    Arquitectura candidata definida
-    Roadmap definido
-    Decisiones pendientes identificadas
+    Vision defined
+    Scope defined
+    Candidate architecture defined
+    Roadmap defined
+    Pending decisions identified
 
-## Criterio de salida
+## Exit criterion
 
-El proyecto puede iniciar implementación sin ambigüedad importante sobre qué se está construyendo.
+The project can begin implementation without major ambiguity about what is being built.
 
 ---
 
-# 5. M1 — Base técnica
+# 5. M1 — Technical base
 
-## Objetivo
+## Objective
 
-Inicializar el monorepo y asegurar que los componentes básicos pueden desarrollarse, probarse y ejecutarse.
+Initialize the monorepo and ensure that the basic components can be developed, tested, and executed.
 
-## Tareas
+## Tasks
 
 ### Monorepo
 
-Crear estructura inicial:
+Create initial structure:
 
     apps/
     ├── web/
@@ -127,40 +127,40 @@ Crear estructura inicial:
 
 ### Tooling
 
-Definir:
+Define:
 
 - package manager;
-- gestor de monorepo;
+- monorepo manager;
 - TypeScript;
 - lint;
 - formatter;
 - testing;
-- variables de entorno;
-- scripts comunes.
+- environment variables;
+- common scripts.
 
-### Aplicaciones
+### Applications
 
-Inicializar:
+Initialize:
 
     Next.js
     NestJS + Fastify
-    Worker Node.js
+    Node.js Worker
 
-### Infraestructura local
+### Local infrastructure
 
-Configurar inicialmente:
+Initially configure:
 
     Redis
     Docker Compose
 
 ### Health checks
 
-Agregar:
+Add:
 
     /health/live
     /health/ready
 
-## Validaciones
+## Validation
 
     install
     lint
@@ -168,31 +168,31 @@ Agregar:
     tests
     build
 
-deberán ejecutarse correctamente.
+must execute successfully.
 
-## Criterio de salida
+## Exit criterion
 
-Las tres aplicaciones pueden ejecutarse y existe un quality gate mínimo.
+All three applications can run and a minimum quality gate exists.
 
 ---
 
-# 6. M2 — Dominio y persistencia
+# 6. M2 — Domain and persistence
 
-## Objetivo
+## Objective
 
-Crear el modelo de datos mínimo y las reglas multiempresa.
+Create the minimum data model and multi-tenant rules.
 
-## Decisiones previas
+## Prior decisions
 
-Resolver:
+Resolve:
 
 - ORM/query builder;
-- estrategia de migraciones;
-- proyecto Supabase de desarrollo;
-- esquema de autenticación;
-- modelo inicial de memberships.
+- migration strategy;
+- development Supabase project;
+- authentication scheme;
+- initial membership model.
 
-## Entidades iniciales
+## Initial entities
 
     Business
     User / AuthUser mapping
@@ -214,38 +214,38 @@ Resolver:
 
     Appointment
 
-## Requisitos
+## Requirements
 
-- todas las entidades operativas deberán pertenecer a un negocio;
-- el backend resolverá el tenant;
-- no se confiará en `business_id` enviado libremente por el frontend;
-- migraciones versionadas;
-- constraints básicos;
-- timestamps consistentes;
-- soporte para identificadores externos donde corresponda.
+- all operational entities must belong to a business;
+- the backend will resolve the tenant;
+- the system will not trust a freely supplied frontend `business_id`;
+- versioned migrations;
+- basic constraints;
+- consistent timestamps;
+- support for external identifiers where appropriate.
 
-## Testing prioritario
+## Priority testing
 
-- aislamiento entre tenants;
-- creación de business;
+- tenant isolation;
+- business creation;
 - memberships;
-- contactos;
-- citas;
-- relaciones principales.
+- contacts;
+- appointments;
+- main relationships.
 
-## Criterio de salida
+## Exit criterion
 
-El dominio central puede persistirse de forma consistente y segura.
+The core domain can be persisted consistently and securely.
 
 ---
 
-# 7. M3 — Dashboard administrativo
+# 7. M3 — Administrative dashboard
 
-## Objetivo
+## Objective
 
-Crear la base de la aplicación utilizada por el negocio.
+Create the foundation of the application used by the business.
 
-## Pantallas iniciales
+## Initial screens
 
     /login
 
@@ -263,65 +263,65 @@ Crear la base de la aplicación utilizada por el negocio.
 
     /settings
 
-## Funciones
+## Functions
 
-### Autenticación
+### Authentication
 
 - login;
 - logout;
-- protección de rutas;
-- sesión.
+- route protection;
+- session.
 
-### Navegación
+### Navigation
 
-Crear layout principal con acceso a los módulos.
+Create the main layout with access to modules.
 
-### Dashboard inicial
+### Initial dashboard
 
-Mostrar métricas simples, aunque inicialmente puedan provenir de datos de prueba o datos reales básicos.
+Show simple metrics, even if they initially come from test data or basic real data.
 
-## Criterio de salida
+## Exit criterion
 
-Un usuario autorizado puede entrar y navegar por la aplicación privada.
+An authorized user can enter and navigate the private application.
 
 ---
 
 # 8. M4 — CRM + Inbox
 
-## Objetivo
+## Objective
 
-Tener una operación humana funcional incluso antes de incorporar IA.
+Have a functional human operation even before adding AI.
 
 ## CRM
 
-Implementar:
+Implement:
 
-- lista de contactos;
-- detalle de contacto;
-- lead asociado;
+- contact list;
+- contact detail;
+- associated lead;
 - pipeline stage;
-- servicio de interés;
-- última interacción.
+- service of interest;
+- last interaction.
 
 ## Inbox
 
-Implementar:
+Implement:
 
-- lista de conversaciones;
-- detalle de conversación;
-- mensajes;
-- estado;
-- canal;
-- control IA/humano;
-- indicador de handoff.
+- conversation list;
+- conversation detail;
+- messages;
+- status;
+- channel;
+- AI/human control;
+- handoff indicator.
 
-## Mensajería interna
+## Internal messaging
 
-Antes de conectar WhatsApp, deberá poder simularse o crear mensajes de desarrollo para validar la experiencia.
+Before connecting WhatsApp, it must be possible to simulate or create development messages to validate the experience.
 
 ## Human handoff
 
-Implementar comportamiento base:
+Implement base behavior:
 
     AI
     ↓
@@ -331,177 +331,177 @@ Implementar comportamiento base:
     ↓
     AI
 
-## Criterio de salida
+## Exit criterion
 
-El dashboard puede representar una conversación completa y permitir intervención manual.
+The dashboard can represent a complete conversation and allow manual intervention.
 
 ---
 
-# 9. M5 — Agenda
+# 9. M5 — Scheduling
 
-## Objetivo
+## Objective
 
-Construir la fuente interna de verdad para disponibilidad y citas.
+Build the internal source of truth for availability and appointments.
 
-## Servicios
+## Services
 
-CRUD mínimo:
+Minimum CRUD:
 
-- crear;
-- editar;
-- activar/desactivar;
-- duración;
-- precio opcional.
+- create;
+- edit;
+- activate/deactivate;
+- duration;
+- optional price.
 
 ## Staff
 
-CRUD mínimo:
+Minimum CRUD:
 
-- crear;
-- editar;
-- activar/desactivar;
-- asignar servicios.
+- create;
+- edit;
+- activate/deactivate;
+- assign services.
 
-## Disponibilidad
+## Availability
 
-Configurar:
+Configure:
 
-- día de semana;
-- inicio;
-- fin;
-- profesional;
-- servicio cuando aplique.
+- day of week;
+- start time;
+- end time;
+- staff member;
+- service when applicable.
 
 ## Appointments
 
-Implementar:
+Implement:
 
-- crear;
-- listar;
-- consultar;
-- cancelar;
-- marcar completada;
-- marcar no-show.
+- create;
+- list;
+- view;
+- cancel;
+- mark completed;
+- mark no-show.
 
-## Motor de disponibilidad
+## Availability engine
 
-Debe considerar:
+Must consider:
 
-    horarios
+    schedules
     +
-    duración
+    duration
     +
-    citas existentes
+    existing appointments
     +
-    estado del profesional
+    staff member status
 
-## Concurrencia
+## Concurrency
 
-Antes de crear una cita se deberá volver a comprobar disponibilidad.
+Before creating an appointment, availability must be checked again.
 
-## Criterio de salida
+## Exit criterion
 
-El backend puede responder de forma confiable:
+The backend can reliably answer:
 
-    ¿Qué horarios reales existen para este servicio y profesional?
+    What real time slots exist for this service and staff member?
 
-y puede reservar uno evitando conflictos básicos.
+and can reserve one while preventing basic conflicts.
 
 ---
 
-# 10. M6 — Investigación e integración de WhatsApp
+# 10. M6 — WhatsApp research and integration
 
-## Objetivo
+## Objective
 
-Seleccionar e integrar el primer proveedor de mensajería.
+Select and integrate the first messaging provider.
 
-## Fase de investigación
+## Research phase
 
-Comparar al menos:
+Compare at least:
 
     Meta Cloud API
     Evolution API
-    BSPs relevantes
-    otras opciones viables
+    relevant BSPs
+    other viable options
 
-## Criterios de comparación
+## Comparison criteria
 
-- costo;
-- requisitos de onboarding;
-- estabilidad;
-- legalidad y cumplimiento;
-- uso para pymes;
-- facilidad de conexión;
-- soporte para números existentes;
+- cost;
+- onboarding requirements;
+- stability;
+- legality and compliance;
+- suitability for SMEs;
+- ease of connection;
+- support for existing numbers;
 - webhooks;
 - multimedia;
-- plantillas;
-- límites;
-- riesgo de bloqueo;
-- operación en Colombia;
-- escalabilidad;
-- experiencia de soporte.
+- templates;
+- limits;
+- blocking risk;
+- operation in Colombia;
+- scalability;
+- support experience.
 
-## Entregable
+## Deliverable
 
-Registrar decisión formal en:
+Record a formal decision in:
 
     docs/DECISIONS.md
 
-## Implementación
+## Implementation
 
-Crear primer `MessagingProvider`.
+Create the first `MessagingProvider`.
 
-El adaptador deberá:
+The adapter must:
 
-- recibir webhook;
-- normalizar mensaje;
-- deduplicar;
-- crear/identificar contacto;
-- crear/recuperar conversación;
-- persistir mensaje;
-- encolar procesamiento;
-- enviar mensajes salientes.
+- receive webhook;
+- normalize message;
+- deduplicate;
+- create/identify contact;
+- create/retrieve conversation;
+- persist message;
+- enqueue processing;
+- send outbound messages.
 
-## Criterio de salida
+## Exit criterion
 
-Un teléfono real puede enviar un mensaje y este aparece correctamente en el Inbox.
+A real phone can send a message and it appears correctly in the Inbox.
 
 ---
 
-# 11. M7 — Agente de IA
+# 11. M7 — AI Agent
 
-## Objetivo
+## Objective
 
-Agregar atención conversacional automática sin dar control directo del sistema al modelo.
+Add automatic conversational assistance without giving direct system control to the model.
 
-## Decisiones
+## Decisions
 
-Seleccionar inicialmente:
+Initially select:
 
-- proveedor;
-- modelo;
-- estrategia de prompts;
+- provider;
+- model;
+- prompt strategy;
 - tool calling;
-- persistencia de contexto;
-- política de errores;
-- política de handoff.
+- context persistence;
+- error policy;
+- handoff policy.
 
-La selección deberá poder cambiar posteriormente.
+The selection must be replaceable later.
 
 ## Business context
 
-El agente deberá conocer:
+The agent must know:
 
-- negocio;
-- servicios;
-- precios;
-- profesionales;
-- horarios;
-- preguntas frecuentes;
-- reglas básicas.
+- business;
+- services;
+- prices;
+- staff;
+- schedules;
+- frequently asked questions;
+- basic rules.
 
-## Tools iniciales
+## Initial tools
 
     get_business_information
     get_services
@@ -512,64 +512,64 @@ El agente deberá conocer:
     update_lead
     request_human_handoff
 
-## Reglas
+## Rules
 
-- no inventar disponibilidad;
-- no inventar precios;
-- no crear citas sin herramienta;
-- no responder si control = HUMAN;
-- escalar cuando corresponda.
+- do not invent availability;
+- do not invent prices;
+- do not create appointments without a tool;
+- do not respond if control = HUMAN;
+- escalate when appropriate.
 
-## Evaluación
+## Evaluation
 
-Crear un conjunto de conversaciones de prueba.
+Create a set of test conversations.
 
-Casos mínimos:
+Minimum cases:
 
-    pregunta de precio
-    pregunta de horario
-    servicio desconocido
-    intención de agendar
-    selección de horario
-    solicitud de humano
-    información insuficiente
-    mensaje ambiguo
+    price question
+    schedule question
+    unknown service
+    scheduling intent
+    time-slot selection
+    human request
+    insufficient information
+    ambiguous message
 
-## Criterio de salida
+## Exit criterion
 
-El agente puede responder correctamente a casos básicos y utilizar herramientas controladas.
+The agent can correctly handle basic cases and use controlled tools.
 
 ---
 
-# 12. M8 — Flujo end-to-end
+# 12. M8 — End-to-end flow
 
-## Objetivo
+## Objective
 
-Conectar todos los componentes.
+Connect all components.
 
-## Escenario objetivo
+## Target scenario
 
-    Paciente
+    Patient
        ↓
     WhatsApp
        ↓
     Webhook
        ↓
-    Contacto
+    Contact
        ↓
-    Conversación
+    Conversation
        ↓
-    Mensaje persistido
+    Persisted message
        ↓
     Queue
        ↓
     Worker
        ↓
-    Agente IA
+    AI Agent
        ↓
     get_available_slots
        ↓
-    Paciente selecciona
+    Patient selects
        ↓
     create_appointment
        ↓
@@ -577,120 +577,120 @@ Conectar todos los componentes.
        ↓
     Pipeline
        ↓
-    Confirmación WhatsApp
+    WhatsApp confirmation
        ↓
     Dashboard
 
-## Pruebas
+## Tests
 
-Probar con teléfonos reales.
+Test using real phones.
 
-Validar:
+Validate:
 
-- mensaje único;
-- mensajes consecutivos;
-- duplicados de webhook;
-- respuesta tardía del proveedor;
-- caída temporal del proveedor IA;
-- horario ocupado durante la conversación;
-- intervención humana;
-- reanudación de IA.
+- single message;
+- consecutive messages;
+- duplicate webhooks;
+- delayed provider response;
+- temporary AI provider outage;
+- time slot becoming unavailable during conversation;
+- human intervention;
+- AI resumption.
 
-## Criterio de salida
+## Exit criterion
 
-El escenario completo funciona de forma repetible sin intervención técnica.
+The complete scenario works repeatedly without technical intervention.
 
-Este milestone representa el primer núcleo funcional del producto.
+This milestone represents the first functional product core.
 
 ---
 
-# 13. M9 — Automatizaciones y recordatorios
+# 13. M9 — Automations and reminders
 
-## Objetivo
+## Objective
 
-Agregar seguimiento mínimo alrededor de la cita.
+Add minimum follow-up around the appointment.
 
-## Automatización inicial
+## Initial automation
 
     appointment.created
             ↓
-    crear job
+    create job
             ↓
-    24 horas antes
+    24 hours before
             ↓
-    enviar recordatorio
+    send reminder
 
-## Requisitos
+## Requirements
 
-- jobs persistentes;
-- reintentos;
-- cancelación si la cita ya no aplica;
-- no enviar recordatorio de cita cancelada;
-- trazabilidad;
-- idempotencia.
+- persistent jobs;
+- retries;
+- cancellation if appointment no longer applies;
+- do not send reminders for cancelled appointments;
+- traceability;
+- idempotency.
 
-## Automatizaciones adicionales opcionales del MVP
+## Additional optional MVP automations
 
-Solo si no retrasan el piloto:
+Only if they do not delay the pilot:
 
-    confirmación inmediata
-    recordatorio adicional configurable
-    notificación de handoff
+    immediate confirmation
+    additional configurable reminder
+    handoff notification
 
-## Criterio de salida
+## Exit criterion
 
-Una cita genera automáticamente al menos un recordatorio válido.
+An appointment automatically generates at least one valid reminder.
 
 ---
 
-# 14. M10 — Observabilidad y hardening
+# 14. M10 — Observability and hardening
 
-## Objetivo
+## Objective
 
-Preparar el sistema para operación real.
+Prepare the system for real operation.
 
-## Observabilidad
+## Observability
 
-Implementar:
+Implement:
 
-- logs estructurados;
+- structured logs;
 - request IDs;
 - job IDs;
 - correlation IDs;
-- errores de proveedor;
-- jobs fallidos;
+- provider errors;
+- failed jobs;
 - health checks;
 - readiness checks.
 
-## Seguridad
+## Security
 
-Revisar:
+Review:
 
 - auth;
 - tenant isolation;
 - secrets;
 - webhooks;
 - rate limiting;
-- validación;
-- permisos;
-- logs sensibles.
+- validation;
+- permissions;
+- sensitive logs.
 
-## Resiliencia
+## Resilience
 
-Validar:
+Validate:
 
 - timeouts;
 - retries;
 - backoff;
-- idempotencia;
-- dead-letter strategy o equivalente;
-- fallos de Redis;
-- fallos de IA;
-- fallos de mensajería.
+- idempotency;
+- dead-letter strategy or equivalent;
+- Redis failures;
+- AI failures;
+- messaging failures.
 
 ## CI
 
-Quality gate mínimo:
+Minimum quality gate:
 
     lint
     typecheck
@@ -699,186 +699,186 @@ Quality gate mínimo:
     build
     migration validation
 
-## Criterio de salida
+## Exit criterion
 
-El sistema puede fallar de forma controlada y permite investigar incidentes.
+The system can fail in a controlled way and incidents can be investigated.
 
 ---
 
-# 15. M11 — Piloto odontológico
+# 15. M11 — Dental pilot
 
-## Objetivo
+## Objective
 
-Ejecutar ia-business-platform con el primer negocio real.
+Run ia-business-platform with the first real business.
 
-## Preparación
+## Preparation
 
-Configurar:
+Configure:
 
-- negocio;
-- servicios;
-- profesionales;
-- disponibilidad;
-- información comercial;
-- preguntas frecuentes;
-- reglas del agente;
-- mensajería;
-- usuario administrador.
+- business;
+- services;
+- staff;
+- availability;
+- commercial information;
+- frequently asked questions;
+- agent rules;
+- messaging;
+- administrator user.
 
-## Fase 1 — Shadow mode
+## Phase 1 — Shadow mode
 
-Cuando sea conveniente:
+When appropriate:
 
-    IA genera respuesta
-    pero humano valida antes de enviar
+    AI generates response
+    but a human validates before sending
 
-Esto podrá utilizarse temporalmente para evaluar comportamiento.
+This may be used temporarily to evaluate behavior.
 
-## Fase 2 — Automatización controlada
+## Phase 2 — Controlled automation
 
-Permitir respuestas automáticas en escenarios definidos.
+Allow automatic responses in defined scenarios.
 
-## Fase 3 — Operación normal
+## Phase 3 — Normal operation
 
-Automatizar flujo principal manteniendo handoff disponible.
+Automate the main flow while keeping handoff available.
 
-## Métricas
+## Metrics
 
-Medir:
+Measure:
 
 - leads;
-- conversaciones;
-- tiempo de primera respuesta;
-- citas;
-- conversión;
+- conversations;
+- time to first response;
+- appointments;
+- conversion;
 - handoffs;
-- errores;
-- intervenciones manuales;
-- mensajes corregidos por humanos.
+- errors;
+- manual interventions;
+- messages corrected by humans.
 
-## Criterio de salida
+## Exit criterion
 
-El negocio utiliza el sistema en operación real y existe evidencia suficiente para evaluar su valor.
-
----
-
-# 16. M12 — Validación del producto
-
-## Objetivo
-
-Determinar qué debe ocurrir después del piloto.
-
-## Preguntas
-
-    ¿La plataforma redujo trabajo manual?
-
-    ¿Mejoró el tiempo de respuesta?
-
-    ¿Se perdieron menos leads?
-
-    ¿La IA resolvió correctamente las consultas básicas?
-
-    ¿Qué porcentaje requirió humano?
-
-    ¿El agendamiento fue confiable?
-
-    ¿Qué funcionalidades pidió realmente el negocio?
-
-    ¿Qué partes fueron innecesarias?
-
-    ¿Cuánto cuesta operar por conversación/lead/cita?
-
-    ¿El canal elegido es viable para otras pymes?
-
-    ¿El producto puede replicarse en otro vertical?
-
-## Resultado
-
-Decidir entre:
-
-    iterar MVP
-    expandir odontología
-    incorporar segundo negocio
-    probar segundo vertical
-    cambiar integración
-    cambiar modelo
-    mejorar onboarding
+The business uses the system in real operation and enough evidence exists to evaluate its value.
 
 ---
 
-# 17. Post-MVP — Prioridades candidatas
+# 16. M12 — Product validation
 
-No existe un orden definitivo todavía.
+## Objective
 
-Las siguientes funciones solo deberán priorizarse después del piloto.
+Determine what should happen after the pilot.
 
-## Follow-up comercial
+## Questions
 
-    lead sin cita
+    Did the platform reduce manual work?
+
+    Did response time improve?
+
+    Were fewer leads lost?
+
+    Did the AI correctly handle basic questions?
+
+    What percentage required a human?
+
+    Was scheduling reliable?
+
+    What features did the business actually request?
+
+    Which parts were unnecessary?
+
+    How much does operation cost per conversation/lead/appointment?
+
+    Is the selected channel viable for other SMEs?
+
+    Can the product be replicated in another vertical?
+
+## Outcome
+
+Decide among:
+
+    iterate MVP
+    expand dentistry
+    add second business
+    test second vertical
+    change integration
+    change model
+    improve onboarding
+
+---
+
+# 17. Post-MVP — Candidate priorities
+
+There is no final order yet.
+
+The following features should only be prioritized after the pilot.
+
+## Commercial follow-up
+
+    lead without appointment
     ↓
-    esperar
+    wait
     ↓
-    seguimiento
+    follow-up
 
 ---
 
 ## Google Calendar
 
-Sincronización bidireccional o controlada según necesidades reales.
+Bidirectional or controlled synchronization according to real needs.
 
 ---
 
-## Pipelines configurables
+## Configurable pipelines
 
-Permitir crear etapas propias.
+Allow businesses to create their own stages.
 
 ---
 
 ## Custom fields
 
-Adaptar información por vertical.
+Adapt information by vertical.
 
 ---
 
-## Knowledge base avanzada
+## Advanced knowledge base
 
-Fuentes como:
+Sources such as:
 
-    documentos
+    documents
     PDF
     web
     FAQs
-    catálogos
+    catalogs
 
 ---
 
 ## Instagram
 
-Agregar segundo canal.
+Add a second channel.
 
 ---
 
 ## Webchat
 
-Widget para páginas web.
+Widget for websites.
 
 ---
 
-## Campañas
+## Campaigns
 
-Mensajería segmentada y compliant.
+Segmented and compliant messaging.
 
 ---
 
 ## Recall
 
-Reactivar clientes según reglas temporales.
+Reactivate customers according to time-based rules.
 
 ---
 
-## Cumpleaños
+## Birthdays
 
-Mensajes programados y promociones opcionales.
+Scheduled messages and optional promotions.
 
 ---
 
@@ -886,77 +886,77 @@ Mensajes programados y promociones opcionales.
 
     Lead
     ↓
-    llamada IA
+    AI call
     ↓
-    conversación
+    conversation
     ↓
-    agenda
+    scheduling
 
 ---
 
-## Pagos
+## Payments
 
-Anticipos o reservas cuando exista necesidad real.
-
----
-
-## Onboarding autoservicio
-
-Permitir que nuevos negocios configuren la plataforma sin acompañamiento técnico.
+Deposits or reservations where there is a real need.
 
 ---
 
-## Billing SaaS
+## Self-service onboarding
 
-Planes, suscripciones y límites.
+Allow new businesses to configure the platform without technical assistance.
+
+---
+
+## SaaS billing
+
+Plans, subscriptions, and limits.
 
 ---
 
 ## Vertical presets
 
-Ejemplos:
+Examples:
 
-    Odontología
-    Estética
-    Veterinaria
-    Inmobiliaria
-    Academia
+    Dentistry
+    Aesthetics
+    Veterinary
+    Real estate
+    Academy
 
 ---
 
-# 18. Funcionalidades explícitamente diferidas
+# 18. Explicitly deferred features
 
-No deberán entrar durante el MVP salvo cambio formal de alcance.
+These must not enter the MVP unless there is a formal scope change.
 
-    app móvil nativa
-    microservicios
+    native mobile app
+    microservices
     Kubernetes
     Kafka
-    multi-región
-    white-label completo
-    marketplace de integraciones
+    multi-region
+    complete white-label
+    integration marketplace
     ERP
-    facturación
-    historia clínica
-    diagnóstico médico
+    billing
+    clinical records
+    medical diagnosis
     data warehouse
-    BI avanzado
-    LLMs alojados por nosotros en producción
-    constructor no-code universal
+    advanced BI
+    self-hosted production LLMs
+    universal no-code builder
 
 ---
 
-# 19. Estrategia de ramas y cambios
+# 19. Branch and change strategy
 
-Inicialmente se recomienda:
+Initially, the following is recommended:
 
     main
 
-como rama estable.
+as the stable branch.
 
-Cada unidad de trabajo significativa deberá realizarse mediante ramas cortas.
+Each meaningful unit of work should be implemented through short-lived branches.
 
-Ejemplos:
+Examples:
 
     feat/bootstrap-monorepo
     feat/business-domain
@@ -966,13 +966,13 @@ Ejemplos:
     feat/ai-agent
     fix/appointment-idempotency
 
-Los cambios deberán ser pequeños y revisables.
+Changes should be small and reviewable.
 
 ---
 
-# 20. Convención de commits
+# 20. Commit convention
 
-Convención candidata:
+Candidate convention:
 
     feat:
     fix:
@@ -983,7 +983,7 @@ Convención candidata:
     perf:
     ci:
 
-Ejemplos:
+Examples:
 
     feat: add business membership model
 
@@ -997,73 +997,73 @@ Ejemplos:
 
 ---
 
-# 21. Documentación durante el desarrollo
+# 21. Documentation during development
 
-Los documentos deberán actualizarse junto con el código.
+Documents must be updated alongside the code.
 
 ### `STATUS.md`
 
-Qué existe actualmente.
+What currently exists.
 
 ### `DECISIONS.md`
 
-Por qué se eligieron tecnologías o enfoques.
+Why technologies or approaches were chosen.
 
 ### `ROADMAP.md`
 
-Qué viene después.
+What comes next.
 
 ### `ARCHITECTURE.md`
 
-Cómo está estructurado el sistema.
+How the system is structured.
 
 ### `MVP.md`
 
-Qué pertenece o no a la primera versión.
+What belongs to the first version and what does not.
 
-La documentación desactualizada deberá considerarse un defecto del proyecto.
+Outdated documentation must be considered a project defect.
 
 ---
 
 # 22. Definition of Done
 
-Una tarea no se considerará terminada únicamente porque funcione localmente.
+A task will not be considered complete merely because it works locally.
 
-Cuando aplique deberá incluir:
+When applicable, it should include:
 
-    implementación
+    implementation
     tests
-    manejo de errores
-    tipado
-    documentación
-    migración
-    observabilidad
-    validación manual
+    error handling
+    typing
+    documentation
+    migration
+    observability
+    manual validation
 
-No todas las tareas requerirán todos los elementos, pero deberán evaluarse.
-
----
-
-# 23. Orden inmediato de ejecución
-
-Después de completar la documentación fundacional:
-
-    1. Completar STATUS.md
-    2. Crear DECISIONS.md
-    3. Completar AGENTS.md
-    4. Completar README.md
-    5. Resolver decisiones técnicas previas al bootstrap
-    6. Inicializar monorepo
-    7. Configurar CI
-    8. Implementar dominio multi-tenant
+Not every task will require every item, but each should be evaluated.
 
 ---
 
-# 24. Próximas decisiones antes de programar
+# 23. Immediate execution order
 
-Las primeras decisiones formales deberán cubrir:
+After completing the foundational documentation:
 
-    ADR-001 Monorepo y package manager
+    1. Complete STATUS.md
+    2. Create DECISIONS.md
+    3. Complete AGENTS.md
+    4. Complete README.md
+    5. Resolve technical decisions required before bootstrap
+    6. Initialize monorepo
+    7. Configure CI
+    8. Implement multi-tenant domain
+
+---
+
+# 24. Next decisions before coding
+
+The first formal decisions should cover:
+
+    ADR-001 Monorepo and package manager
     ADR-002 Backend framework
     ADR-003 Database access / ORM
     ADR-004 Supabase responsibilities
@@ -1072,44 +1072,44 @@ Las primeras decisiones formales deberán cubrir:
     ADR-007 WhatsApp provider evaluation process
     ADR-008 AI provider abstraction
 
-No todas necesitan resolverse el mismo día.
+Not all of them need to be resolved on the same day.
 
-Las decisiones con impacto inmediato deberán cerrarse antes de implementar el componente afectado.
-
----
-
-# 25. Regla para modificar el roadmap
-
-Una fase puede cambiar cuando exista nueva evidencia.
-
-No deberá modificarse únicamente porque aparezca una tecnología atractiva o una idea nueva.
-
-Cada cambio relevante deberá responder:
-
-    ¿Qué problema resuelve?
-
-    ¿Es necesario ahora?
-
-    ¿Qué milestone bloquea?
-
-    ¿Qué costo agrega?
-
-    ¿Puede esperar hasta después del piloto?
+Decisions with immediate implementation impact must be closed before implementing the affected component.
 
 ---
 
-# 26. Meta inmediata
+# 25. Rule for changing the roadmap
 
-La meta actual no es construir todas las capacidades de la visión.
+A phase may change when new evidence appears.
 
-La meta inmediata es avanzar desde:
+It must not change merely because an attractive technology or new idea appears.
 
-    repositorio documentado
+Every relevant change must answer:
 
-hasta:
+    What problem does it solve?
 
-    mensaje real
-    → cita real
-    → dashboard real
+    Is it needed now?
 
-de la forma más simple, mantenible y confiable posible.
+    What milestone does it unblock?
+
+    What cost does it add?
+
+    Can it wait until after the pilot?
+
+---
+
+# 26. Immediate goal
+
+The current goal is not to build every capability in the vision.
+
+The immediate goal is to move from:
+
+    documented repository
+
+to:
+
+    real message
+    → real appointment
+    → real dashboard
+
+in the simplest, most maintainable, and most reliable way possible.

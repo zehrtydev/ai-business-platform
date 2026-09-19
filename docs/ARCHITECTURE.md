@@ -1,49 +1,49 @@
 # ARCHITECTURE.md
 
-## Estado
+## Status
 
-Draft inicial.
+Initial draft.
 
-Este documento describe la arquitectura candidata de **ia-business-platform** para el MVP y establece los límites principales entre componentes.
+This document describes the candidate architecture for the **ia-business-platform** MVP and establishes the main boundaries between components.
 
-Las decisiones marcadas como candidatas podrán cambiar durante la implementación. Las decisiones definitivas deberán registrarse en `docs/DECISIONS.md`.
-
----
-
-## 1. Objetivos de arquitectura
-
-La arquitectura deberá permitir:
-
-- construir el MVP rápidamente;
-- mantener separación clara entre frontend, backend y procesamiento asíncrono;
-- soportar múltiples negocios desde el inicio;
-- desacoplar proveedores de mensajería e inteligencia artificial;
-- procesar webhooks de forma segura e idempotente;
-- ejecutar tareas en background;
-- mantener una fuente de verdad central para citas, contactos y conversaciones;
-- incorporar nuevos canales y proveedores sin reescribir el núcleo;
-- crecer progresivamente sin adoptar microservicios prematuramente;
-- desplegar inicialmente en infraestructura económica y sencilla.
+Decisions marked as candidates may change during implementation. Final decisions must be recorded in `docs/DECISIONS.md`.
 
 ---
 
-## 2. Principio principal
+## 1. Architecture goals
 
-La arquitectura inicial será un:
+The architecture must make it possible to:
 
-> **Monolito modular con workers asíncronos.**
-
-No se utilizarán microservicios durante el MVP.
-
-Esto significa que la lógica de negocio permanecerá dentro de una aplicación backend organizada por dominios, mientras los trabajos que no requieran respuesta inmediata serán ejecutados por uno o más workers.
+- build the MVP quickly;
+- maintain a clear separation between frontend, backend, and asynchronous processing;
+- support multiple businesses from the start;
+- decouple messaging and artificial intelligence providers;
+- process webhooks safely and idempotently;
+- run background tasks;
+- maintain a central source of truth for appointments, contacts, and conversations;
+- add new channels and providers without rewriting the core;
+- grow progressively without adopting microservices prematurely;
+- deploy initially on simple, low-cost infrastructure.
 
 ---
 
-## 3. Vista general
+## 2. Main principle
 
-                             USUARIOS
+The initial architecture will be a:
 
-                        Navegador / Dashboard
+> **Modular monolith with asynchronous workers.**
+
+Microservices will not be used during the MVP.
+
+This means business logic will remain inside a backend application organized by domains, while work that does not require an immediate response will be executed by one or more workers.
+
+---
+
+## 3. Overview
+
+                              USERS
+
+                        Browser / Dashboard
                                   │
                                   ▼
                            ┌─────────────┐
@@ -72,140 +72,140 @@ Esto significa que la lógica de negocio permanecerá dentro de una aplicación 
                 │           └─────┬─────┘
                 │                 │
                 ▼                 ▼
-          Supabase Realtime   Integraciones
+          Supabase Realtime    Integrations
                                   │
                ┌──────────────────┼──────────────────┐
                │                  │                  │
                ▼                  ▼                  ▼
            WhatsApp         Google Calendar         n8n
-           Provider            futuro             opcional
+           Provider             future             optional
 
 ---
 
-## 4. Componentes principales
+## 4. Main components
 
 ### 4.1 `apps/web`
 
-Frontend administrativo.
+Administrative frontend.
 
-Tecnología candidata:
+Candidate technology:
 
     Next.js
     TypeScript
 
-Responsabilidades:
+Responsibilities:
 
-- autenticación del usuario;
+- user authentication;
 - dashboard;
 - inbox;
 - CRM;
-- agenda;
-- servicios;
-- profesionales;
-- configuración del negocio;
-- visualización de métricas;
+- scheduling;
+- services;
+- staff;
+- business settings;
+- metrics visualization;
 - human handoff;
-- interacción con la API.
+- interaction with the API.
 
-El frontend no deberá contener lógica de negocio crítica.
+The frontend must not contain critical business logic.
 
-No será responsable de determinar:
+It will not be responsible for determining:
 
-- disponibilidad real;
-- permisos efectivos;
-- aislamiento multiempresa;
-- creación definitiva de citas;
-- ejecución de automatizaciones;
-- llamadas directas a proveedores externos con secretos.
+- actual availability;
+- effective permissions;
+- multi-tenant isolation;
+- definitive appointment creation;
+- automation execution;
+- direct calls to external providers using secrets.
 
 ---
 
 ### 4.2 `apps/api`
 
-Backend principal.
+Main backend.
 
-Tecnología candidata:
+Candidate technology:
 
     NestJS
     Fastify
     TypeScript
 
-Responsabilidades:
+Responsibilities:
 
-- reglas de negocio;
-- autorización;
-- resolución del tenant;
-- contactos;
+- business rules;
+- authorization;
+- tenant resolution;
+- contacts;
 - leads;
-- conversaciones;
-- mensajes;
-- servicios;
-- profesionales;
-- disponibilidad;
-- citas;
+- conversations;
+- messages;
+- services;
+- staff;
+- availability;
+- appointments;
 - pipelines;
-- integración con proveedores;
-- herramientas disponibles para los agentes de IA;
-- recepción de webhooks;
-- generación de eventos;
-- creación de jobs;
-- endpoints de health/readiness.
+- provider integrations;
+- tools available to AI agents;
+- webhook reception;
+- event generation;
+- job creation;
+- health/readiness endpoints.
 
-El backend será la autoridad principal sobre el estado operativo del producto.
+The backend will be the main authority over the operational state of the product.
 
 ---
 
 ### 4.3 `apps/worker`
 
-Procesamiento asíncrono.
+Asynchronous processing.
 
-Tecnología candidata:
+Candidate technology:
 
     Node.js
     BullMQ
     Redis
 
-Responsabilidades iniciales:
+Initial responsibilities:
 
-- procesamiento diferido de mensajes;
-- ejecución de respuestas mediante IA;
-- envío de mensajes;
-- recordatorios;
-- reintentos;
-- sincronizaciones externas;
-- trabajos programados;
-- procesamiento de eventos secundarios.
+- deferred message processing;
+- execution of AI-generated responses;
+- message sending;
+- reminders;
+- retries;
+- external synchronization;
+- scheduled jobs;
+- processing of secondary events.
 
-El worker podrá compartir paquetes de dominio con `apps/api`, pero no deberá depender del frontend.
+The worker may share domain packages with `apps/api`, but it must not depend on the frontend.
 
 ---
 
-## 5. Base de datos
+## 5. Database
 
-Motor principal:
+Primary engine:
 
     PostgreSQL
 
-Proveedor candidato para el MVP:
+Candidate provider for the MVP:
 
     Supabase
 
-Supabase será utilizado principalmente como infraestructura administrada para:
+Supabase will be used mainly as managed infrastructure for:
 
 - PostgreSQL;
-- autenticación;
-- almacenamiento cuando sea necesario;
-- realtime cuando sea útil.
+- authentication;
+- storage when needed;
+- realtime where useful.
 
-Supabase no reemplazará la capa de negocio del backend.
+Supabase will not replace the backend business layer.
 
 ---
 
-## 6. Fuente de verdad
+## 6. Source of truth
 
-La base de datos de ia-business-platform será la fuente de verdad para las entidades principales.
+The ia-business-platform database will be the source of truth for the main entities.
 
-Ejemplos:
+Examples:
 
     Business
     Contact
@@ -220,13 +220,13 @@ Ejemplos:
     PipelineStage
     Integration
 
-Sistemas externos como Google Calendar no deberán ser la única fuente de verdad.
+External systems such as Google Calendar must not be the only source of truth.
 
-Ejemplo:
+Example:
 
-    Appointment interno
+    Internal Appointment
            ↓
-    sincronización
+    synchronization
            ↓
     Google Calendar
 
@@ -234,15 +234,15 @@ Ejemplo:
 
 ## 7. Multi-tenancy
 
-La aplicación será multiempresa desde el inicio.
+The application will be multi-tenant from the beginning.
 
-La unidad principal de aislamiento será:
+The main isolation unit will be:
 
     business_id
 
-Toda entidad perteneciente a un negocio deberá poder asociarse de forma inequívoca a ese tenant.
+Every entity belonging to a business must be unambiguously associated with that tenant.
 
-Ejemplos:
+Examples:
 
     services.business_id
     contacts.business_id
@@ -251,13 +251,13 @@ Ejemplos:
     pipelines.business_id
     integrations.business_id
 
-### Regla de seguridad
+### Security rule
 
-El backend nunca deberá confiar únicamente en un `business_id` enviado por el frontend.
+The backend must never rely solely on a `business_id` sent by the frontend.
 
-El tenant deberá resolverse a partir de la identidad autenticada y sus memberships.
+The tenant must be resolved from the authenticated identity and its memberships.
 
-Conceptualmente:
+Conceptually:
 
     User
       ↓
@@ -267,9 +267,9 @@ Conceptualmente:
 
 ---
 
-## 8. Modelo de dominio inicial
+## 8. Initial domain model
 
-Dominios previstos:
+Planned domains:
 
     auth
     businesses
@@ -290,127 +290,127 @@ Dominios previstos:
     analytics
     audit
 
-Estos dominios existirán como módulos dentro del monolito.
+These domains will exist as modules inside the monolith.
 
-No implican microservicios separados.
+They do not imply separate microservices.
 
 ---
 
-## 9. Comunicación síncrona y asíncrona
+## 9. Synchronous and asynchronous communication
 
-### Síncrona
+### Synchronous
 
-Se utilizará cuando el usuario o proveedor requiera una respuesta inmediata.
+Used when the user or provider requires an immediate response.
 
-Ejemplos:
+Examples:
 
     GET /services
     GET /appointments
     POST /appointments
     POST /auth/login
 
-### Asíncrona
+### Asynchronous
 
-Se utilizará cuando una operación:
+Used when an operation:
 
-- pueda tardar;
-- dependa de un proveedor externo;
-- necesite reintentos;
-- deba ejecutarse en el futuro;
-- no deba bloquear un webhook.
+- may take time;
+- depends on an external provider;
+- needs retries;
+- must execute in the future;
+- should not block a webhook.
 
-Ejemplos:
+Examples:
 
-    procesar mensaje recibido
-    consultar IA
-    enviar respuesta
-    programar recordatorio
-    sincronizar calendario
-    generar analytics
+    process received message
+    query AI
+    send response
+    schedule reminder
+    synchronize calendar
+    generate analytics
 
 ---
 
 ## 10. Webhooks
 
-Los webhooks deberán procesarse bajo el principio:
+Webhooks must be processed under the principle:
 
-> recibir → validar → persistir/deduplicar → encolar → responder.
+> receive → validate → persist/deduplicate → enqueue → respond.
 
-Ejemplo:
+Example:
 
-    Proveedor WhatsApp
+    WhatsApp Provider
            ↓
     Webhook
            ↓
     API
            ↓
-    Validar firma/origen
+    Validate signature/origin
            ↓
-    Verificar idempotencia
+    Check idempotency
            ↓
-    Persistir evento mínimo
+    Persist minimum event
            ↓
-    Crear job
+    Create job
            ↓
     HTTP 200
            ↓
-    Worker procesa
+    Worker processes
 
-No se deberán ejecutar cadenas largas de IA e integraciones antes de responder al webhook cuando no sea necesario.
+Long chains of AI and integration calls should not be executed before answering the webhook when unnecessary.
 
 ---
 
-## 11. Idempotencia
+## 11. Idempotency
 
-Los sistemas externos pueden reenviar eventos.
+External systems may resend events.
 
-La plataforma deberá asumir que un mismo evento puede llegar más de una vez.
+The platform must assume that the same event may arrive more than once.
 
-Se utilizarán identificadores externos y/o claves de idempotencia para evitar duplicados.
+External identifiers and/or idempotency keys will be used to prevent duplicates.
 
-Casos críticos:
+Critical cases:
 
-    mensajes
+    messages
     webhooks
     appointments
     jobs
-    sincronizaciones
+    synchronizations
 
-Ejemplo:
+Example:
 
     provider_message_id
 
-deberá poder utilizarse para detectar mensajes previamente procesados.
+must be usable to detect previously processed messages.
 
 ---
 
-## 12. Redis y colas
+## 12. Redis and queues
 
-Tecnologías candidatas:
+Candidate technologies:
 
     Redis
     BullMQ
 
-Redis no será la fuente de verdad de datos críticos.
+Redis will not be the source of truth for critical data.
 
-Se utilizará principalmente para:
+It will mainly be used for:
 
-- colas;
-- locks cuando corresponda;
-- coordinación de workers;
-- jobs retrasados;
-- reintentos;
-- estados efímeros.
+- queues;
+- locks when appropriate;
+- worker coordination;
+- delayed jobs;
+- retries;
+- ephemeral state.
 
-Los datos cuya pérdida afecte el negocio deberán persistirse en PostgreSQL.
+Data whose loss would affect the business must be persisted in PostgreSQL.
 
 ---
 
-## 13. Eventos internos
+## 13. Internal events
 
-El sistema utilizará eventos de dominio para desacoplar acciones secundarias.
+The system will use domain events to decouple secondary actions.
 
-Ejemplos:
+Examples:
 
     contact.created
     lead.created
@@ -422,17 +422,17 @@ Ejemplos:
     conversation.handoff_requested
     conversation.handoff_resolved
 
-Durante el MVP estos eventos podrán implementarse dentro del propio monolito y las colas existentes.
+During the MVP, these events may be implemented inside the monolith and the existing queues.
 
-No se requiere Kafka, RabbitMQ ni una plataforma de streaming distribuida.
+Kafka, RabbitMQ, or a distributed streaming platform is not required.
 
 ---
 
-## 14. Mensajería
+## 14. Messaging
 
-La lógica de negocio no deberá depender de un proveedor concreto de WhatsApp.
+Business logic must not depend on a specific WhatsApp provider.
 
-Se definirá una abstracción equivalente a:
+An abstraction equivalent to the following will be defined:
 
     interface MessagingProvider {
       sendText(...)
@@ -442,24 +442,24 @@ Se definirá una abstracción equivalente a:
       getMedia(...)
     }
 
-Implementaciones futuras podrán incluir:
+Future implementations may include:
 
     Meta Cloud API
     Evolution API
     BSP
-    otros proveedores
+    other providers
 
-La selección inicial permanece pendiente de investigación.
+The initial selection remains pending research.
 
 ---
 
-## 15. Normalización de mensajes
+## 15. Message normalization
 
-Cada proveedor utiliza formatos diferentes.
+Each provider uses different formats.
 
-Los adaptadores deberán convertir mensajes externos a un formato interno común.
+Adapters must convert external messages into a common internal format.
 
-Ejemplo conceptual:
+Conceptual example:
 
     type NormalizedInboundMessage = {
       externalMessageId: string
@@ -471,15 +471,15 @@ Ejemplo conceptual:
       receivedAt: Date
     }
 
-El resto del sistema deberá trabajar con el formato interno, no con el payload específico del proveedor.
+The rest of the system must work with the internal format, not the provider-specific payload.
 
 ---
 
-## 16. Inteligencia artificial
+## 16. Artificial intelligence
 
-La IA será tratada como una capacidad externa al dominio principal.
+AI will be treated as a capability external to the core domain.
 
-Se definirá una abstracción equivalente a:
+An abstraction equivalent to the following will be defined:
 
     interface AIProvider {
       generate(...)
@@ -487,13 +487,13 @@ Se definirá una abstracción equivalente a:
       executeWithTools(...)
     }
 
-El objetivo es poder sustituir modelos o proveedores sin modificar la lógica de CRM, conversaciones o agenda.
+The goal is to replace models or providers without changing CRM, conversation, or scheduling logic.
 
 ---
 
 ## 17. Agent layer
 
-El agente deberá combinar:
+The agent must combine:
 
     System/Business Context
             +
@@ -505,40 +505,40 @@ El agente deberá combinar:
             ↓
            LLM
 
-El modelo podrá proponer el uso de herramientas, pero el backend será quien las ejecute.
+The model may propose the use of tools, but the backend will execute them.
 
-Ejemplo:
+Example:
 
-    Paciente:
-    "Quiero una cita mañana"
+    Patient:
+    "I want an appointment tomorrow"
 
             ↓
 
-    LLM solicita:
+    LLM requests:
     get_available_slots(...)
 
             ↓
 
-    Backend valida y ejecuta
+    Backend validates and executes
 
             ↓
 
-    Resultado:
+    Result:
     09:00
     11:30
     15:00
 
             ↓
 
-    LLM genera respuesta
+    LLM generates response
 
 ---
 
 ## 18. Tool execution
 
-Las herramientas de IA serán funciones controladas por la aplicación.
+AI tools will be application-controlled functions.
 
-Ejemplos:
+Examples:
 
     get_business_information
     get_services
@@ -548,110 +548,110 @@ Ejemplos:
     update_lead
     request_human_handoff
 
-Cada ejecución deberá:
+Each execution must:
 
-1. validar el tenant;
-2. validar parámetros;
-3. comprobar autorización;
-4. ejecutar reglas de negocio;
-5. persistir cambios;
-6. generar eventos cuando corresponda;
-7. devolver únicamente la información necesaria al agente.
+1. validate the tenant;
+2. validate parameters;
+3. check authorization;
+4. execute business rules;
+5. persist changes;
+6. generate events where appropriate;
+7. return only the information required by the agent.
 
-La IA nunca tendrá acceso directo a SQL ni a secretos del sistema.
+The AI will never have direct access to SQL or system secrets.
 
 ---
 
 ## 19. Human handoff
 
-La conversación deberá conocer quién tiene el control.
+The conversation must know who has control.
 
-Ejemplo conceptual:
+Conceptual example:
 
     AI
     HUMAN
 
-Cuando el modo sea humano:
+When the mode is human:
 
     AI responses = disabled
 
-El worker deberá comprobar este estado antes de producir una respuesta automática.
+The worker must check this state before producing an automatic response.
 
-Esto evita respuestas simultáneas del operador y la IA.
+This prevents simultaneous replies from the operator and the AI.
 
 ---
 
-## 20. Agenda y concurrencia
+## 20. Scheduling and concurrency
 
-La disponibilidad deberá calcularse en el backend.
+Availability must be calculated in the backend.
 
-La creación de una cita deberá volver a validar que el horario siga disponible.
+Appointment creation must revalidate that the time slot is still available.
 
-Flujo:
+Flow:
 
-    consultar horarios
+    query time slots
           ↓
-    mostrar opciones
+    show options
           ↓
-    usuario selecciona
+    user selects
           ↓
-    validar nuevamente
+    validate again
           ↓
-    crear cita
+    create appointment
 
-La base de datos deberá ayudar a impedir reservas incompatibles.
+The database must help prevent incompatible bookings.
 
-La estrategia exacta de constraints/locking se definirá al diseñar el esquema.
+The exact constraint/locking strategy will be defined when the schema is designed.
 
 ---
 
 ## 21. Realtime
 
-Casos candidatos:
+Candidate use cases:
 
-    nuevo mensaje
-    conversación actualizada
-    handoff solicitado
-    cita creada
+    new message
+    conversation updated
+    handoff requested
+    appointment created
 
-Tecnología candidata:
+Candidate technology:
 
     Supabase Realtime
 
-Realtime será una mejora de experiencia del dashboard.
+Realtime will improve dashboard experience.
 
-No reemplazará la persistencia ni las APIs normales.
+It will not replace persistence or regular APIs.
 
 ---
 
 ## 22. n8n
 
-n8n podrá utilizarse como herramienta complementaria de integración.
+n8n may be used as a complementary integration tool.
 
-Ejemplos:
+Examples:
 
     ia-business-platform
             ↓
-          evento
+          event
             ↓
            n8n
        ↙     ↓     ↘
-    Sheets  Gmail   CRM externo
+    Sheets  Gmail   external CRM
 
-n8n no será:
+n8n will not be:
 
-- la fuente de verdad;
-- el backend principal;
-- el lugar donde viva la lógica crítica de citas;
-- el único almacenamiento del estado del negocio.
+- the source of truth;
+- the main backend;
+- the place where critical appointment logic lives;
+- the only storage for business state.
 
-El producto deberá continuar siendo funcional aunque una automatización externa de n8n falle.
+The product must continue to function even if an external n8n automation fails.
 
 ---
 
 ## 23. Monorepo
 
-Estructura candidata:
+Candidate structure:
 
     ia-business-platform/
     ├── apps/
@@ -681,55 +681,55 @@ Estructura candidata:
     ├── README.md
     └── package.json
 
-La herramienta concreta para gestionar el monorepo se decidirá antes de inicializar las aplicaciones.
+The specific tool used to manage the monorepo will be decided before initializing the applications.
 
 ---
 
-## 24. Contratos compartidos
+## 24. Shared contracts
 
-`packages/contracts` podrá contener tipos y contratos que necesiten compartir web, API y worker.
+`packages/contracts` may contain types and contracts that need to be shared between web, API, and worker.
 
-No deberá convertirse en un paquete genérico donde se coloque código sin dominio claro.
+It must not become a generic package where code with no clear domain is placed.
 
-Ejemplos adecuados:
+Appropriate examples:
 
-    DTOs compartidos
+    shared DTOs
     event contracts
-    enums públicos
-    schemas de validación compartidos
+    public enums
+    shared validation schemas
 
 ---
 
-## 25. Capa de acceso a datos
+## 25. Data access layer
 
-La herramienta ORM o query builder permanece pendiente de decisión.
+The ORM or query-builder tool remains pending decision.
 
-Candidatos deberán evaluarse según:
+Candidates must be evaluated according to:
 
-- soporte PostgreSQL;
-- migraciones;
+- PostgreSQL support;
+- migrations;
 - TypeScript;
-- transacciones;
-- control sobre SQL;
-- mantenibilidad;
-- compatibilidad con Supabase;
+- transactions;
+- control over SQL;
+- maintainability;
+- Supabase compatibility;
 - testing.
 
-La elección se registrará en `docs/DECISIONS.md`.
+The choice will be recorded in `docs/DECISIONS.md`.
 
 ---
 
-## 26. Autenticación
+## 26. Authentication
 
-Proveedor candidato:
+Candidate provider:
 
     Supabase Auth
 
-La autenticación identifica al usuario.
+Authentication identifies the user.
 
-La autorización seguirá siendo responsabilidad del backend.
+Authorization will remain the backend's responsibility.
 
-Conceptualmente:
+Conceptually:
 
     Supabase Auth
           ↓
@@ -739,35 +739,35 @@ Conceptualmente:
           ↓
     membership + permissions + business
 
-Tener un token válido no será suficiente para acceder a cualquier tenant.
+Having a valid token will not be enough to access any tenant.
 
 ---
 
-## 27. Seguridad
+## 27. Security
 
-Principios iniciales:
+Initial principles:
 
-- secretos solo mediante variables de entorno o secret management;
-- ningún secreto en Git;
-- validación de inputs;
-- aislamiento por tenant;
-- verificación de webhooks;
-- mínimos privilegios;
-- protección de endpoints administrativos;
-- rate limiting donde sea necesario;
-- auditoría de operaciones sensibles.
+- secrets only through environment variables or secret management;
+- no secrets in Git;
+- input validation;
+- tenant isolation;
+- webhook verification;
+- least privilege;
+- protection of administrative endpoints;
+- rate limiting where necessary;
+- auditing of sensitive operations.
 
-Los datos sensibles de cada vertical deberán analizarse antes de incorporarlos.
+Sensitive data for each vertical must be analyzed before being incorporated.
 
-El MVP odontológico no incluirá historia clínica.
+The dental MVP will not include clinical records.
 
 ---
 
-## 28. Logs y observabilidad
+## 28. Logs and observability
 
-Cada componente deberá producir logs estructurados.
+Each component must produce structured logs.
 
-Campos útiles:
+Useful fields:
 
     timestamp
     level
@@ -780,28 +780,28 @@ Campos útiles:
     message
     error
 
-Los logs no deberán incluir secretos ni datos sensibles innecesarios.
+Logs must not include secrets or unnecessary sensitive data.
 
-Endpoints mínimos:
+Minimum endpoints:
 
     /health/live
     /health/ready
 
-También deberá existir visibilidad de:
+There must also be visibility into:
 
-- jobs fallidos;
-- errores de proveedores;
-- webhooks rechazados;
-- errores de IA;
-- reintentos agotados.
+- failed jobs;
+- provider errors;
+- rejected webhooks;
+- AI errors;
+- exhausted retries.
 
 ---
 
 ## 29. Correlation IDs
 
-Cuando sea posible, una operación deberá poder seguirse entre componentes.
+Whenever possible, an operation should be traceable across components.
 
-Ejemplo:
+Example:
 
     Webhook
       ↓
@@ -813,15 +813,15 @@ Ejemplo:
       ↓
     send message
 
-Esto permitirá investigar errores sin depender exclusivamente de timestamps.
+This will make it possible to investigate errors without relying exclusively on timestamps.
 
 ---
 
-## 30. Manejo de errores externos
+## 30. External error handling
 
-Todo proveedor externo puede fallar.
+Every external provider may fail.
 
-Ejemplos:
+Examples:
 
     WhatsApp
     AI provider
@@ -829,27 +829,27 @@ Ejemplos:
     Google Calendar
     email
 
-La arquitectura deberá distinguir entre:
+The architecture must distinguish between:
 
-- errores permanentes;
-- errores temporales;
-- errores reintentables;
-- errores que requieren intervención humana.
+- permanent errors;
+- temporary errors;
+- retryable errors;
+- errors requiring human intervention.
 
-No todos los fallos deberán reintentarse automáticamente.
+Not every failure should be retried automatically.
 
 ---
 
-## 31. Deployment inicial
+## 31. Initial deployment
 
-Infraestructura candidata:
+Candidate infrastructure:
 
     VPS
     4 vCPU
     8 GB RAM
     100 GB SSD
 
-El VPS podrá alojar inicialmente:
+The VPS may initially host:
 
     Caddy
     Next.js
@@ -858,71 +858,71 @@ El VPS podrá alojar inicialmente:
     Redis
     monitoring
 
-Supabase permanecerá como servicio externo administrado.
+Supabase will remain an external managed service.
 
-La IA se consumirá mediante APIs externas durante el MVP.
+AI will be consumed through external APIs during the MVP.
 
-No se ejecutarán modelos LLM pesados dentro del VPS.
+Heavy LLM models will not run inside the VPS.
 
 ---
 
 ## 32. Reverse proxy
 
-Tecnología candidata:
+Candidate technology:
 
     Caddy
 
-Responsabilidades:
+Responsibilities:
 
 - TLS;
-- routing por dominio/subdominio;
+- domain/subdomain routing;
 - reverse proxy;
-- renovación automática de certificados.
+- automatic certificate renewal.
 
 ---
 
-## 33. Ambientes
+## 33. Environments
 
-Se deberán distinguir como mínimo:
+At minimum, the following must be distinguished:
 
     development
     production
 
-Idealmente se añadirá:
+Ideally, the following will be added:
 
     staging
 
-antes del piloto real.
+before the real pilot.
 
-Cada entorno deberá tener sus propias credenciales e integraciones cuando sea viable.
+Each environment should have its own credentials and integrations when feasible.
 
-No se deberán utilizar datos reales de clientes para pruebas locales rutinarias.
+Real customer data should not be used for routine local testing.
 
 ---
 
-## 34. Desarrollo local
+## 34. Local development
 
-El entorno local deberá poder levantar los componentes necesarios con una experiencia sencilla.
+The local environment should be able to start the required components with a simple experience.
 
-Objetivo conceptual:
+Conceptual target:
 
     docker compose up -d
     pnpm dev
 
-o equivalente.
+or equivalent.
 
-Servicios locales candidatos:
+Candidate local services:
 
     Redis
-    dependencias auxiliares
+    auxiliary dependencies
 
-La base administrada podrá utilizar un proyecto de desarrollo independiente o una instancia local según la decisión posterior.
+The managed database may use a separate development project or a local instance according to a later decision.
 
 ---
 
 ## 35. CI
 
-La integración continua deberá validar progresivamente:
+Continuous integration must progressively validate:
 
     lint
     typecheck
@@ -931,48 +931,48 @@ La integración continua deberá validar progresivamente:
     build
     migration validation
 
-Ningún PR deberá depender únicamente de una revisión manual.
+No PR should depend solely on manual review.
 
 ---
 
-## 36. Estrategia de testing
+## 36. Testing strategy
 
-Se utilizarán varios niveles.
+Several levels will be used.
 
 ### Unit tests
 
-Reglas de negocio aisladas.
+Isolated business rules.
 
-Ejemplos:
+Examples:
 
-    calcular disponibilidad
-    cambiar pipeline stage
-    validar handoff
-    normalizar mensajes
+    calculate availability
+    change pipeline stage
+    validate handoff
+    normalize messages
 
 ### Integration tests
 
-Interacción entre módulos, base de datos y adaptadores.
+Interaction between modules, database, and adapters.
 
 ### E2E
 
-Flujos críticos.
+Critical flows.
 
-Primer flujo prioritario:
+First priority flow:
 
-    mensaje
-    → agente
-    → disponibilidad
-    → cita
-    → confirmación
+    message
+    → agent
+    → availability
+    → appointment
+    → confirmation
 
 ---
 
-## 37. Adaptadores externos
+## 37. External adapters
 
-Los proveedores externos deberán vivir detrás de puertos/interfaces del dominio.
+External providers must live behind domain ports/interfaces.
 
-Ejemplo conceptual:
+Conceptual example:
 
     Domain
        │
@@ -983,7 +983,7 @@ Ejemplo conceptual:
        ├── EvolutionAdapter
        └── FutureAdapter
 
-Este principio se aplicará también a:
+This principle also applies to:
 
     AI
     Calendar
@@ -993,11 +993,11 @@ Este principio se aplicará también a:
 
 ---
 
-## 38. Principio de dependencia
+## 38. Dependency principle
 
-La lógica central del negocio no deberá importar directamente SDKs específicos de proveedores cuando pueda evitarse.
+Core business logic should not directly import provider-specific SDKs when it can be avoided.
 
-Preferencia:
+Preferred:
 
     Domain
       ↓
@@ -1007,96 +1007,96 @@ Preferencia:
       ↓
     External SDK/API
 
-No:
+Not:
 
     Domain
       ↓
-    SDK externo
+    External SDK
 
-Esto facilita reemplazos, pruebas y evolución.
+This makes replacement, testing, and evolution easier.
 
 ---
 
-## 39. Escalabilidad
+## 39. Scalability
 
-El MVP no se diseñará para millones de usuarios desde el primer día.
+The MVP will not be designed for millions of users from day one.
 
-Sí deberá permitir crecimiento progresivo.
+It must, however, support progressive growth.
 
-Ruta prevista:
+Expected path:
 
     1 API + 1 worker
             ↓
-    más workers
+    more workers
             ↓
-    separar web/api
+    separate web/api
             ↓
-    VPS exclusivo
+    dedicated VPS
             ↓
-    servicios administrados adicionales
+    additional managed services
             ↓
-    separación de componentes solo si existe necesidad real
+    separate components only when there is a real need
 
-No se adoptará Kubernetes ni microservicios por anticipación.
+Kubernetes and microservices will not be adopted in anticipation of hypothetical scale.
 
 ---
 
-## 40. Backup y recuperación
+## 40. Backup and recovery
 
-La infraestructura deberá considerar desde el inicio:
+Infrastructure must consider from the beginning:
 
-- backups de base de datos;
-- recuperación de configuración;
-- variables de entorno respaldadas de forma segura;
-- backups de volúmenes críticos;
-- posibilidad de reconstruir servidores desde documentación e infraestructura versionada.
+- database backups;
+- configuration recovery;
+- environment variables backed up securely;
+- backups of critical volumes;
+- ability to rebuild servers from documentation and versioned infrastructure.
 
-El código permanecerá en Git.
+Code will remain in Git.
 
-Los datos persistentes no deberán depender únicamente del disco del VPS.
+Persistent data must not depend solely on the VPS disk.
 
 ---
 
-## 41. Decisiones pendientes
+## 41. Pending decisions
 
-Antes o durante las primeras fases deberán resolverse:
+Before or during the early phases, the following must be resolved:
 
-    Proveedor inicial de WhatsApp
+    Initial WhatsApp provider
     ORM/query builder
-    gestor de monorepo
-    package manager definitivo
-    modelo/proveedor inicial de IA
-    estrategia exacta de embeddings si llegan a ser necesarios
-    Google Calendar dentro o después del MVP
-    proveedor de observabilidad
-    estrategia de deployment CI/CD
-    política de backups
+    monorepo manager
+    final package manager
+    initial AI model/provider
+    exact embedding strategy if needed
+    Google Calendar inside or after MVP
+    observability provider
+    CI/CD deployment strategy
+    backup policy
 
-Cada decisión significativa deberá documentarse en `docs/DECISIONS.md`.
+Every significant decision must be documented in `docs/DECISIONS.md`.
 
 ---
 
-## 42. Restricciones actuales
+## 42. Current constraints
 
-Durante el MVP se evitarán deliberadamente:
+During the MVP, the following will be deliberately avoided:
 
-    microservicios
+    microservices
     Kubernetes
     Kafka
-    arquitecturas multi-región
-    LLMs self-hosted en producción
+    multi-region architectures
+    self-hosted LLMs in production
     data warehouse
-    event sourcing completo
-    CQRS complejo
+    full event sourcing
+    complex CQRS
     service mesh
-    infraestructura innecesariamente distribuida
+    unnecessarily distributed infrastructure
 
-Podrán evaluarse posteriormente si existe un problema real que las justifique.
+They may be evaluated later if a real problem justifies them.
 
 ---
 
-## 43. Principio rector
+## 43. Guiding principle
 
-La arquitectura deberá ser suficientemente sólida para evolucionar, pero suficientemente simple para que un equipo pequeño pueda entenderla, desplegarla, depurarla y modificarla.
+The architecture must be robust enough to evolve, but simple enough for a small team to understand, deploy, debug, and modify.
 
-> La complejidad deberá introducirse únicamente cuando resuelva un problema real y medible.
+> Complexity should be introduced only when it solves a real and measurable problem.

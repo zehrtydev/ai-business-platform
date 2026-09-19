@@ -1,132 +1,132 @@
 # PROJECT.md
 
-## Nombre temporal
+## Temporary name
 
 **ia-business-platform**
 
-El nombre es temporal y se utiliza para identificar el proyecto durante sus primeras fases de diseño y desarrollo.
+The name is temporary and is used to identify the project during its early design and development phases.
 
 ---
 
-## Descripción
+## Description
 
-**ia-business-platform** es una plataforma SaaS multiempresa orientada a automatizar la atención, conversión, agendamiento y seguimiento de leads mediante canales de mensajería e inteligencia artificial.
+**ia-business-platform** is a multi-tenant SaaS platform focused on automating lead attention, conversion, scheduling, and follow-up through messaging channels and artificial intelligence.
 
-El sistema busca centralizar las conversaciones comerciales de un negocio, atender automáticamente a los usuarios, identificar sus necesidades, guiarlos hacia una acción de conversión y mantener seguimiento durante todo su ciclo como lead o cliente.
+The system aims to centralize a business's commercial conversations, automatically assist users, identify their needs, guide them toward a conversion action, and maintain follow-up throughout their lifecycle as a lead or customer.
 
-La plataforma no estará ligada a una industria específica.
+The platform will not be tied to a specific industry.
 
-El primer caso de uso será un consultorio odontológico, pero el núcleo del producto deberá poder adaptarse posteriormente a otros negocios de servicios como:
+The first use case will be a dental office, but the product core must later be adaptable to other service businesses such as:
 
-- clínicas y centros médicos;
-- centros estéticos;
-- veterinarias;
-- psicología;
-- fisioterapia;
-- inmobiliarias;
-- academias;
-- talleres;
-- barberías y salones;
-- otros negocios basados en citas, leads o atención comercial.
-
----
-
-## Problema
-
-Muchos negocios reciben potenciales clientes mediante canales como WhatsApp, Instagram o formularios web.
-
-La gestión suele realizarse manualmente y presenta problemas como:
-
-- respuestas tardías;
-- leads sin atender;
-- conversaciones dispersas;
-- pérdida de información;
-- citas gestionadas manualmente;
-- falta de seguimiento;
-- dependencia permanente del teléfono;
-- ausencia de métricas de conversión;
-- dificultad para conocer el estado de cada oportunidad.
-
-Como resultado, el negocio puede perder clientes simplemente por no responder o hacer seguimiento a tiempo.
+- clinics and medical centers;
+- aesthetic centers;
+- veterinary clinics;
+- psychology practices;
+- physiotherapy practices;
+- real estate agencies;
+- academies;
+- workshops;
+- barbershops and salons;
+- other businesses based on appointments, leads, or customer service.
 
 ---
 
-## Propuesta de valor
+## Problem
 
-ia-business-platform busca convertir la atención comercial en un proceso continuo y automatizado.
+Many businesses receive potential customers through channels such as WhatsApp, Instagram, or web forms.
 
-Cada lead podrá ser:
+Management is usually manual and presents problems such as:
 
-1. recibido;
-2. identificado;
-3. atendido;
-4. calificado;
-5. informado;
-6. guiado hacia una acción;
-7. agendado cuando corresponda;
-8. registrado en el CRM;
-9. seguido automáticamente;
-10. escalado a una persona cuando sea necesario.
+- delayed responses;
+- unattended leads;
+- scattered conversations;
+- lost information;
+- appointments managed manually;
+- lack of follow-up;
+- constant dependence on a phone;
+- absence of conversion metrics;
+- difficulty knowing the status of each opportunity.
 
-El objetivo no es simplemente responder mensajes mediante IA.
-
-El objetivo es ayudar al negocio a convertir conversaciones en resultados medibles.
+As a result, the business can lose customers simply because it does not respond or follow up in time.
 
 ---
 
-## Flujo conceptual
+## Value proposition
+
+ia-business-platform aims to turn commercial attention into a continuous and automated process.
+
+Each lead can be:
+
+1. received;
+2. identified;
+3. assisted;
+4. qualified;
+5. informed;
+6. guided toward an action;
+7. scheduled when appropriate;
+8. registered in the CRM;
+9. followed up automatically;
+10. escalated to a person when necessary.
+
+The goal is not simply to answer messages with AI.
+
+The goal is to help the business turn conversations into measurable results.
+
+---
+
+## Conceptual flow
 
     Lead
       ↓
-    Canal de comunicación
+    Communication channel
       ↓
-    Conversación
+    Conversation
       ↓
-    Agente de IA
+    AI Agent
       ↓
-    Identificación de necesidad
+    Need identification
       ↓
-    Resolución de preguntas
+    Question resolution
       ↓
-    Calificación
+    Qualification
       ↓
-    Conversión
+    Conversion
       ↓
-    Agenda / acción comercial
+    Scheduling / commercial action
       ↓
-    Seguimiento
+    Follow-up
       ↓
-    Cliente
+    Customer
 
 ---
 
-## Principios del producto
+## Product principles
 
-### 1. Multiempresa desde el origen
+### 1. Multi-tenant from the start
 
-La plataforma deberá soportar múltiples negocios de forma aislada.
+The platform must support multiple businesses in isolation.
 
-Cada negocio tendrá sus propios:
+Each business will have its own:
 
-- usuarios;
-- contactos;
+- users;
+- contacts;
 - leads;
-- conversaciones;
-- servicios;
-- profesionales;
-- citas;
+- conversations;
+- services;
+- staff members;
+- appointments;
 - pipelines;
-- configuraciones;
-- automatizaciones;
-- integraciones.
+- settings;
+- automations;
+- integrations.
 
 ---
 
-### 2. Núcleo independiente de la industria
+### 2. Industry-independent core
 
-El dominio principal deberá utilizar conceptos generales.
+The main domain must use general concepts.
 
-Ejemplos:
+Examples:
 
 - Business
 - Contact
@@ -139,65 +139,65 @@ Ejemplos:
 - Pipeline
 - Automation
 
-Los conceptos específicos de odontología u otras industrias deberán implementarse como configuración o extensiones del núcleo cuando sea posible.
+Concepts specific to dentistry or other industries should be implemented as configuration or extensions of the core whenever possible.
 
 ---
 
-### 3. IA como agente, no como fuente de verdad
+### 3. AI as an agent, not as the source of truth
 
-La inteligencia artificial será responsable principalmente de:
+Artificial intelligence will be mainly responsible for:
 
-- comprender mensajes;
-- conversar;
-- interpretar intención;
-- recopilar información;
-- seleccionar herramientas;
-- generar respuestas.
+- understanding messages;
+- conversing;
+- interpreting intent;
+- collecting information;
+- selecting tools;
+- generating responses.
 
-Las operaciones críticas deberán ser ejecutadas y validadas por el backend.
+Critical operations must be executed and validated by the backend.
 
-Ejemplos:
+Examples:
 
-- disponibilidad;
-- creación de citas;
-- modificación de datos;
-- estado del lead;
-- permisos;
-- automatizaciones.
-
----
-
-### 4. Intervención humana siempre disponible
-
-La plataforma deberá permitir que una persona tome el control de una conversación.
-
-El sistema nunca asumirá que la IA puede resolver todos los casos.
+- availability;
+- appointment creation;
+- data modification;
+- lead status;
+- permissions;
+- automations.
 
 ---
 
-### 5. Proveedores desacoplados
+### 4. Human intervention always available
 
-El producto no deberá depender directamente de un único proveedor externo.
+The platform must allow a person to take control of a conversation.
 
-Esto aplica especialmente a:
-
-- mensajería;
-- inteligencia artificial;
-- correo;
-- calendarios;
-- telefonía;
-- almacenamiento;
-- integraciones externas.
-
-Los proveedores deberán conectarse mediante adaptadores o interfaces.
+The system will never assume that AI can solve every case.
 
 ---
 
-### 6. Automatización basada en eventos
+### 5. Decoupled providers
 
-Las acciones internas importantes podrán generar eventos.
+The product must not depend directly on a single external provider.
 
-Ejemplos:
+This applies especially to:
+
+- messaging;
+- artificial intelligence;
+- email;
+- calendars;
+- telephony;
+- storage;
+- external integrations.
+
+Providers must connect through adapters or interfaces.
+
+---
+
+### 6. Event-based automation
+
+Important internal actions may generate events.
+
+Examples:
 
     lead.created
     message.received
@@ -206,86 +206,86 @@ Ejemplos:
     lead.stage_changed
     conversation.handoff_requested
 
-Estos eventos podrán activar:
+These events may trigger:
 
-- notificaciones;
-- tareas;
-- seguimientos;
-- integraciones;
-- procesos asíncronos;
+- notifications;
+- tasks;
+- follow-ups;
+- integrations;
+- asynchronous processes;
 - analytics.
 
 ---
 
-## Primer caso de uso
+## First use case
 
-El primer entorno real será un consultorio odontológico.
+The first real environment will be a dental office.
 
-El problema principal identificado es:
+The main problem identified is:
 
-> Gran parte del tiempo del profesional se pierde respondiendo mensajes de WhatsApp y coordinando citas manualmente.
+> A large portion of the professional's time is spent answering WhatsApp messages and coordinating appointments manually.
 
-La primera implementación deberá permitir que un paciente pueda iniciar una conversación, resolver dudas y terminar con una cita agendada sin intervención humana cuando el caso lo permita.
+The first implementation must allow a patient to start a conversation, resolve questions, and end with a scheduled appointment without human intervention when the case allows it.
 
 ---
 
-## Objetivo inicial
+## Initial objective
 
-El primer gran objetivo funcional es completar el flujo:
+The first major functional objective is to complete the flow:
 
     WhatsApp
        ↓
-    Mensaje recibido
+    Message received
        ↓
-    Contacto identificado
+    Contact identified
        ↓
-    Conversación registrada
+    Conversation registered
        ↓
-    IA responde
+    AI responds
        ↓
-    Paciente desea agendar
+    Patient wants to schedule
        ↓
-    Sistema consulta disponibilidad
+    System checks availability
        ↓
-    Paciente selecciona horario
+    Patient selects a time
        ↓
-    Cita creada
+    Appointment created
        ↓
-    Pipeline actualizado
+    Pipeline updated
        ↓
-    Confirmación enviada
+    Confirmation sent
 
-Cuando este flujo funcione de extremo a extremo con un usuario real, se considerará validado el núcleo inicial del producto.
+When this flow works end to end with a real user, the initial product core will be considered validated.
 
 ---
 
-## Alcance futuro
+## Future scope
 
-La plataforma podrá evolucionar hacia funcionalidades como:
+The platform may evolve toward functionality such as:
 
-- múltiples canales;
+- multiple channels;
 - Instagram;
-- formularios web;
-- agentes de voz;
-- campañas;
-- recordatorios;
-- recuperación de leads;
-- postventa;
-- reactivación de clientes;
-- promociones;
-- pagos;
-- integraciones con CRM;
-- múltiples sedes;
-- analítica avanzada;
-- automatizaciones configurables;
-- verticales especializados.
+- web forms;
+- voice agents;
+- campaigns;
+- reminders;
+- lead recovery;
+- post-sale follow-up;
+- customer reactivation;
+- promotions;
+- payments;
+- CRM integrations;
+- multiple locations;
+- advanced analytics;
+- configurable automations;
+- specialized verticals.
 
-Estas funcionalidades no forman necesariamente parte del MVP.
+These features are not necessarily part of the MVP.
 
 ---
 
-## Visión
+## Vision
 
-ia-business-platform busca convertirse en una infraestructura de atención y conversión para negocios de servicios.
+ia-business-platform aims to become an attention and conversion infrastructure for service businesses.
 
-La visión a largo plazo es que una empresa pueda configurar su operación, conectar sus canales y permitir que agentes de IA gestionen gran parte del ciclo comercial manteniendo supervisión humana y control total sobre sus datos y procesos.
+The long-term vision is for a company to configure its operation, connect its channels, and allow AI agents to manage a large portion of the commercial cycle while maintaining human supervision and full control over its data and processes.

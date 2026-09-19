@@ -1,246 +1,246 @@
 # MVP.md
 
-## Estado
+## Status
 
-Draft inicial.
+Initial draft.
 
-Este documento define el alcance funcional mínimo de la primera versión utilizable de **ia-business-platform**.
+This document defines the minimum functional scope of the first usable version of **ia-business-platform**.
 
-El nombre del proyecto es temporal.
+The project name is temporary.
 
 ---
 
-## Objetivo del MVP
+## MVP objective
 
-El MVP debe demostrar que la plataforma puede gestionar de extremo a extremo el proceso:
+The MVP must demonstrate that the platform can manage the following process end to end:
 
     Lead
       ↓
-    Mensaje
+    Message
       ↓
-    Atención automática
+    Automatic assistance
       ↓
-    Identificación de necesidad
+    Need identification
       ↓
-    Conversación
+    Conversation
       ↓
-    Intención de agendar
+    Scheduling intent
       ↓
-    Consulta de disponibilidad
+    Availability lookup
       ↓
-    Selección de horario
+    Time-slot selection
       ↓
-    Creación de cita
+    Appointment creation
       ↓
-    Confirmación
+    Confirmation
 
-El objetivo principal no es demostrar que una IA puede responder mensajes.
+The main objective is not to demonstrate that an AI can answer messages.
 
-El objetivo es demostrar que un negocio puede recibir un lead mediante un canal de mensajería y convertirlo en una cita registrada dentro de la plataforma, con mínima o ninguna intervención humana.
+The objective is to demonstrate that a business can receive a lead through a messaging channel and convert it into an appointment registered inside the platform, with little or no human intervention.
 
 ---
 
-## 1. Caso de uso inicial
+## 1. Initial use case
 
-El primer entorno real será un consultorio odontológico.
+The first real environment will be a dental office.
 
-El problema principal identificado es:
+The main problem identified is:
 
-> El negocio pierde tiempo respondiendo mensajes y coordinando citas manualmente, mientras algunos potenciales pacientes pueden quedar sin respuesta o sin seguimiento.
+> The business loses time answering messages and coordinating appointments manually, while some potential patients may remain unanswered or without follow-up.
 
-El MVP deberá permitir que un paciente pueda:
+The MVP must allow a patient to:
 
-1. escribir al consultorio;
-2. recibir respuesta automática;
-3. consultar información básica;
-4. expresar su intención de agendar;
-5. conocer horarios disponibles;
-6. seleccionar un horario;
-7. confirmar sus datos;
-8. terminar con una cita registrada.
+1. write to the office;
+2. receive an automatic response;
+3. ask for basic information;
+4. express the intention to schedule;
+5. see available time slots;
+6. select a time slot;
+7. confirm their information;
+8. end with a registered appointment.
 
 ---
 
-## 2. Alcance del MVP
+## 2. MVP scope
 
-El MVP estará compuesto por los siguientes módulos.
+The MVP will consist of the following modules.
 
-### 2.1 Autenticación
+### 2.1 Authentication
 
-El sistema deberá permitir que usuarios autorizados ingresen al panel administrativo.
+The system must allow authorized users to access the administrative panel.
 
-Funciones mínimas:
+Minimum functions:
 
-- iniciar sesión;
-- cerrar sesión;
-- mantener sesión autenticada;
-- proteger las rutas privadas.
+- sign in;
+- sign out;
+- maintain an authenticated session;
+- protect private routes.
 
-No se requiere registro público para el MVP.
+Public registration is not required for the MVP.
 
 ### 2.2 Business
 
-La plataforma deberá soportar al menos una organización o negocio.
+The platform must support at least one organization or business.
 
-Aunque el piloto utilice un solo negocio, el modelo de datos deberá estar preparado para múltiples negocios.
+Even if the pilot uses a single business, the data model must be prepared for multiple businesses.
 
-Cada negocio deberá disponer como mínimo de:
+Each business must have at least:
 
-- nombre;
-- información general;
-- zona horaria;
-- configuración básica;
-- estado activo/inactivo.
+- name;
+- general information;
+- time zone;
+- basic configuration;
+- active/inactive status.
 
-Las entidades operativas deberán asociarse al negocio mediante un identificador como:
+Operational entities must be associated with the business through an identifier such as:
 
     business_id
 
-### 2.3 Usuarios
+### 2.3 Users
 
-Un negocio podrá tener usuarios autorizados para acceder al sistema.
+A business may have authorized users who can access the system.
 
-Para el MVP no se requiere un sistema avanzado de permisos.
+An advanced permission system is not required for the MVP.
 
-Será suficiente diferenciar inicialmente entre:
+Initially, it is sufficient to distinguish between:
 
     OWNER
     MEMBER
 
-El diseño deberá permitir ampliar posteriormente los roles.
+The design must allow roles to be expanded later.
 
 ---
 
-## 3. Servicios
+## 3. Services
 
-El negocio deberá poder registrar los servicios que ofrece.
+The business must be able to register the services it offers.
 
-Cada servicio deberá soportar como mínimo:
+Each service must support at least:
 
     name
     description
     duration
-    price opcional
+    optional price
     active
     business_id
 
-Ejemplo inicial:
+Initial example:
 
-    Valoración odontológica
-    Duración: 30 minutos
-    Precio: $X
+    Dental evaluation
+    Duration: 30 minutes
+    Price: $X
 
-La IA podrá consultar estos servicios para responder preguntas y conducir el proceso de agendamiento.
+The AI may query these services to answer questions and guide the scheduling process.
 
 ---
 
-## 4. Profesionales
+## 4. Staff
 
-El negocio deberá poder registrar las personas que prestan servicios.
+The business must be able to register the people who provide services.
 
-Cada profesional deberá disponer como mínimo de:
+Each staff member must have at least:
 
     name
     active
     business_id
 
-El profesional podrá estar relacionado con uno o varios servicios.
+A staff member may be related to one or more services.
 
-Ejemplo:
+Example:
 
-    Dra. Laura Pérez
+    Dr. Laura Pérez
 
-    Servicios:
-    - Valoración
-    - Limpieza
-    - Ortodoncia
-
----
-
-## 5. Disponibilidad
-
-El sistema deberá conocer cuándo puede atender cada profesional.
-
-Para el MVP se necesita soportar:
-
-- días de atención;
-- hora de inicio;
-- hora de finalización;
-- relación profesional-servicio;
-- duración del servicio;
-- citas existentes.
-
-El backend deberá ser responsable de determinar la disponibilidad real.
-
-La IA nunca deberá inventar horarios.
-
-Ejemplo:
-
-    Profesional:
-    Dra. Laura
-
-    Servicio:
-    Valoración
-
-    Disponibilidad:
-    Lunes 08:00 - 12:00
-    Martes 14:00 - 18:00
+    Services:
+    - Evaluation
+    - Cleaning
+    - Orthodontics
 
 ---
 
-## 6. Contactos
+## 5. Availability
 
-Toda persona que interactúe con el negocio deberá representarse mediante un contacto.
+The system must know when each staff member can provide service.
 
-Un contacto deberá poder almacenar como mínimo:
+For the MVP, it must support:
+
+- working days;
+- start time;
+- end time;
+- staff-service relationship;
+- service duration;
+- existing appointments.
+
+The backend must be responsible for determining actual availability.
+
+The AI must never invent time slots.
+
+Example:
+
+    Staff member:
+    Dr. Laura
+
+    Service:
+    Evaluation
+
+    Availability:
+    Monday 08:00 - 12:00
+    Tuesday 14:00 - 18:00
+
+---
+
+## 6. Contacts
+
+Every person who interacts with the business must be represented as a contact.
+
+A contact must be able to store at least:
 
     id
     business_id
     name
     phone
-    email opcional
+    optional email
     source
     created_at
     updated_at
 
-Un mensaje proveniente de un número conocido deberá asociarse al contacto existente.
+A message from a known number must be associated with the existing contact.
 
-Un mensaje proveniente de un número desconocido deberá permitir crear automáticamente un nuevo contacto.
+A message from an unknown number must allow a new contact to be created automatically.
 
 ---
 
 ## 7. Leads
 
-Un contacto podrá convertirse en lead cuando exista una oportunidad comercial.
+A contact may become a lead when a commercial opportunity exists.
 
-El lead deberá almacenar como mínimo:
+The lead must store at least:
 
     contact_id
     business_id
     pipeline_stage
-    service_interest opcional
+    optional service_interest
     source
     status
     created_at
     updated_at
 
-Contacto y lead no serán conceptos equivalentes.
+Contact and lead are not equivalent concepts.
 
     Contact
        ↓
-    puede convertirse en
+    may become
        ↓
     Lead
 
-Esto permitirá que una persona exista en la plataforma incluso sin una oportunidad comercial activa.
+This allows a person to exist in the platform even without an active commercial opportunity.
 
 ---
 
 ## 8. Pipeline
 
-El MVP deberá permitir conocer el estado comercial de cada lead.
+The MVP must make it possible to know the commercial status of each lead.
 
-Inicialmente se podrá utilizar un pipeline sencillo:
+Initially, a simple pipeline may be used:
 
     NEW
       ↓
@@ -254,44 +254,44 @@ Inicialmente se podrá utilizar un pipeline sencillo:
       ↓
     COMPLETED
 
-Los estados deberán pertenecer al negocio.
+Stages must belong to the business.
 
-La arquitectura deberá permitir pipelines configurables posteriormente.
+The architecture must later allow configurable pipelines.
 
-No es necesario construir un editor visual de pipelines en el MVP.
+A visual pipeline editor is not required in the MVP.
 
 ---
 
-## 9. Conversaciones
+## 9. Conversations
 
-Cada interacción con un contacto deberá agruparse en una conversación.
+Each interaction with a contact must be grouped into a conversation.
 
-Una conversación deberá registrar como mínimo:
+A conversation must record at least:
 
     business_id
     contact_id
     channel
     status
-    assigned_to opcional
+    optional assigned_to
     ai_enabled
     created_at
     updated_at
 
-Estados iniciales posibles:
+Possible initial states:
 
     OPEN
     HUMAN_REQUIRED
     CLOSED
 
-La conversación deberá conservar todo su historial.
+The conversation must preserve its entire history.
 
 ---
 
-## 10. Mensajes
+## 10. Messages
 
-Todos los mensajes entrantes y salientes deberán persistirse.
+All incoming and outgoing messages must be persisted.
 
-Cada mensaje deberá registrar como mínimo:
+Each message must record at least:
 
     conversation_id
     direction
@@ -301,16 +301,16 @@ Cada mensaje deberá registrar como mínimo:
     provider_message_id
     created_at
 
-Direcciones:
+Directions:
 
     INBOUND
     OUTBOUND
 
-Tipos mínimos:
+Minimum type:
 
     TEXT
 
-La arquitectura deberá permitir posteriormente:
+The architecture must later allow:
 
     IMAGE
     AUDIO
@@ -318,128 +318,128 @@ La arquitectura deberá permitir posteriormente:
     DOCUMENT
     LOCATION
 
-sin que todos tengan que implementarse durante el MVP.
+without requiring all of them to be implemented during the MVP.
 
 ---
 
 ## 11. Inbox
 
-El panel deberá disponer de una bandeja de conversaciones.
+The panel must provide a conversation inbox.
 
-El usuario deberá poder:
+The user must be able to:
 
-- consultar conversaciones;
-- abrir una conversación;
-- visualizar mensajes;
-- identificar el contacto;
-- ver el estado del lead;
-- enviar mensajes manualmente;
-- tomar control de la conversación;
-- devolver posteriormente el control a la IA.
+- view conversations;
+- open a conversation;
+- view messages;
+- identify the contact;
+- see the lead status;
+- send messages manually;
+- take control of the conversation;
+- return control to the AI later.
 
-No es necesario replicar toda la experiencia visual de WhatsApp.
+It is not necessary to replicate the full WhatsApp visual experience.
 
-El objetivo es permitir supervisión y operación humana.
+The goal is to enable human supervision and operation.
 
 ---
 
 ## 12. Human Handoff
 
-El sistema deberá soportar intervención humana.
+The system must support human intervention.
 
-La IA podrá solicitar ayuda cuando:
+The AI may request help when:
 
-- no pueda responder;
-- detecte una solicitud sensible;
-- el usuario solicite hablar con una persona;
-- ocurra un error;
-- exista una regla configurada para hacerlo.
+- it cannot answer;
+- it detects a sensitive request;
+- the user asks to speak to a person;
+- an error occurs;
+- a configured rule requires it.
 
-Flujo esperado:
+Expected flow:
 
-    IA activa
+    AI active
        ↓
-    handoff solicitado
+    handoff requested
        ↓
-    IA pausada
+    AI paused
        ↓
-    conversación marcada
+    conversation marked
        ↓
-    humano interviene
+    human intervenes
 
-Posteriormente:
+Later:
 
-    humano finaliza
+    human finishes
        ↓
-    IA puede reactivarse
+    AI may be reactivated
 
-La IA no deberá continuar enviando mensajes mientras el control humano esté activo.
+The AI must not continue sending messages while human control is active.
 
 ---
 
-## 13. Integración de mensajería
+## 13. Messaging integration
 
-El MVP deberá soportar al menos un canal de mensajería basado en WhatsApp.
+The MVP must support at least one WhatsApp-based messaging channel.
 
-El proveedor definitivo permanece pendiente de investigación.
+The final provider remains pending research.
 
-La aplicación no deberá depender directamente de una implementación específica.
+The application must not depend directly on a specific implementation.
 
-Se utilizará una abstracción conceptual similar a:
+A conceptual abstraction similar to the following will be used:
 
     MessagingProvider
 
-con responsabilidades como:
+with responsibilities such as:
 
     sendText
     receiveMessage
     markAsRead
     getMedia
 
-Posibles proveedores podrán incluir:
+Possible providers may include:
 
     Meta Cloud API
     Evolution API
     BSP
-    otros proveedores
+    other providers
 
-La elección definitiva se documentará en `DECISIONS.md`.
-
----
-
-## 14. Agente de IA
-
-El sistema deberá incorporar un agente capaz de conversar con el lead.
-
-El agente tendrá acceso al contexto del negocio.
-
-Como mínimo deberá conocer:
-
-- nombre del negocio;
-- servicios;
-- precios configurados;
-- profesionales;
-- horarios;
-- preguntas frecuentes;
-- políticas básicas;
-- información comercial relevante.
-
-El agente deberá poder identificar:
-
-- intención;
-- interés en servicios;
-- intención de agendar;
-- solicitud de intervención humana.
+The final choice will be documented in `DECISIONS.md`.
 
 ---
 
-## 15. Herramientas del agente
+## 14. AI Agent
 
-La IA no deberá modificar directamente el estado del sistema.
+The system must include an agent capable of conversing with the lead.
 
-La plataforma deberá exponer herramientas controladas por el backend.
+The agent will have access to business context.
 
-Ejemplos conceptuales:
+At minimum, it must know:
+
+- business name;
+- services;
+- configured prices;
+- staff members;
+- schedules;
+- frequently asked questions;
+- basic policies;
+- relevant commercial information.
+
+The agent must be able to identify:
+
+- intent;
+- service interest;
+- scheduling intent;
+- request for human intervention.
+
+---
+
+## 15. Agent tools
+
+The AI must not directly modify system state.
+
+The platform must expose backend-controlled tools.
+
+Conceptual examples:
 
     get_business_information()
 
@@ -457,37 +457,37 @@ Ejemplos conceptuales:
 
     request_human_handoff()
 
-El LLM podrá decidir solicitar una herramienta.
+The LLM may decide to request a tool.
 
-El backend deberá:
+The backend must:
 
-1. validar los parámetros;
-2. comprobar permisos;
-3. ejecutar la operación;
-4. persistir los cambios;
-5. devolver el resultado.
+1. validate parameters;
+2. check permissions;
+3. execute the operation;
+4. persist changes;
+5. return the result.
 
 ---
 
-## 16. Proveedores de IA
+## 16. AI providers
 
-El MVP no deberá quedar acoplado a un único modelo o proveedor.
+The MVP must not be tightly coupled to a single model or provider.
 
-Se utilizará una abstracción equivalente a:
+An abstraction equivalent to the following will be used:
 
     AIProvider
 
-El proveedor seleccionado inicialmente deberá poder sustituirse sin modificar la lógica de negocio.
+The initially selected provider must be replaceable without changing business logic.
 
-La selección concreta del modelo se decidirá durante la implementación y podrá variar según la tarea.
+The specific model will be selected during implementation and may vary by task.
 
 ---
 
-## 17. Agenda
+## 17. Scheduling
 
-El sistema deberá disponer de una representación interna de las citas.
+The system must have an internal representation of appointments.
 
-Una cita deberá almacenar como mínimo:
+An appointment must store at least:
 
     business_id
     contact_id
@@ -500,136 +500,136 @@ Una cita deberá almacenar como mínimo:
     created_at
     updated_at
 
-Estados mínimos:
+Minimum states:
 
     SCHEDULED
     CANCELLED
     COMPLETED
     NO_SHOW
 
-El backend deberá impedir conflictos de disponibilidad.
+The backend must prevent availability conflicts.
 
 ---
 
-## 18. Flujo de agendamiento
+## 18. Scheduling flow
 
-El flujo mínimo deberá funcionar así:
+The minimum flow must work as follows:
 
-    Paciente
+    Patient
       ↓
-    Quiero una valoración
+    I want an evaluation
       ↓
-    IA identifica servicio
+    AI identifies service
       ↓
-    Backend consulta disponibilidad
+    Backend checks availability
       ↓
-    IA presenta horarios
+    AI presents time slots
       ↓
-    Paciente selecciona horario
+    Patient selects a time slot
       ↓
-    Backend valida nuevamente
+    Backend validates again
       ↓
-    Backend crea cita
+    Backend creates appointment
       ↓
-    Pipeline actualizado
+    Pipeline updated
       ↓
-    IA confirma la cita
+    AI confirms the appointment
 
-La disponibilidad deberá comprobarse nuevamente antes de crear la cita.
+Availability must be checked again before creating the appointment.
 
-Esto evita reservar un horario que haya dejado de estar disponible durante la conversación.
+This prevents booking a time slot that became unavailable during the conversation.
 
 ---
 
 ## 19. Dashboard
 
-El MVP deberá incluir un dashboard operativo.
+The MVP must include an operational dashboard.
 
-No se requiere analítica avanzada.
+Advanced analytics are not required.
 
-Como mínimo deberá mostrar:
+At minimum, it must show:
 
-    Leads recibidos
-    Conversaciones abiertas
-    Citas agendadas
-    Conversaciones que requieren humano
+    Leads received
+    Open conversations
+    Appointments scheduled
+    Conversations requiring a human
 
-Podrá incluir una métrica básica de conversión:
+It may include a basic conversion metric:
 
-    citas agendadas / leads recibidos
+    appointments scheduled / leads received
 
-Las métricas deberán definirse de forma consistente antes de implementarse.
-
----
-
-## 20. CRM básico
-
-El usuario deberá poder consultar los contactos y leads registrados.
-
-Como mínimo deberá poder visualizar:
-
-    nombre
-    teléfono
-    fuente
-    estado
-    servicio de interés
-    última interacción
-    cita asociada
-
-No se requiere un CRM completo comparable con plataformas especializadas.
-
-El objetivo es tener suficiente información para gestionar el flujo comercial inicial.
+Metrics must be defined consistently before implementation.
 
 ---
 
-## 21. Recordatorios
+## 20. Basic CRM
 
-El MVP deberá soportar al menos recordatorios básicos de citas.
+The user must be able to view registered contacts and leads.
 
-Ejemplo:
+At minimum, it must be possible to view:
+
+    name
+    phone
+    source
+    status
+    service of interest
+    last interaction
+    associated appointment
+
+A full CRM comparable to specialized platforms is not required.
+
+The goal is to provide enough information to manage the initial commercial flow.
+
+---
+
+## 21. Reminders
+
+The MVP must support at least basic appointment reminders.
+
+Example:
 
     appointment.created
             ↓
-    programar recordatorio
+    schedule reminder
             ↓
-    24 horas antes
+    24 hours before
             ↓
-    enviar mensaje
+    send message
 
-La ejecución deberá realizarse mediante procesamiento asíncrono.
+Execution must occur through asynchronous processing.
 
-No deberá depender de que un usuario tenga abierta la aplicación.
+It must not depend on a user having the application open.
 
 ---
 
-## 22. Procesamiento asíncrono
+## 22. Asynchronous processing
 
-Las operaciones que no requieran respuesta HTTP inmediata deberán poder ejecutarse en background.
+Operations that do not require an immediate HTTP response must be able to run in the background.
 
-Casos iniciales:
+Initial cases:
 
-    procesamiento de mensajes
-    respuesta mediante IA
-    envío de mensajes
-    recordatorios
-    reintentos
-    eventos
+    message processing
+    AI response
+    message sending
+    reminders
+    retries
+    events
 
-La arquitectura candidata utilizará:
+The candidate architecture will use:
 
     Redis
     BullMQ
     Workers
 
-La decisión definitiva quedará registrada en `DECISIONS.md`.
+The final decision will be recorded in `DECISIONS.md`.
 
 ---
 
-## 23. Eventos
+## 23. Events
 
-El sistema deberá poder generar eventos internos relevantes.
+The system must be able to generate relevant internal events.
 
-Ejemplos:
+Examples:
 
     contact.created
     lead.created
@@ -641,323 +641,323 @@ Ejemplos:
     conversation.handoff_requested
     conversation.handoff_resolved
 
-No es necesario implementar una plataforma completa de event streaming.
+A complete event-streaming platform is not required.
 
-El objetivo es desacoplar progresivamente las acciones secundarias de las operaciones principales.
+The goal is to progressively decouple secondary actions from primary operations.
 
 ---
 
 ## 24. Realtime
 
-El dashboard deberá reflejar los cambios importantes sin requerir recarga manual constante.
+The dashboard must reflect important changes without requiring constant manual reloads.
 
-Casos prioritarios:
+Priority cases:
 
-    nuevo mensaje
-    nueva conversación
-    handoff solicitado
-    cita creada
+    new message
+    new conversation
+    handoff requested
+    appointment created
 
-La implementación podrá apoyarse inicialmente en Supabase Realtime.
+The implementation may initially use Supabase Realtime.
 
 ---
 
-## 25. Integraciones externas
+## 25. External integrations
 
-El MVP podrá integrar un calendario externo si es necesario para el piloto.
+The MVP may integrate an external calendar if needed for the pilot.
 
-Google Calendar será el primer candidato.
+Google Calendar will be the first candidate.
 
-Sin embargo, la cita deberá existir también dentro de la plataforma.
+However, the appointment must also exist inside the platform.
 
-El calendario externo no deberá ser la única fuente de verdad.
+The external calendar must not be the only source of truth.
 
-Conceptualmente:
+Conceptually:
 
-    Appointment interno
+    Internal Appointment
            ↓
-    sincronización
+    synchronization
            ↓
     Google Calendar
 
 ---
 
-## 26. Automatización
+## 26. Automation
 
-El MVP no necesita un constructor visual de automatizaciones.
+The MVP does not need a visual automation builder.
 
-Las primeras automatizaciones podrán existir como reglas internas del sistema.
+The first automations may exist as internal system rules.
 
-Ejemplo:
+Example:
 
     appointment.created
             ↓
-    crear recordatorio
+    create reminder
 
-Posteriormente estas reglas podrán convertirse en automatizaciones configurables.
+Later, these rules may become configurable automations.
 
 ---
 
-## 27. Seguridad y aislamiento
+## 27. Security and isolation
 
-Aunque exista un solo cliente inicial, el MVP deberá respetar aislamiento multiempresa.
+Even if there is only one initial customer, the MVP must enforce multi-tenant isolation.
 
-Un usuario perteneciente a:
+A user belonging to:
 
     Business A
 
-no deberá poder acceder a datos pertenecientes a:
+must not be able to access data belonging to:
 
     Business B
 
-El `business_id` nunca deberá depender exclusivamente de información enviada por el frontend.
+`business_id` must never depend exclusively on information sent by the frontend.
 
-El backend deberá determinar y validar el tenant correspondiente.
-
----
-
-## 28. Auditoría básica
-
-Las acciones relevantes deberán poder rastrearse.
-
-Como mínimo debe ser posible determinar:
-
-    qué ocurrió
-    cuándo ocurrió
-    qué entidad estuvo involucrada
-    qué actor originó la acción
-
-No se requiere todavía un sistema avanzado de auditoría visible para el usuario.
+The backend must determine and validate the corresponding tenant.
 
 ---
 
-## 29. Observabilidad
+## 28. Basic auditing
 
-La aplicación deberá disponer como mínimo de:
+Relevant actions must be traceable.
 
-- logs estructurados;
+At minimum, it must be possible to determine:
+
+    what happened
+    when it happened
+    which entity was involved
+    which actor originated the action
+
+An advanced user-visible auditing system is not required yet.
+
+---
+
+## 29. Observability
+
+The application must have at least:
+
+- structured logs;
 - health check;
 - readiness check;
-- registro de errores;
-- identificación de jobs fallidos;
-- visibilidad de errores de integraciones externas.
+- error logging;
+- failed job identification;
+- visibility into external integration errors.
 
-Los fallos de servicios externos no deberán desaparecer silenciosamente.
+Failures in external services must not disappear silently.
 
 ---
 
-## 30. Fuera del alcance del MVP
+## 30. Out of scope for the MVP
 
-Las siguientes funcionalidades quedan explícitamente fuera del MVP inicial:
+The following features are explicitly outside the initial MVP:
 
     Instagram
     Facebook Messenger
-    agentes de voz
-    llamadas telefónicas automáticas
-    pagos
-    facturación
-    historias clínicas
-    historias odontológicas
-    prescripciones
-    diagnóstico médico
-    campañas masivas
-    marketing automation avanzado
-    promociones automáticas
-    cumpleaños
-    recall semestral
-    constructor visual de workflows
-    constructor visual de pipelines
-    app móvil nativa
+    voice agents
+    automated phone calls
+    payments
+    billing
+    clinical records
+    dental records
+    prescriptions
+    medical diagnosis
+    mass campaigns
+    advanced marketing automation
+    automatic promotions
+    birthdays
+    six-month recall
+    visual workflow builder
+    visual pipeline builder
+    native mobile app
     white-label
-    marketplace de integraciones
-    múltiples idiomas avanzados
-    analítica avanzada
+    integration marketplace
+    advanced multilingual support
+    advanced analytics
     data warehouse
     BI
-    multi-región
-    microservicios
+    multi-region
+    microservices
     Kubernetes
-    modelos de IA alojados por nosotros
+    self-hosted AI models
 
-Estas funcionalidades podrán formar parte del roadmap futuro.
-
----
-
-## 31. Criterios de aceptación del MVP
-
-El MVP se considerará funcional cuando pueda completarse de extremo a extremo el siguiente escenario:
-
-    1. Existe un negocio configurado.
-
-    2. Existe al menos un servicio.
-
-    3. Existe al menos un profesional.
-
-    4. Existe disponibilidad configurada.
-
-    5. Un usuario externo envía un mensaje real mediante WhatsApp.
-
-    6. El sistema recibe el mensaje.
-
-    7. El contacto es creado o identificado.
-
-    8. La conversación queda registrada.
-
-    9. El mensaje aparece en el Inbox.
-
-    10. El agente responde automáticamente.
-
-    11. El usuario solicita información sobre un servicio.
-
-    12. La IA responde utilizando información configurada del negocio.
-
-    13. El usuario manifiesta intención de agendar.
-
-    14. La IA consulta disponibilidad mediante una herramienta.
-
-    15. El backend devuelve horarios válidos.
-
-    16. La IA presenta las opciones.
-
-    17. El usuario selecciona un horario.
-
-    18. El backend valida nuevamente la disponibilidad.
-
-    19. Se crea la cita.
-
-    20. El lead cambia de estado.
-
-    21. La confirmación es enviada por WhatsApp.
-
-    22. La cita aparece en el dashboard.
-
-    23. El contacto aparece en el CRM.
-
-    24. La conversación permanece disponible en el historial.
-
-    25. Se programa al menos un recordatorio.
-
-    26. Un humano puede tomar el control de la conversación.
-
-    27. La IA deja de responder mientras existe control humano.
-
-Si este escenario funciona consistentemente, el núcleo inicial del producto se considerará validado.
+These features may become part of the future roadmap.
 
 ---
 
-## 32. Criterios no funcionales
+## 31. MVP acceptance criteria
 
-El MVP deberá priorizar:
+The MVP will be considered functional when the following scenario can be completed end to end:
 
-### Confiabilidad
+    1. A business is configured.
 
-Los mensajes y citas no deberán depender exclusivamente de memoria temporal.
+    2. At least one service exists.
 
-Los datos relevantes deberán persistirse.
+    3. At least one staff member exists.
 
-### Idempotencia
+    4. Availability is configured.
 
-Webhooks, mensajes y jobs podrán llegar más de una vez.
+    5. An external user sends a real message through WhatsApp.
 
-El sistema deberá evitar duplicar operaciones críticas.
+    6. The system receives the message.
 
-Especialmente:
+    7. The contact is created or identified.
 
-    mensajes
-    contactos
-    citas
-    eventos externos
+    8. The conversation is registered.
 
-### Reintentos
+    9. The message appears in the Inbox.
 
-Los fallos temporales de proveedores externos deberán poder reintentarse cuando sea seguro hacerlo.
+    10. The agent responds automatically.
 
-### Seguridad
+    11. The user requests information about a service.
 
-Los secretos y credenciales nunca deberán almacenarse en el repositorio.
+    12. The AI responds using configured business information.
 
-### Trazabilidad
+    13. The user expresses scheduling intent.
 
-Debe ser posible investigar por qué falló una conversación, un mensaje o un agendamiento.
+    14. The AI checks availability through a tool.
 
-### Escalabilidad progresiva
+    15. The backend returns valid time slots.
 
-La arquitectura deberá permitir aumentar capacidad sin requerir reescribir el producto completo.
+    16. The AI presents the options.
 
-No se requiere diseñar infraestructura para millones de usuarios durante el MVP.
+    17. The user selects a time slot.
 
----
+    18. The backend validates availability again.
 
-## 33. Métricas iniciales
+    19. The appointment is created.
 
-Durante el piloto se deberán observar como mínimo:
+    20. The lead changes stage.
 
-    leads recibidos
-    conversaciones atendidas
-    citas agendadas
-    handoffs humanos
-    errores de mensajería
-    errores del agente
-    tiempo hasta primera respuesta
+    21. The confirmation is sent through WhatsApp.
 
-Estas métricas permitirán determinar si la automatización realmente está resolviendo el problema del negocio.
+    22. The appointment appears on the dashboard.
 
----
+    23. The contact appears in the CRM.
 
-## 34. Hipótesis a validar
+    24. The conversation remains available in history.
 
-El MVP deberá ayudar a responder las siguientes preguntas:
+    25. At least one reminder is scheduled.
 
-    ¿La IA puede atender correctamente las consultas frecuentes?
+    26. A human can take control of the conversation.
 
-    ¿Los usuarios están dispuestos a agendar mediante conversación automatizada?
+    27. The AI stops responding while human control is active.
 
-    ¿El sistema reduce trabajo manual?
-
-    ¿El negocio confía en dejar conversaciones básicas en manos de la IA?
-
-    ¿El human handoff funciona adecuadamente?
-
-    ¿La agenda puede mantenerse consistente?
-
-    ¿El canal de WhatsApp elegido es suficientemente estable y viable económicamente?
-
-    ¿El modelo puede reutilizarse en otros negocios de servicios?
+If this scenario works consistently, the initial product core will be considered validated.
 
 ---
 
-## 35. Decisiones pendientes
+## 32. Non-functional criteria
 
-Las siguientes decisiones deberán investigarse antes o durante la implementación:
+The MVP must prioritize:
 
-    Proveedor de WhatsApp
-    Proveedor/modelo inicial de IA
-    ORM o capa de acceso a datos
-    Estrategia exacta de sincronización con calendarios
-    Política de retención de conversaciones
-    Proveedor de correo
-    Proveedor de observabilidad
-    Infraestructura definitiva de producción
+### Reliability
 
-Las decisiones importantes deberán registrarse en:
+Messages and appointments must not depend exclusively on temporary memory.
+
+Relevant data must be persisted.
+
+### Idempotency
+
+Webhooks, messages, and jobs may arrive more than once.
+
+The system must avoid duplicating critical operations.
+
+Especially:
+
+    messages
+    contacts
+    appointments
+    external events
+
+### Retries
+
+Temporary failures from external providers must be retryable when it is safe to do so.
+
+### Security
+
+Secrets and credentials must never be stored in the repository.
+
+### Traceability
+
+It must be possible to investigate why a conversation, message, or scheduling action failed.
+
+### Progressive scalability
+
+The architecture must allow capacity to increase without requiring the entire product to be rewritten.
+
+The MVP does not need infrastructure designed for millions of users.
+
+---
+
+## 33. Initial metrics
+
+During the pilot, at least the following must be observed:
+
+    leads received
+    conversations handled
+    appointments scheduled
+    human handoffs
+    messaging errors
+    agent errors
+    time to first response
+
+These metrics will help determine whether the automation is actually solving the business problem.
+
+---
+
+## 34. Hypotheses to validate
+
+The MVP should help answer the following questions:
+
+    Can the AI correctly handle frequently asked questions?
+
+    Are users willing to schedule through an automated conversation?
+
+    Does the system reduce manual work?
+
+    Does the business trust the AI with basic conversations?
+
+    Does human handoff work properly?
+
+    Can scheduling remain consistent?
+
+    Is the selected WhatsApp channel sufficiently stable and economically viable?
+
+    Can the model be reused for other service businesses?
+
+---
+
+## 35. Pending decisions
+
+The following decisions must be researched before or during implementation:
+
+    WhatsApp provider
+    Initial AI provider/model
+    ORM or data access layer
+    Exact calendar synchronization strategy
+    Conversation retention policy
+    Email provider
+    Observability provider
+    Final production infrastructure
+
+Important decisions must be recorded in:
 
     docs/DECISIONS.md
 
 ---
 
-## 36. Principio de alcance
+## 36. Scope principle
 
-Durante el desarrollo del MVP se aplicará la siguiente regla:
+During MVP development, the following rule will apply:
 
-> Una nueva funcionalidad no entra automáticamente al MVP porque sea útil o atractiva.
+> A new feature does not automatically enter the MVP merely because it is useful or attractive.
 
-Para incorporarse deberá demostrar que es necesaria para validar el flujo principal:
+To be included, it must demonstrate that it is necessary to validate the main flow:
 
-    mensaje
-    → conversación
-    → intención
-    → disponibilidad
-    → cita
-    → seguimiento
+    message
+    → conversation
+    → intent
+    → availability
+    → appointment
+    → follow-up
 
-Todo lo demás podrá incorporarse al roadmap.
+Everything else may be added to the roadmap.
