@@ -1358,6 +1358,77 @@ Tradeoffs:
 
 ---
 
+# ADR-031 — Database integration and tenant isolation test strategy
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires confidence that the complete PostgreSQL schema can be created from versioned migrations and that tenant-scoped relationships cannot cross business boundaries.
+
+Manual validation against the development Supabase project was useful while designing the schema, but it is not sufficient as a repeatable regression test.
+
+Tests must not depend on a shared development or production database.
+
+## Decision
+
+Database integration tests run against an ephemeral PostgreSQL 17.6 instance.
+
+The test environment recreates the minimal external database structures required by repository migrations:
+
+    auth.users
+    extensions schema
+
+This mirrors only the Supabase-owned structures required for migration execution. The application does not own the Supabase Auth schema.
+
+Every repository SQL migration is applied from the beginning in filename order.
+
+The integration suite verifies:
+
+- all current application tables have Row-Level Security enabled;
+- composite tenant foreign keys reject cross-business relationships;
+- scheduling relationships cannot mix staff and services from different businesses;
+- availability rules cannot reference staff from another business;
+- CRM leads cannot reference contacts, stages, or services from another business;
+- appointments cannot reference contacts, services, or staff from another business;
+- overlapping scheduled appointments for the same staff member are rejected;
+- adjacent half-open appointment ranges remain valid;
+- conversations cannot reference contacts or assigned users from another business;
+- messages cannot reference conversations or human senders from another business;
+- duplicate provider message identifiers are rejected within one business;
+- the same provider message identifier may exist in different businesses.
+
+The test database name must contain `test` before the suite is allowed to reset schemas.
+
+The CI quality gate starts a disposable PostgreSQL service and runs the same integration test through:
+
+    pnpm test:db
+
+The integration test validates database-level tenant integrity and schema behavior.
+
+It does not replace authenticated tenant resolution or application authorization tests. Those remain separate backend responsibilities.
+
+RLS is currently verified as enabled on application tables. Direct client RLS policies are intentionally absent while NestJS remains the authorization boundary.
+
+## Consequences
+
+Positive:
+
+- all migrations are continuously tested from an empty PostgreSQL database;
+- migration SQL failures are caught in CI rather than only by Drizzle metadata checks;
+- tenant isolation constraints receive repeatable regression coverage;
+- appointment exclusion behavior is covered automatically;
+- CI does not require Supabase development credentials;
+- tests cannot accidentally reset a normal database name.
+
+Tradeoffs:
+
+- the test creates a minimal Supabase Auth compatibility structure rather than booting the full Supabase stack;
+- database-level isolation tests do not test backend authorization behavior;
+- future migrations that depend on additional Supabase-managed structures must extend the test bootstrap intentionally.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:

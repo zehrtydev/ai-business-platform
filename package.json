@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "test:e2e": "pnpm --filter api test:e2e",
     "db:generate": "pnpm --filter @ai-business-platform/database db:generate",
-    "db:check": "pnpm --filter @ai-business-platform/database db:check"
+    "db:check": "pnpm --filter @ai-business-platform/database db:check",
+    "test:db": "pnpm --filter @ai-business-platform/database test:integration"
   },
   "devDependencies": {
     "oxlint": "^1.83.0",

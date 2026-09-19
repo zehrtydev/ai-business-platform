@@ -34,8 +34,6 @@ Establish the domain and persistence foundation defined for M2.
 
 Immediate target:
 
-    automated tenant isolation tests
-            ↓
     authenticated tenant resolution
             ↓
     complete M2 persistence validation
@@ -468,7 +466,6 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    automated tenant isolation tests
     authentication application flow
     authenticated tenant resolution
     Redis queues
@@ -489,10 +486,9 @@ M2 is in progress.
 
 Recommended immediate order:
 
-    1. Add automated tenant isolation tests
-    2. Integrate authenticated tenant resolution in the backend
-    3. Complete M2 persistence validation
-    4. Begin M3 administrative dashboard
+    1. Integrate authenticated tenant resolution in the backend
+    2. Complete M2 persistence validation
+    3. Begin M3 administrative dashboard
 
 ---
 
@@ -539,7 +535,7 @@ M1 is closed.
     Identity/tenancy schema DONE
     Development migrations  APPLIED
     Core schemas            DONE
-    Tenant isolation tests  MANUAL VALIDATION
+    Tenant isolation tests  AUTOMATED
 
 ---
 

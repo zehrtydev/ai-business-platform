@@ -13,11 +13,12 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "oxlint --type-aware src/",
+    "lint": "oxlint --type-aware src/ && oxlint test/",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "node test/tenant-isolation.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

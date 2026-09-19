@@ -1,0 +1,799 @@
+import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import postgres from 'postgres';
+
+const connectionString = process.env.DATABASE_TEST_URL?.trim();
+
+if (!connectionString) {
+  throw new Error('DATABASE_TEST_URL is required.');
+}
+
+const sql = postgres(connectionString, {
+  max: 1,
+  onnotice: () => {},
+});
+
+const currentDirectory = dirname(fileURLToPath(import.meta.url));
+const migrationsDirectory = join(currentDirectory, '..', 'migrations');
+
+async function waitForDatabase() {
+  const deadline = Date.now() + 60_000;
+  let lastError;
+
+  while (Date.now() < deadline) {
+    try {
+      await sql`select 1`;
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+
+  throw new Error('Database did not become ready within 60 seconds.', {
+    cause: lastError,
+  });
+}
+
+async function resetDatabase() {
+  const [database] = await sql`
+    select current_database() as "name"
+  `;
+
+  assert(
+    database.name.toLowerCase().includes('test'),
+    `Refusing to reset non-test database "${database.name}".`,
+  );
+
+  await sql.unsafe('DROP EXTENSION IF EXISTS btree_gist CASCADE');
+  await sql.unsafe('DROP SCHEMA IF EXISTS public CASCADE');
+  await sql.unsafe('DROP SCHEMA IF EXISTS auth CASCADE');
+  await sql.unsafe('DROP SCHEMA IF EXISTS extensions CASCADE');
+
+  await sql.unsafe('CREATE SCHEMA public');
+  await sql.unsafe('CREATE SCHEMA auth');
+  await sql.unsafe('CREATE SCHEMA extensions');
+
+  await sql.unsafe(`
+    CREATE TABLE auth.users (
+      id uuid PRIMARY KEY
+    )
+  `);
+
+  await sql.unsafe('SET search_path TO "$user", public, extensions');
+}
+
+async function applyMigrations() {
+  const migrationFiles = (await readdir(migrationsDirectory))
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
+
+  assert(migrationFiles.length > 0, 'No database migrations found.');
+
+  for (const migrationFile of migrationFiles) {
+    const migration = await readFile(
+      join(migrationsDirectory, migrationFile),
+      'utf8',
+    );
+
+    const statements = migration
+      .split('--> statement-breakpoint')
+      .map((statement) => statement.trim())
+      .filter(Boolean);
+
+    for (const statement of statements) {
+      await sql.unsafe(statement);
+    }
+  }
+
+  return migrationFiles;
+}
+
+async function verifyRls() {
+  const expectedTables = [
+    'app_users',
+    'appointments',
+    'availability_rules',
+    'business_memberships',
+    'businesses',
+    'contacts',
+    'conversations',
+    'leads',
+    'messages',
+    'pipeline_stages',
+    'pipelines',
+    'services',
+    'staff_members',
+    'staff_services',
+  ].sort();
+
+  const rows = await sql`
+    select c.relname as "name"
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relkind = 'r'
+      and c.relrowsecurity = true
+    order by c.relname
+  `;
+
+  assert.deepEqual(
+    rows.map((row) => row.name).sort(),
+    expectedTables,
+    'All application tables must have RLS enabled.',
+  );
+}
+
+async function verifyTenantIsolation() {
+  await sql.unsafe(`
+DO $$
+DECLARE
+  business_a uuid;
+  business_b uuid;
+
+  user_a uuid := gen_random_uuid();
+  user_b uuid := gen_random_uuid();
+
+  contact_a uuid;
+  contact_b uuid;
+
+  service_a uuid;
+  service_b uuid;
+
+  staff_a uuid;
+  staff_b uuid;
+
+  pipeline_a uuid;
+  pipeline_b uuid;
+
+  stage_a uuid;
+  stage_b uuid;
+
+  conversation_a uuid;
+  conversation_b uuid;
+
+  cross_staff_service_rejected boolean := false;
+  cross_availability_staff_rejected boolean := false;
+  cross_pipeline_stage_rejected boolean := false;
+  cross_lead_contact_rejected boolean := false;
+  cross_lead_stage_rejected boolean := false;
+  cross_lead_service_rejected boolean := false;
+  cross_appointment_contact_rejected boolean := false;
+  cross_appointment_service_rejected boolean := false;
+  cross_appointment_staff_rejected boolean := false;
+  appointment_overlap_rejected boolean := false;
+  cross_conversation_contact_rejected boolean := false;
+  cross_conversation_assignee_rejected boolean := false;
+  invalid_ai_state_rejected boolean := false;
+  cross_message_conversation_rejected boolean := false;
+  cross_message_sender_rejected boolean := false;
+  duplicate_provider_message_rejected boolean := false;
+BEGIN
+  INSERT INTO auth.users (id)
+  VALUES (user_a), (user_b);
+
+  INSERT INTO public.app_users (id, display_name)
+  VALUES
+    (user_a, 'Tenant test user A'),
+    (user_b, 'Tenant test user B');
+
+  INSERT INTO public.businesses (name, timezone)
+  VALUES ('Tenant test A', 'America/Bogota')
+  RETURNING id INTO business_a;
+
+  INSERT INTO public.businesses (name, timezone)
+  VALUES ('Tenant test B', 'America/Bogota')
+  RETURNING id INTO business_b;
+
+  INSERT INTO public.business_memberships (
+    business_id,
+    user_id,
+    role
+  )
+  VALUES
+    (business_a, user_a, 'owner'),
+    (business_b, user_b, 'owner');
+
+  INSERT INTO public.contacts (business_id, name, source)
+  VALUES (business_a, 'Contact A', 'test')
+  RETURNING id INTO contact_a;
+
+  INSERT INTO public.contacts (business_id, name, source)
+  VALUES (business_b, 'Contact B', 'test')
+  RETURNING id INTO contact_b;
+
+  INSERT INTO public.services (
+    business_id,
+    name,
+    duration_minutes
+  )
+  VALUES (business_a, 'Service A', 60)
+  RETURNING id INTO service_a;
+
+  INSERT INTO public.services (
+    business_id,
+    name,
+    duration_minutes
+  )
+  VALUES (business_b, 'Service B', 60)
+  RETURNING id INTO service_b;
+
+  INSERT INTO public.staff_members (business_id, name)
+  VALUES (business_a, 'Staff A')
+  RETURNING id INTO staff_a;
+
+  INSERT INTO public.staff_members (business_id, name)
+  VALUES (business_b, 'Staff B')
+  RETURNING id INTO staff_b;
+
+  INSERT INTO public.pipelines (
+    business_id,
+    name,
+    is_default
+  )
+  VALUES (business_a, 'Pipeline A', true)
+  RETURNING id INTO pipeline_a;
+
+  INSERT INTO public.pipelines (
+    business_id,
+    name,
+    is_default
+  )
+  VALUES (business_b, 'Pipeline B', true)
+  RETURNING id INTO pipeline_b;
+
+  INSERT INTO public.pipeline_stages (
+    business_id,
+    pipeline_id,
+    name,
+    position
+  )
+  VALUES (business_a, pipeline_a, 'Stage A', 1)
+  RETURNING id INTO stage_a;
+
+  INSERT INTO public.pipeline_stages (
+    business_id,
+    pipeline_id,
+    name,
+    position
+  )
+  VALUES (business_b, pipeline_b, 'Stage B', 1)
+  RETURNING id INTO stage_b;
+
+  INSERT INTO public.staff_services (
+    business_id,
+    staff_member_id,
+    service_id
+  )
+  VALUES (business_a, staff_a, service_a);
+
+  INSERT INTO public.availability_rules (
+    business_id,
+    staff_member_id,
+    day_of_week,
+    start_time,
+    end_time
+  )
+  VALUES (
+    business_a,
+    staff_a,
+    1,
+    '09:00',
+    '17:00'
+  );
+
+  BEGIN
+    INSERT INTO public.staff_services (
+      business_id,
+      staff_member_id,
+      service_id
+    )
+    VALUES (business_a, staff_a, service_b);
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_staff_service_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.availability_rules (
+      business_id,
+      staff_member_id,
+      day_of_week,
+      start_time,
+      end_time
+    )
+    VALUES (
+      business_a,
+      staff_b,
+      2,
+      '09:00',
+      '17:00'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_availability_staff_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.pipeline_stages (
+      business_id,
+      pipeline_id,
+      name,
+      position
+    )
+    VALUES (
+      business_a,
+      pipeline_b,
+      'Invalid cross-tenant stage',
+      2
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_pipeline_stage_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id
+    )
+    VALUES (
+      business_a,
+      contact_b,
+      pipeline_a,
+      stage_a,
+      service_a
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_lead_contact_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      pipeline_b,
+      stage_b,
+      service_a
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_lead_stage_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      pipeline_a,
+      stage_a,
+      service_b
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_lead_service_rejected := true;
+  END;
+
+  INSERT INTO public.appointments (
+    business_id,
+    contact_id,
+    service_id,
+    staff_member_id,
+    starts_at,
+    ends_at
+  )
+  VALUES (
+    business_a,
+    contact_a,
+    service_a,
+    staff_a,
+    '2026-10-01T15:00:00Z',
+    '2026-10-01T16:00:00Z'
+  );
+
+  BEGIN
+    INSERT INTO public.appointments (
+      business_id,
+      contact_id,
+      service_id,
+      staff_member_id,
+      starts_at,
+      ends_at
+    )
+    VALUES (
+      business_a,
+      contact_b,
+      service_a,
+      staff_a,
+      '2026-10-01T17:00:00Z',
+      '2026-10-01T18:00:00Z'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_appointment_contact_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.appointments (
+      business_id,
+      contact_id,
+      service_id,
+      staff_member_id,
+      starts_at,
+      ends_at
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      service_b,
+      staff_a,
+      '2026-10-01T17:00:00Z',
+      '2026-10-01T18:00:00Z'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_appointment_service_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.appointments (
+      business_id,
+      contact_id,
+      service_id,
+      staff_member_id,
+      starts_at,
+      ends_at
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      service_a,
+      staff_b,
+      '2026-10-01T17:00:00Z',
+      '2026-10-01T18:00:00Z'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_appointment_staff_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.appointments (
+      business_id,
+      contact_id,
+      service_id,
+      staff_member_id,
+      starts_at,
+      ends_at
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      service_a,
+      staff_a,
+      '2026-10-01T15:30:00Z',
+      '2026-10-01T16:30:00Z'
+    );
+  EXCEPTION WHEN exclusion_violation THEN
+    appointment_overlap_rejected := true;
+  END;
+
+  -- Half-open ranges must allow adjacent reservations.
+  INSERT INTO public.appointments (
+    business_id,
+    contact_id,
+    service_id,
+    staff_member_id,
+    starts_at,
+    ends_at
+  )
+  VALUES (
+    business_a,
+    contact_a,
+    service_a,
+    staff_a,
+    '2026-10-01T16:00:00Z',
+    '2026-10-01T17:00:00Z'
+  );
+
+  INSERT INTO public.conversations (
+    business_id,
+    contact_id,
+    channel
+  )
+  VALUES (
+    business_a,
+    contact_a,
+    'WHATSAPP'
+  )
+  RETURNING id INTO conversation_a;
+
+  INSERT INTO public.conversations (
+    business_id,
+    contact_id,
+    channel
+  )
+  VALUES (
+    business_b,
+    contact_b,
+    'WHATSAPP'
+  )
+  RETURNING id INTO conversation_b;
+
+  UPDATE public.conversations
+  SET
+    assigned_to_user_id = user_a,
+    ai_enabled = false
+  WHERE id = conversation_a;
+
+  BEGIN
+    INSERT INTO public.conversations (
+      business_id,
+      contact_id,
+      channel
+    )
+    VALUES (
+      business_a,
+      contact_b,
+      'WHATSAPP'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_conversation_contact_rejected := true;
+  END;
+
+  BEGIN
+    UPDATE public.conversations
+    SET assigned_to_user_id = user_b
+    WHERE id = conversation_a;
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_conversation_assignee_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    VALUES (
+      business_a,
+      contact_a,
+      'WHATSAPP',
+      'HUMAN_REQUIRED',
+      true
+    );
+  EXCEPTION WHEN check_violation THEN
+    invalid_ai_state_rejected := true;
+  END;
+
+  INSERT INTO public.messages (
+    business_id,
+    conversation_id,
+    direction,
+    sender,
+    content,
+    provider_message_id
+  )
+  VALUES (
+    business_a,
+    conversation_a,
+    'INBOUND',
+    'CONTACT',
+    'Inbound A',
+    'provider-message-1'
+  );
+
+  INSERT INTO public.messages (
+    business_id,
+    conversation_id,
+    direction,
+    sender,
+    sender_user_id,
+    content
+  )
+  VALUES (
+    business_a,
+    conversation_a,
+    'OUTBOUND',
+    'HUMAN',
+    user_a,
+    'Human response A'
+  );
+
+  BEGIN
+    INSERT INTO public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content
+    )
+    VALUES (
+      business_a,
+      conversation_b,
+      'INBOUND',
+      'CONTACT',
+      'Invalid conversation tenant'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_message_conversation_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      sender_user_id,
+      content
+    )
+    VALUES (
+      business_a,
+      conversation_a,
+      'OUTBOUND',
+      'HUMAN',
+      user_b,
+      'Invalid sender tenant'
+    );
+  EXCEPTION WHEN foreign_key_violation THEN
+    cross_message_sender_rejected := true;
+  END;
+
+  BEGIN
+    INSERT INTO public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content,
+      provider_message_id
+    )
+    VALUES (
+      business_a,
+      conversation_a,
+      'INBOUND',
+      'CONTACT',
+      'Duplicate provider message',
+      'provider-message-1'
+    );
+  EXCEPTION WHEN unique_violation THEN
+    duplicate_provider_message_rejected := true;
+  END;
+
+  -- The same provider identifier may exist in another business.
+  INSERT INTO public.messages (
+    business_id,
+    conversation_id,
+    direction,
+    sender,
+    content,
+    provider_message_id
+  )
+  VALUES (
+    business_b,
+    conversation_b,
+    'INBOUND',
+    'CONTACT',
+    'Inbound B',
+    'provider-message-1'
+  );
+
+  IF NOT cross_staff_service_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant staff/service relation was not rejected';
+  END IF;
+
+  IF NOT cross_availability_staff_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant availability staff was not rejected';
+  END IF;
+
+  IF NOT cross_pipeline_stage_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant pipeline stage was not rejected';
+  END IF;
+
+  IF NOT cross_lead_contact_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant lead contact was not rejected';
+  END IF;
+
+  IF NOT cross_lead_stage_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant lead stage was not rejected';
+  END IF;
+
+  IF NOT cross_lead_service_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant lead service was not rejected';
+  END IF;
+
+  IF NOT cross_appointment_contact_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant appointment contact was not rejected';
+  END IF;
+
+  IF NOT cross_appointment_service_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant appointment service was not rejected';
+  END IF;
+
+  IF NOT cross_appointment_staff_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant appointment staff was not rejected';
+  END IF;
+
+  IF NOT appointment_overlap_rejected THEN
+    RAISE EXCEPTION 'Overlapping scheduled appointment was not rejected';
+  END IF;
+
+  IF NOT cross_conversation_contact_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant conversation contact was not rejected';
+  END IF;
+
+  IF NOT cross_conversation_assignee_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant conversation assignee was not rejected';
+  END IF;
+
+  IF NOT invalid_ai_state_rejected THEN
+    RAISE EXCEPTION 'Invalid conversation AI state was not rejected';
+  END IF;
+
+  IF NOT cross_message_conversation_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant message conversation was not rejected';
+  END IF;
+
+  IF NOT cross_message_sender_rejected THEN
+    RAISE EXCEPTION 'Cross-tenant human message sender was not rejected';
+  END IF;
+
+  IF NOT duplicate_provider_message_rejected THEN
+    RAISE EXCEPTION 'Duplicate provider message was not rejected';
+  END IF;
+
+  DELETE FROM public.businesses
+  WHERE id IN (business_a, business_b);
+
+  DELETE FROM auth.users
+  WHERE id IN (user_a, user_b);
+END
+$$;
+  `);
+
+  const [counts] = await sql`
+    select
+      (select count(*)::int from public.businesses) as "businesses",
+      (select count(*)::int from public.contacts) as "contacts",
+      (select count(*)::int from public.conversations) as "conversations",
+      (select count(*)::int from public.messages) as "messages",
+      (select count(*)::int from auth.users) as "authUsers"
+  `;
+
+  assert.deepEqual(counts, {
+    businesses: 0,
+    contacts: 0,
+    conversations: 0,
+    messages: 0,
+    authUsers: 0,
+  });
+}
+
+try {
+  await waitForDatabase();
+  await resetDatabase();
+  const migrations = await applyMigrations();
+  await verifyRls();
+  await verifyTenantIsolation();
+
+  console.log(
+    `Database integration test passed: ${migrations.length} migrations applied, RLS verified, tenant isolation enforced.`,
+  );
+} finally {
+  await sql.end({ timeout: 5 });
+}
