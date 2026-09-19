@@ -18,3 +18,5 @@ export function createDatabase(connectionString: string) {
     db,
   };
 }
+
+export type Database = ReturnType<typeof createDatabase>['db'];

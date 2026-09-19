@@ -1429,6 +1429,82 @@ Tradeoffs:
 
 ---
 
+# ADR-032 — Authenticated tenant resolution boundary
+
+**Status:** ACCEPTED
+
+## Context
+
+M2 requires the backend to derive tenant context from an authenticated identity and its business memberships.
+
+A valid external authentication token identifies a user, but it does not by itself authorize access to any business.
+
+Users may belong to one or multiple businesses.
+
+The client may need to select a business when more than one membership exists, but a client-supplied business identifier must never be treated as authorization.
+
+## Decision
+
+Tenant resolution is implemented as an application boundary in NestJS.
+
+The resolver receives:
+
+    authenticated user identity
+    +
+    optional requested business
+            ↓
+    verified BusinessMembership
+            ↓
+    TenantContext
+
+`TenantContext` contains:
+
+    userId
+    membershipId
+    businessId
+    role
+
+The authenticated user identifier is trusted only when supplied by the authentication layer.
+
+Tenant resolution must never derive the authenticated user from a freely supplied request header or body field.
+
+For a user with exactly one membership, that tenant may be resolved automatically.
+
+For a user with multiple memberships, an explicit tenant selection is required.
+
+A requested business identifier from the client is treated only as a selection candidate. Access is granted only if a matching `BusinessMembership` exists for the authenticated user.
+
+A user with no membership, or a user requesting another business, is denied.
+
+Membership lookup is implemented through the shared database package and queries `business_memberships` by authenticated user ID.
+
+The HTTP tenant guard currently expects a previously verified `authenticatedUserId` on the request and may consume `x-business-id` as the tenant selection.
+
+The guard does not verify Supabase tokens itself.
+
+Supabase Auth token verification, login, logout, session handling, and route authentication belong to M3.
+
+The tenancy module is therefore not registered globally until the authentication layer can populate authenticated identity correctly.
+
+## Consequences
+
+Positive:
+
+- tenant authorization is separated from authentication provider details;
+- client-controlled business IDs cannot independently grant access;
+- multi-business users are supported explicitly;
+- tenant context includes the verified membership role;
+- database access remains centralized through the shared database package;
+- future Supabase Auth integration can populate identity without changing tenant rules.
+
+Tradeoffs:
+
+- protected HTTP routes cannot use the tenant guard until authentication middleware or guards exist;
+- multi-business clients must explicitly select a tenant;
+- authorization remains application-controlled rather than delegated to direct Supabase table access.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:

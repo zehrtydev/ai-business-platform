@@ -124,6 +124,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@ai-business-platform/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)

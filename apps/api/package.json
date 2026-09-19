@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-business-platform/database": "workspace:*",
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-fastify": "^12.0.1",

@@ -10,7 +10,7 @@ Temporary project name.
 
 ## Current phase
 
-    M2 — Domain and persistence
+    M3 — Administrative dashboard
 
 Status:
 
@@ -30,15 +30,17 @@ Implementation now moves to automated tenant isolation tests and backend tenant 
 
 ## Current objective
 
-Establish the domain and persistence foundation defined for M2.
+Build the administrative application foundation defined for M3.
 
 Immediate target:
 
-    authenticated tenant resolution
+    Supabase Auth integration
             ↓
-    complete M2 persistence validation
+    authenticated session
             ↓
-    M3 — Administrative dashboard
+    protected private routes
+            ↓
+    administrative dashboard foundation
 
 ---
 
@@ -476,9 +478,9 @@ Major areas still not implemented include:
     AI agent
     deployment pipeline
 
-M0 and M1 are complete.
+M0, M1, and M2 are complete.
 
-M2 is in progress.
+M3 is in progress.
 
 ---
 
@@ -486,9 +488,11 @@ M2 is in progress.
 
 Recommended immediate order:
 
-    1. Integrate authenticated tenant resolution in the backend
-    2. Complete M2 persistence validation
-    3. Begin M3 administrative dashboard
+    1. Integrate Supabase Auth with the application
+    2. Add login, logout, and session handling
+    3. Protect private routes
+    4. Connect authenticated identity to tenant resolution
+    5. Begin the administrative dashboard
 
 ---
 
@@ -527,7 +531,7 @@ M1 is closed.
 
 ### M2 — Domain and persistence
 
-    Status                  IN PROGRESS
+    Status                  DONE
     ORM/migration decision  DONE
     packages/database       FOUNDATION COMPLETE
     Drizzle foundation      DONE
@@ -536,6 +540,19 @@ M1 is closed.
     Development migrations  APPLIED
     Core schemas            DONE
     Tenant isolation tests  AUTOMATED
+    Tenant resolution       DONE
+
+M2 is closed.
+
+### M3 — Administrative dashboard
+
+    Status                  IN PROGRESS
+    Supabase Auth           NOT STARTED
+    Login/logout            NOT STARTED
+    Session                 NOT STARTED
+    Route protection        NOT STARTED
+    Navigation              NOT STARTED
+    Initial dashboard       NOT STARTED
 
 ---
 

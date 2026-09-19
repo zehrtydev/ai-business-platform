@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "import": "./dist/index.js"
     }
   },
@@ -18,7 +18,7 @@
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
     "test": "vitest run",
-    "test:integration": "node test/tenant-isolation.mjs"
+    "test:integration": "pnpm build && node test/tenant-isolation.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

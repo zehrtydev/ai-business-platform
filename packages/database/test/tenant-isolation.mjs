@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 
 import postgres from 'postgres';
 
+import {
+  createDatabase,
+  listBusinessMembershipsForUser,
+} from '../dist/index.js';
+
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
 
 if (!connectionString) {
@@ -125,6 +130,90 @@ async function verifyRls() {
     expectedTables,
     'All application tables must have RLS enabled.',
   );
+}
+
+async function verifyMembershipReader() {
+  const userId = crypto.randomUUID();
+  let businessA;
+  let businessB;
+
+  await sql`
+    insert into auth.users (id)
+    values (${userId}::uuid)
+  `;
+
+  await sql`
+    insert into public.app_users (id, display_name)
+    values (${userId}::uuid, 'Membership reader test')
+  `;
+
+  const [createdBusinessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Membership reader A', 'America/Bogota')
+    returning id
+  `;
+
+  const [createdBusinessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Membership reader B', 'America/Bogota')
+    returning id
+  `;
+
+  businessA = createdBusinessA.id;
+  businessB = createdBusinessB.id;
+
+  await sql`
+    insert into public.business_memberships (
+      business_id,
+      user_id,
+      role
+    )
+    values
+      (${businessA}::uuid, ${userId}::uuid, 'owner'),
+      (${businessB}::uuid, ${userId}::uuid, 'member')
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const memberships = await listBusinessMembershipsForUser(
+      database.db,
+      userId,
+    );
+
+    assert.equal(memberships.length, 2);
+
+    assert.deepEqual(
+      memberships.map((membership) => ({
+        businessId: membership.businessId,
+        role: membership.role,
+      })),
+      [
+        {
+          businessId: [businessA, businessB].sort()[0],
+          role:
+            [businessA, businessB].sort()[0] === businessA ? 'owner' : 'member',
+        },
+        {
+          businessId: [businessA, businessB].sort()[1],
+          role:
+            [businessA, businessB].sort()[1] === businessA ? 'owner' : 'member',
+        },
+      ],
+    );
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA}::uuid, ${businessB}::uuid)
+  `;
+
+  await sql`
+    delete from auth.users
+    where id = ${userId}::uuid
+  `;
 }
 
 async function verifyTenantIsolation() {
@@ -789,6 +878,7 @@ try {
   await resetDatabase();
   const migrations = await applyMigrations();
   await verifyRls();
+  await verifyMembershipReader();
   await verifyTenantIsolation();
 
   console.log(
