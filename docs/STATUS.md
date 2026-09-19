@@ -469,8 +469,8 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    backend Supabase token verification
-    authenticated identity-to-tenant wiring
+    web-to-API authenticated request forwarding
+    first development user and membership provisioning
     administrative navigation and dashboard
     Redis queues
     CRM application layer
@@ -490,9 +490,9 @@ M3 is in progress.
 
 Recommended immediate order:
 
-    1. Add Supabase access-token verification to the NestJS API
-    2. Connect verified API identity to tenant resolution
-    3. Provision and verify the first development user and membership
+    1. Provision and verify the first development user and membership
+    2. Forward the authenticated web access token to the NestJS API
+    3. Exercise the real login-to-tenant flow
     4. Build the administrative navigation
     5. Begin the initial dashboard
 
@@ -553,8 +553,10 @@ M2 is closed.
     Login/logout            DONE
     Session                 DONE
     Route protection        DONE
-    API token verification  NOT STARTED
-    Auth-to-tenant wiring   NOT STARTED
+    API token verification  DONE
+    API auth-to-tenant      DONE
+    Web-to-API auth         NOT STARTED
+    Development user        NOT PROVISIONED
     Navigation              NOT STARTED
     Initial dashboard       ROUTE FOUNDATION
 

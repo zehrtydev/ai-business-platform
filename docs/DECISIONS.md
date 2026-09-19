@@ -1601,6 +1601,52 @@ The NestJS authentication layer must populate `authenticatedUserId` only after t
 
 Tenant selection and business authorization continue to follow ADR-032.
 
+The NestJS API verifies incoming Supabase access tokens through the Supabase Auth
+`/auth/v1/user` endpoint using only:
+
+    SUPABASE_URL
+    SUPABASE_PUBLISHABLE_KEY
+
+The backend does not require the Supabase JWT shared secret, `service_role`, or a
+Supabase secret API key for user authentication.
+
+The HTTP authentication chain is:
+
+    Authorization: Bearer <access token>
+            ↓
+    SupabaseAuthGuard
+            ↓
+    Supabase Auth verification
+            ↓
+    authenticatedUserId
+            ↓
+    TenantContextGuard
+            ↓
+    verified BusinessMembership
+            ↓
+    TenantContext
+
+The authentication guard is the only HTTP boundary that populates
+`authenticatedUserId` from an external access token.
+
+`x-business-id` remains only a tenant-selection candidate. It cannot establish
+identity or grant membership.
+
+The initial authenticated API foundation exposes:
+
+    GET /auth/me
+    GET /tenant/context
+
+`/auth/me` proves the authenticated identity boundary.
+
+`/tenant/context` proves the complete authentication-to-membership chain and
+supports automatic resolution for a single membership or explicit selection for
+multi-business users.
+
+Invalid or expired credentials are rejected before tenant resolution. Supabase
+Auth connectivity or configuration failures are treated as server-side failures
+rather than fabricated authenticated identities.
+
 ## Consequences
 
 Positive:
@@ -1615,9 +1661,10 @@ Positive:
 
 Tradeoffs:
 
-- the web application currently authenticates users before the NestJS API accepts authenticated Bearer requests;
-- end-to-end Auth-to-tenant behavior remains incomplete until backend token verification is implemented;
-- the first development user and membership must still be provisioned before the real login flow can be exercised;
+- Supabase Auth is currently in the request path for backend access-token verification;
+- the web application still needs to forward its authenticated access token to the NestJS API;
+- the first development user and membership must still be provisioned before the real cross-application flow can be exercised;
+- local JWKS verification may later reduce Auth-server verification latency after asymmetric signing is adopted and operationally validated;
 - `@supabase/ssr` remains an external integration whose behavior must be checked against current Supabase documentation when upgraded.
 
 ---
