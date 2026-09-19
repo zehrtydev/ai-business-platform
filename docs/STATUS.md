@@ -22,9 +22,10 @@ The repository now has an executable monorepo foundation, local Redis infrastruc
 health checks, shared packages, automated testing, formatting, and a GitHub Actions
 quality gate.
 
-The minimum M2 operational schema is now implemented and applied to the development database.
+M2 is complete, including the operational schema, automated tenant isolation tests,
+and authenticated tenant resolution.
 
-Implementation now moves to automated tenant isolation tests and backend tenant resolution.
+M3 is now implementing the administrative authentication and application shell.
 
 ---
 
@@ -468,8 +469,9 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    authentication application flow
-    authenticated tenant resolution
+    backend Supabase token verification
+    authenticated identity-to-tenant wiring
+    administrative navigation and dashboard
     Redis queues
     CRM application layer
     Inbox application layer
@@ -488,11 +490,11 @@ M3 is in progress.
 
 Recommended immediate order:
 
-    1. Integrate Supabase Auth with the application
-    2. Add login, logout, and session handling
-    3. Protect private routes
-    4. Connect authenticated identity to tenant resolution
-    5. Begin the administrative dashboard
+    1. Add Supabase access-token verification to the NestJS API
+    2. Connect verified API identity to tenant resolution
+    3. Provision and verify the first development user and membership
+    4. Build the administrative navigation
+    5. Begin the initial dashboard
 
 ---
 
@@ -547,12 +549,14 @@ M2 is closed.
 ### M3 — Administrative dashboard
 
     Status                  IN PROGRESS
-    Supabase Auth           NOT STARTED
-    Login/logout            NOT STARTED
-    Session                 NOT STARTED
-    Route protection        NOT STARTED
+    Supabase Auth web SSR   DONE
+    Login/logout            DONE
+    Session                 DONE
+    Route protection        DONE
+    API token verification  NOT STARTED
+    Auth-to-tenant wiring   NOT STARTED
     Navigation              NOT STARTED
-    Initial dashboard       NOT STARTED
+    Initial dashboard       ROUTE FOUNDATION
 
 ---
 

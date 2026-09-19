@@ -1505,6 +1505,123 @@ Tradeoffs:
 
 ---
 
+
+# ADR-033 — Supabase Auth session boundary for the web application
+
+**Status:** ACCEPTED
+
+## Context
+
+M3 requires login, logout, authenticated sessions, and protected private routes.
+
+Supabase Auth is the selected identity provider, while application authorization and tenant access remain backend responsibilities.
+
+The web application uses Next.js App Router and must support server-rendered authentication without exposing privileged Supabase credentials to the browser.
+
+A session stored in browser-accessible cookies must not be trusted without cryptographic verification.
+
+## Decision
+
+The web authentication layer uses:
+
+    Supabase Auth
+          +
+    @supabase/supabase-js
+          +
+    @supabase/ssr
+          +
+    Next.js server-side cookies
+
+Only the project URL and Supabase publishable key are exposed to the web application.
+
+No Supabase secret key or `service_role` credential is used by the browser or committed to the repository.
+
+The web application provides request-specific Supabase clients for:
+
+    browser components
+    server components / server actions
+    Next.js Proxy
+
+The Next.js Proxy refreshes authentication state and propagates refreshed cookies and Supabase-provided cache headers.
+
+Authenticated identity is established through:
+
+    supabase.auth.getClaims()
+
+`getClaims()` is the trusted identity boundary because it verifies the access token.
+
+Server-side authorization decisions must not trust the user object returned only from:
+
+    getSession()
+
+Login uses email and password through:
+
+    signInWithPassword()
+
+Logout uses:
+
+    signOut()
+
+The initial private route is:
+
+    /dashboard
+
+Private pages independently verify authenticated identity before rendering.
+
+The root route redirects to `/dashboard`, which in turn redirects unauthenticated requests to `/login`.
+
+A small application abstraction converts verified Supabase claims into:
+
+    VerifiedIdentity {
+        userId
+        optional email
+    }
+
+The `sub` claim is the authoritative authenticated user identifier.
+
+Client-editable user metadata is not used for authorization.
+
+The web authentication code must compile in CI without Supabase environment variables. Runtime authentication requires the environment configuration, but build-time compilation must not depend on development credentials.
+
+The current web authentication layer does not authorize a business tenant.
+
+The next backend authentication step must:
+
+    Bearer access token
+            ↓
+    verified Supabase identity
+            ↓
+    authenticatedUserId
+            ↓
+    TenantResolver
+            ↓
+    TenantContext
+
+The NestJS authentication layer must populate `authenticatedUserId` only after token verification.
+
+Tenant selection and business authorization continue to follow ADR-032.
+
+## Consequences
+
+Positive:
+
+- authentication sessions work with Next.js server rendering;
+- identity verification is separated from untrusted cookie contents;
+- no privileged Supabase credential is exposed to the frontend;
+- login and logout are implemented through server-side application flows;
+- private pages verify identity before rendering;
+- the authentication boundary maps directly to the existing tenant resolver;
+- CI does not require live Supabase credentials to compile the web application.
+
+Tradeoffs:
+
+- the web application currently authenticates users before the NestJS API accepts authenticated Bearer requests;
+- end-to-end Auth-to-tenant behavior remains incomplete until backend token verification is implemented;
+- the first development user and membership must still be provisioned before the real login flow can be exercised;
+- `@supabase/ssr` remains an external integration whose behavior must be checked against current Supabase documentation when upgraded.
+
+---
+
 # Decision backlog
 
 Current unresolved decisions, roughly in implementation order:
