@@ -11,6 +11,7 @@ import {
   getDashboardSummary,
   listBusinessMembershipsForUser,
   listContactsForBusiness,
+  listConversationsForBusiness,
 } from '../dist/index.js';
 
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
@@ -571,6 +572,259 @@ async function verifyContactList() {
 
     assert.equal(limitedContactsA.length, 1);
     assert.equal(limitedContactsA[0].id, contactA1.id);
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
+  `;
+}
+
+async function verifyConversationList() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Conversation list A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Conversation list B', 'America/Bogota')
+    returning id
+  `;
+
+  const [contactA1] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      phone,
+      source
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Conversation Contact A1',
+      '+10000000011',
+      'development'
+    )
+    returning id
+  `;
+
+  const [contactA2] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      email,
+      source
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Conversation Contact A2',
+      'conversation-a2@example.com',
+      'development'
+    )
+    returning id
+  `;
+
+  const [contactB] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Conversation Contact B',
+      'development'
+    )
+    returning id
+  `;
+
+  const [conversationA1] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled,
+      created_at,
+      updated_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA1.id}::uuid,
+      'development',
+      'HUMAN_REQUIRED',
+      false,
+      '2026-09-20T00:00:00Z',
+      '2026-09-20T02:00:00Z'
+    )
+    returning id
+  `;
+
+  const [conversationA2] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled,
+      created_at,
+      updated_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA2.id}::uuid,
+      'development',
+      'OPEN',
+      true,
+      '2026-09-19T23:00:00Z',
+      '2026-09-20T01:00:00Z'
+    )
+    returning id
+  `;
+
+  const [conversationB] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${contactB.id}::uuid,
+      'other-tenant-channel',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  await sql`
+    insert into public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content,
+      created_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${conversationA1.id}::uuid,
+      'INBOUND',
+      'CONTACT',
+      'Older message',
+      '2026-09-20T01:00:00Z'
+    )
+  `;
+
+  const [latestMessageA1] = await sql`
+    insert into public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content,
+      created_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${conversationA1.id}::uuid,
+      'INBOUND',
+      'CONTACT',
+      'Latest customer message',
+      '2026-09-20T01:59:00Z'
+    )
+    returning id
+  `;
+
+  await sql`
+    insert into public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${conversationB.id}::uuid,
+      'INBOUND',
+      'CONTACT',
+      'Other tenant message'
+    )
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const conversationsA = await listConversationsForBusiness(
+      database.db,
+      businessA.id,
+    );
+
+    assert.equal(conversationsA.length, 2);
+
+    assert.deepEqual(
+      conversationsA.map((conversation) => conversation.id),
+      [conversationA1.id, conversationA2.id],
+    );
+
+    assert.deepEqual(conversationsA[0].contact, {
+      id: contactA1.id,
+      name: 'Conversation Contact A1',
+      phone: '+10000000011',
+      email: null,
+    });
+
+    assert.equal(conversationsA[0].channel, 'development');
+    assert.equal(conversationsA[0].status, 'HUMAN_REQUIRED');
+    assert.equal(conversationsA[0].aiEnabled, false);
+
+    assert.deepEqual(
+      conversationsA[0].latestMessage
+        ? {
+            id: conversationsA[0].latestMessage.id,
+            direction: conversationsA[0].latestMessage.direction,
+            sender: conversationsA[0].latestMessage.sender,
+            content: conversationsA[0].latestMessage.content,
+          }
+        : null,
+      {
+        id: latestMessageA1.id,
+        direction: 'INBOUND',
+        sender: 'CONTACT',
+        content: 'Latest customer message',
+      },
+    );
+
+    assert.equal(conversationsA[1].id, conversationA2.id);
+    assert.equal(conversationsA[1].latestMessage, null);
+
+    const conversationsB = await listConversationsForBusiness(
+      database.db,
+      businessB.id,
+    );
+
+    assert.equal(conversationsB.length, 1);
+    assert.equal(conversationsB[0].id, conversationB.id);
+    assert.equal(
+      conversationsB[0].latestMessage?.content,
+      'Other tenant message',
+    );
+
+    const limitedConversationsA = await listConversationsForBusiness(
+      database.db,
+      businessA.id,
+      1,
+    );
+
+    assert.equal(limitedConversationsA.length, 1);
+    assert.equal(limitedConversationsA[0].id, conversationA1.id);
   } finally {
     await database.client.end({ timeout: 5 });
   }
@@ -1433,6 +1687,7 @@ try {
   await verifyRls();
   await verifyMembershipReader();
   await verifyContactList();
+  await verifyConversationList();
   await verifyDashboardSummary();
   await verifyTenantIsolation();
 

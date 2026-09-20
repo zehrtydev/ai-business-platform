@@ -13,6 +13,8 @@ import type { CrmContactReader } from '../src/crm/crm.types.js';
 import { DatabaseService } from '../src/database/database.service.js';
 import { DASHBOARD_SUMMARY_READER } from '../src/dashboard/dashboard.tokens.js';
 import type { DashboardSummaryReader } from '../src/dashboard/dashboard.types.js';
+import { INBOX_CONVERSATION_READER } from '../src/inbox/inbox.tokens.js';
+import type { InboxConversationReader } from '../src/inbox/inbox.types.js';
 import { TENANT_MEMBERSHIP_READER } from '../src/tenancy/tenancy.tokens.js';
 import type {
   TenantMembership,
@@ -171,6 +173,60 @@ describe('API (e2e)', () => {
     },
   };
 
+  const inboxConversationReader: InboxConversationReader = {
+    async listConversations(businessId) {
+      if (businessId === 'business-a') {
+        return [
+          {
+            id: 'conversation-a',
+            contact: {
+              id: 'contact-a',
+              name: 'Contact A',
+              phone: '+10000000001',
+              email: 'contact-a@example.com',
+            },
+            channel: 'development',
+            status: 'HUMAN_REQUIRED',
+            assignedToUserId: null,
+            aiEnabled: false,
+            createdAt: '2026-09-20T00:00:00.000Z',
+            updatedAt: '2026-09-20T01:30:00.000Z',
+            latestMessage: {
+              id: 'message-a',
+              direction: 'INBOUND',
+              sender: 'CONTACT',
+              content: 'I need help with my appointment.',
+              createdAt: '2026-09-20T01:29:00.000Z',
+            },
+          },
+        ];
+      }
+
+      if (businessId === 'business-c') {
+        return [
+          {
+            id: 'conversation-c',
+            contact: {
+              id: 'contact-c',
+              name: 'Contact C',
+              phone: null,
+              email: 'contact-c@example.com',
+            },
+            channel: 'development',
+            status: 'OPEN',
+            assignedToUserId: null,
+            aiEnabled: true,
+            createdAt: '2026-09-19T23:00:00.000Z',
+            updatedAt: '2026-09-20T00:30:00.000Z',
+            latestMessage: null,
+          },
+        ];
+      }
+
+      return [];
+    },
+  };
+
   const dashboardSummaryReader: DashboardSummaryReader = {
     async getSummary(businessId) {
       if (businessId === 'business-a') {
@@ -212,6 +268,8 @@ describe('API (e2e)', () => {
       .useValue(crmContactReader)
       .overrideProvider(DASHBOARD_SUMMARY_READER)
       .useValue(dashboardSummaryReader)
+      .overrideProvider(INBOX_CONVERSATION_READER)
+      .useValue(inboxConversationReader)
       .overrideProvider(DatabaseService)
       .useValue({
         db: {},
@@ -443,6 +501,71 @@ describe('API (e2e)', () => {
         createdAt: '2026-09-19T21:00:00.000Z',
         updatedAt: '2026-09-19T21:00:00.000Z',
         lead: null,
+      });
+  });
+
+  it('/inbox/conversations rejects missing authentication', async () => {
+    await request(app.getHttpServer()).get('/inbox/conversations').expect(401);
+  });
+
+  it('/inbox/conversations returns conversations for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'conversation-a',
+            contact: {
+              id: 'contact-a',
+              name: 'Contact A',
+              phone: '+10000000001',
+              email: 'contact-a@example.com',
+            },
+            channel: 'development',
+            status: 'HUMAN_REQUIRED',
+            assignedToUserId: null,
+            aiEnabled: false,
+            createdAt: '2026-09-20T00:00:00.000Z',
+            updatedAt: '2026-09-20T01:30:00.000Z',
+            latestMessage: {
+              id: 'message-a',
+              direction: 'INBOUND',
+              sender: 'CONTACT',
+              content: 'I need help with my appointment.',
+              createdAt: '2026-09-20T01:29:00.000Z',
+            },
+          },
+        ],
+      });
+  });
+
+  it('/inbox/conversations follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'conversation-c',
+            contact: {
+              id: 'contact-c',
+              name: 'Contact C',
+              phone: null,
+              email: 'contact-c@example.com',
+            },
+            channel: 'development',
+            status: 'OPEN',
+            assignedToUserId: null,
+            aiEnabled: true,
+            createdAt: '2026-09-19T23:00:00.000Z',
+            updatedAt: '2026-09-20T00:30:00.000Z',
+            latestMessage: null,
+          },
+        ],
       });
   });
 

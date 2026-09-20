@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { CrmModule } from './crm/crm.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InboxModule } from './inbox/inbox.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
 @Module({
@@ -14,6 +15,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     CrmModule,
     DashboardModule,
     HealthModule,
+    InboxModule,
     TenancyModule,
   ],
   controllers: [AppController],

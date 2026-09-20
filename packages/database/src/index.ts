@@ -1,5 +1,10 @@
 export type { Database } from './client.js';
 export type {
+  ConversationListItem,
+  ConversationListMessage,
+} from './queries/conversation-list.js';
+export { listConversationsForBusiness } from './queries/conversation-list.js';
+export type {
   ContactDetail,
   ContactDetailLead,
 } from './queries/contact-detail.js';

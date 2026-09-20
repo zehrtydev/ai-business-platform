@@ -483,8 +483,9 @@ Major areas still not implemented include:
 
 M0, M1, M2, and M3 are complete.
 
-M4 is in progress. The first tenant-scoped CRM contact list is implemented
-and manually verified against persisted development data.
+M4 is in progress. Tenant-scoped CRM contact list/detail and the conversation
+inbox foundation are implemented and manually verified against persisted
+development data.
 
 ---
 
@@ -492,10 +493,10 @@ and manually verified against persisted development data.
 
 Recommended immediate order:
 
-    1. Implement the conversation inbox foundation
-    2. Add conversation detail and persisted messages
-    3. Add development message simulation
-    4. Establish the human handoff workflow
+    1. Implement conversation detail with persisted messages
+    2. Add development message simulation
+    3. Establish the human handoff workflow
+    4. Connect CRM and Inbox operational flows
 
 ---
 
@@ -585,7 +586,7 @@ M3 is closed.
     Latest lead projection    VERIFIED
     Contact list web UI       VERIFIED
     CRM contact detail        DONE
-    Conversation list         NOT STARTED
+    Conversation list         DONE
     Conversation detail       NOT STARTED
     Development messages      NOT STARTED
     Human handoff workflow    NOT STARTED
@@ -607,6 +608,18 @@ without an associated lead.
 
 Contact detail lookup is tenant-scoped by the backend and returns no cross-tenant
 contact data.
+
+The conversation inbox foundation is also tenant-scoped and currently exposes:
+
+    contact identity
+    channel
+    conversation status
+    AI/human control state
+    latest persisted message
+    latest activity time
+
+The Inbox screen has been manually verified with OPEN, HUMAN_REQUIRED, AI-active,
+human-control, and no-message conversation states.
 
 M4 remains in progress.
 
