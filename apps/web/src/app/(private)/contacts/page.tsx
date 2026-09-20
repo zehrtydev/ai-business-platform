@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { getContactList } from '../../../lib/api/contact-list';
@@ -107,7 +108,10 @@ export default async function ContactsPage() {
                 {contacts.map((contact) => (
                   <tr key={contact.id}>
                     <td>
-                      <div className="contact-cell">
+                      <Link
+                        className="contact-cell contact-cell--link"
+                        href={`/contacts/${contact.id}`}
+                      >
                         <span
                           className="contact-cell__avatar"
                           aria-hidden="true"
@@ -126,7 +130,7 @@ export default async function ContactsPage() {
                           <strong>{contact.name ?? 'Unnamed contact'}</strong>
                           <span>{contactIdentity(contact)}</span>
                         </span>
-                      </div>
+                      </Link>
                     </td>
 
                     <td>

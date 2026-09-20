@@ -1,5 +1,10 @@
 export type { Database } from './client.js';
 export type {
+  ContactDetail,
+  ContactDetailLead,
+} from './queries/contact-detail.js';
+export { getContactDetailForBusiness } from './queries/contact-detail.js';
+export type {
   ContactListItem,
   ContactListLead,
 } from './queries/contact-list.js';

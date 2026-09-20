@@ -474,7 +474,7 @@ Google Calendar may be added depending on pilot needs.
 Major areas still not implemented include:
 
     Redis queues
-    CRM contact detail and editing
+    CRM editing
     Inbox application layer
     availability engine
     WhatsApp integration
@@ -492,8 +492,8 @@ and manually verified against persisted development data.
 
 Recommended immediate order:
 
-    1. Implement CRM contact detail
-    2. Implement the conversation inbox foundation
+    1. Implement the conversation inbox foundation
+    2. Add conversation detail and persisted messages
     3. Add development message simulation
     4. Establish the human handoff workflow
 
@@ -584,7 +584,7 @@ M3 is closed.
     Contact list DB query     VERIFIED
     Latest lead projection    VERIFIED
     Contact list web UI       VERIFIED
-    CRM contact detail        NOT STARTED
+    CRM contact detail        DONE
     Conversation list         NOT STARTED
     Conversation detail       NOT STARTED
     Development messages      NOT STARTED
@@ -601,7 +601,12 @@ The contact list currently exposes:
 The backend derives the business from authenticated tenant context. The web client
 does not supply a freely trusted business identifier.
 
-The first CRM screen has been manually verified against persisted development data.
+The CRM contact list and contact detail screens have been manually verified
+against persisted development data. Contact detail supports contacts with and
+without an associated lead.
+
+Contact detail lookup is tenant-scoped by the backend and returns no cross-tenant
+contact data.
 
 M4 remains in progress.
 

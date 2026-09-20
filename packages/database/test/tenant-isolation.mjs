@@ -7,6 +7,7 @@ import postgres from 'postgres';
 
 import {
   createDatabase,
+  getContactDetailForBusiness,
   getDashboardSummary,
   listBusinessMembershipsForUser,
   listContactsForBusiness,
@@ -494,6 +495,66 @@ async function verifyContactList() {
 
     assert.equal(contactsA[1].id, contactA2.id);
     assert.equal(contactsA[1].lead, null);
+
+    const detailA = await getContactDetailForBusiness(
+      database.db,
+      businessA.id,
+      contactA1.id,
+    );
+
+    assert(detailA);
+    assert.equal(detailA.id, contactA1.id);
+    assert.equal(detailA.name, 'Contact A1');
+    assert.equal(detailA.phone, '+10000000001');
+    assert.equal(detailA.email, 'a1@example.com');
+    assert.equal(detailA.source, 'development');
+
+    assert.deepEqual(
+      detailA.lead
+        ? {
+            id: detailA.lead.id,
+            pipelineStage: detailA.lead.pipelineStage,
+            service: detailA.lead.service,
+          }
+        : null,
+      {
+        id: latestLeadA.id,
+        pipelineStage: {
+          id: stageANew.id,
+          name: 'Qualified',
+        },
+        service: {
+          id: serviceANew.id,
+          name: 'Evaluation',
+        },
+      },
+    );
+
+    const contactWithoutLead = await getContactDetailForBusiness(
+      database.db,
+      businessA.id,
+      contactA2.id,
+    );
+
+    assert(contactWithoutLead);
+    assert.equal(contactWithoutLead.id, contactA2.id);
+    assert.equal(contactWithoutLead.lead, null);
+
+    const crossTenantContact = await getContactDetailForBusiness(
+      database.db,
+      businessA.id,
+      contactB.id,
+    );
+
+    assert.equal(crossTenantContact, null);
+
+    const invalidContactId = await getContactDetailForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+    );
+
+    assert.equal(invalidContactId, null);
 
     const contactsB = await listContactsForBusiness(database.db, businessB.id);
 

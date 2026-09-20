@@ -3,6 +3,8 @@ import {
   Get,
   Inject,
   InternalServerErrorException,
+  NotFoundException,
+  Param,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -34,5 +36,26 @@ export class CrmController {
     return {
       items: await this.contactReader.listContacts(businessId),
     };
+  }
+
+  @Get('contacts/:contactId')
+  @UseGuards(SupabaseAuthGuard, TenantContextGuard)
+  async contact(
+    @Req() request: TenantRequest,
+    @Param('contactId') contactId: string,
+  ) {
+    const businessId = request.tenantContext?.businessId;
+
+    if (!businessId) {
+      throw new InternalServerErrorException('Tenant context is required.');
+    }
+
+    const contact = await this.contactReader.getContact(businessId, contactId);
+
+    if (!contact) {
+      throw new NotFoundException('Contact not found.');
+    }
+
+    return contact;
   }
 }

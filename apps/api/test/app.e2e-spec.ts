@@ -125,6 +125,50 @@ describe('API (e2e)', () => {
 
       return [];
     },
+
+    async getContact(businessId, contactId) {
+      if (businessId === 'business-a' && contactId === 'contact-a') {
+        return {
+          id: 'contact-a',
+          name: 'Contact A',
+          phone: '+10000000001',
+          email: 'contact-a@example.com',
+          source: 'development',
+          lastInteractionAt: '2026-09-20T01:00:00.000Z',
+          createdAt: '2026-09-19T20:00:00.000Z',
+          updatedAt: '2026-09-20T01:05:00.000Z',
+          lead: {
+            id: 'lead-a',
+            pipelineStage: {
+              id: 'stage-a',
+              name: 'Qualified',
+            },
+            service: {
+              id: 'service-a',
+              name: 'Evaluation',
+            },
+            createdAt: '2026-09-19T20:05:00.000Z',
+            updatedAt: '2026-09-20T00:45:00.000Z',
+          },
+        };
+      }
+
+      if (businessId === 'business-c' && contactId === 'contact-c') {
+        return {
+          id: 'contact-c',
+          name: 'Contact C',
+          phone: null,
+          email: 'contact-c@example.com',
+          source: 'development',
+          lastInteractionAt: null,
+          createdAt: '2026-09-19T21:00:00.000Z',
+          updatedAt: '2026-09-19T21:00:00.000Z',
+          lead: null,
+        };
+      }
+
+      return null;
+    },
   };
 
   const dashboardSummaryReader: DashboardSummaryReader = {
@@ -337,6 +381,68 @@ describe('API (e2e)', () => {
             lead: null,
           },
         ],
+      });
+  });
+
+  it('/crm/contacts/:contactId rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts/contact-a')
+      .expect(401);
+  });
+
+  it('/crm/contacts/:contactId returns contact detail for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts/contact-a')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        id: 'contact-a',
+        name: 'Contact A',
+        phone: '+10000000001',
+        email: 'contact-a@example.com',
+        source: 'development',
+        lastInteractionAt: '2026-09-20T01:00:00.000Z',
+        createdAt: '2026-09-19T20:00:00.000Z',
+        updatedAt: '2026-09-20T01:05:00.000Z',
+        lead: {
+          id: 'lead-a',
+          pipelineStage: {
+            id: 'stage-a',
+            name: 'Qualified',
+          },
+          service: {
+            id: 'service-a',
+            name: 'Evaluation',
+          },
+          createdAt: '2026-09-19T20:05:00.000Z',
+          updatedAt: '2026-09-20T00:45:00.000Z',
+        },
+      });
+  });
+
+  it('/crm/contacts/:contactId hides contacts from another tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts/contact-c')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(404);
+  });
+
+  it('/crm/contacts/:contactId follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts/contact-c')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        id: 'contact-c',
+        name: 'Contact C',
+        phone: null,
+        email: 'contact-c@example.com',
+        source: 'development',
+        lastInteractionAt: null,
+        createdAt: '2026-09-19T21:00:00.000Z',
+        updatedAt: '2026-09-19T21:00:00.000Z',
+        lead: null,
       });
   });
 
