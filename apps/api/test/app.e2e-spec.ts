@@ -225,6 +225,79 @@ describe('API (e2e)', () => {
 
       return [];
     },
+
+    async getConversation(businessId, conversationId) {
+      if (businessId === 'business-a' && conversationId === 'conversation-a') {
+        return {
+          id: 'conversation-a',
+          contact: {
+            id: 'contact-a',
+            name: 'Contact A',
+            phone: '+10000000001',
+            email: 'contact-a@example.com',
+          },
+          channel: 'development',
+          status: 'HUMAN_REQUIRED',
+          assignedToUserId: null,
+          aiEnabled: false,
+          createdAt: '2026-09-20T00:00:00.000Z',
+          updatedAt: '2026-09-20T01:30:00.000Z',
+          messages: [
+            {
+              id: 'message-a-1',
+              direction: 'INBOUND',
+              sender: 'CONTACT',
+              senderUserId: null,
+              content: 'I need to move my appointment.',
+              messageType: 'TEXT',
+              providerMessageId: null,
+              createdAt: '2026-09-20T01:00:00.000Z',
+            },
+            {
+              id: 'message-a-2',
+              direction: 'OUTBOUND',
+              sender: 'AI',
+              senderUserId: null,
+              content: 'I can help you with that.',
+              messageType: 'TEXT',
+              providerMessageId: null,
+              createdAt: '2026-09-20T01:15:00.000Z',
+            },
+            {
+              id: 'message-a-3',
+              direction: 'INBOUND',
+              sender: 'CONTACT',
+              senderUserId: null,
+              content: 'Tomorrow afternoon would work.',
+              messageType: 'TEXT',
+              providerMessageId: null,
+              createdAt: '2026-09-20T01:29:00.000Z',
+            },
+          ],
+        };
+      }
+
+      if (businessId === 'business-c' && conversationId === 'conversation-c') {
+        return {
+          id: 'conversation-c',
+          contact: {
+            id: 'contact-c',
+            name: 'Contact C',
+            phone: null,
+            email: 'contact-c@example.com',
+          },
+          channel: 'development',
+          status: 'OPEN',
+          assignedToUserId: null,
+          aiEnabled: true,
+          createdAt: '2026-09-19T23:00:00.000Z',
+          updatedAt: '2026-09-20T00:30:00.000Z',
+          messages: [],
+        };
+      }
+
+      return null;
+    },
   };
 
   const dashboardSummaryReader: DashboardSummaryReader = {
@@ -566,6 +639,97 @@ describe('API (e2e)', () => {
             latestMessage: null,
           },
         ],
+      });
+  });
+
+  it('/inbox/conversations/:conversationId rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations/conversation-a')
+      .expect(401);
+  });
+
+  it('/inbox/conversations/:conversationId returns persisted message history', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations/conversation-a')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        id: 'conversation-a',
+        contact: {
+          id: 'contact-a',
+          name: 'Contact A',
+          phone: '+10000000001',
+          email: 'contact-a@example.com',
+        },
+        channel: 'development',
+        status: 'HUMAN_REQUIRED',
+        assignedToUserId: null,
+        aiEnabled: false,
+        createdAt: '2026-09-20T00:00:00.000Z',
+        updatedAt: '2026-09-20T01:30:00.000Z',
+        messages: [
+          {
+            id: 'message-a-1',
+            direction: 'INBOUND',
+            sender: 'CONTACT',
+            senderUserId: null,
+            content: 'I need to move my appointment.',
+            messageType: 'TEXT',
+            providerMessageId: null,
+            createdAt: '2026-09-20T01:00:00.000Z',
+          },
+          {
+            id: 'message-a-2',
+            direction: 'OUTBOUND',
+            sender: 'AI',
+            senderUserId: null,
+            content: 'I can help you with that.',
+            messageType: 'TEXT',
+            providerMessageId: null,
+            createdAt: '2026-09-20T01:15:00.000Z',
+          },
+          {
+            id: 'message-a-3',
+            direction: 'INBOUND',
+            sender: 'CONTACT',
+            senderUserId: null,
+            content: 'Tomorrow afternoon would work.',
+            messageType: 'TEXT',
+            providerMessageId: null,
+            createdAt: '2026-09-20T01:29:00.000Z',
+          },
+        ],
+      });
+  });
+
+  it('/inbox/conversations/:conversationId hides conversations from another tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations/conversation-c')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(404);
+  });
+
+  it('/inbox/conversations/:conversationId follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/inbox/conversations/conversation-c')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        id: 'conversation-c',
+        contact: {
+          id: 'contact-c',
+          name: 'Contact C',
+          phone: null,
+          email: 'contact-c@example.com',
+        },
+        channel: 'development',
+        status: 'OPEN',
+        assignedToUserId: null,
+        aiEnabled: true,
+        createdAt: '2026-09-19T23:00:00.000Z',
+        updatedAt: '2026-09-20T00:30:00.000Z',
+        messages: [],
       });
   });
 

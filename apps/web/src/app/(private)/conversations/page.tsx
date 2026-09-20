@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import {
@@ -112,7 +113,11 @@ export default async function ConversationsPage() {
                 conversation.latestMessage?.createdAt ?? conversation.updatedAt;
 
               return (
-                <article className="conversation-row" key={conversation.id}>
+                <Link
+                  className="conversation-row conversation-row--link"
+                  href={`/conversations/${conversation.id}`}
+                  key={conversation.id}
+                >
                   <div className="conversation-row__identity">
                     <span className="contact-cell__avatar" aria-hidden="true">
                       {name.slice(0, 1).toUpperCase()}
@@ -169,7 +174,7 @@ export default async function ConversationsPage() {
                   >
                     {formatActivity(activityAt)}
                   </time>
-                </article>
+                </Link>
               );
             })}
           </div>

@@ -8,6 +8,7 @@ import postgres from 'postgres';
 import {
   createDatabase,
   getContactDetailForBusiness,
+  getConversationDetailForBusiness,
   getDashboardSummary,
   listBusinessMembershipsForUser,
   listContactsForBusiness,
@@ -722,6 +723,26 @@ async function verifyConversationList() {
     )
   `;
 
+  const [middleMessageA1] = await sql`
+    insert into public.messages (
+      business_id,
+      conversation_id,
+      direction,
+      sender,
+      content,
+      created_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${conversationA1.id}::uuid,
+      'OUTBOUND',
+      'AI',
+      'Middle AI message',
+      '2026-09-20T01:30:00Z'
+    )
+    returning id
+  `;
+
   const [latestMessageA1] = await sql`
     insert into public.messages (
       business_id,
@@ -804,6 +825,77 @@ async function verifyConversationList() {
 
     assert.equal(conversationsA[1].id, conversationA2.id);
     assert.equal(conversationsA[1].latestMessage, null);
+
+    const conversationDetailA1 = await getConversationDetailForBusiness(
+      database.db,
+      businessA.id,
+      conversationA1.id,
+    );
+
+    assert(conversationDetailA1);
+    assert.equal(conversationDetailA1.id, conversationA1.id);
+    assert.equal(conversationDetailA1.status, 'HUMAN_REQUIRED');
+    assert.equal(conversationDetailA1.aiEnabled, false);
+    assert.deepEqual(conversationDetailA1.contact, {
+      id: contactA1.id,
+      name: 'Conversation Contact A1',
+      phone: '+10000000011',
+      email: null,
+    });
+
+    assert.deepEqual(
+      conversationDetailA1.messages.map((message) => ({
+        id: message.id,
+        direction: message.direction,
+        sender: message.sender,
+        content: message.content,
+      })),
+      [
+        {
+          id: conversationDetailA1.messages[0].id,
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          content: 'Older message',
+        },
+        {
+          id: middleMessageA1.id,
+          direction: 'OUTBOUND',
+          sender: 'AI',
+          content: 'Middle AI message',
+        },
+        {
+          id: latestMessageA1.id,
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          content: 'Latest customer message',
+        },
+      ],
+    );
+
+    const conversationDetailA2 = await getConversationDetailForBusiness(
+      database.db,
+      businessA.id,
+      conversationA2.id,
+    );
+
+    assert(conversationDetailA2);
+    assert.deepEqual(conversationDetailA2.messages, []);
+
+    const crossTenantConversation = await getConversationDetailForBusiness(
+      database.db,
+      businessA.id,
+      conversationB.id,
+    );
+
+    assert.equal(crossTenantConversation, null);
+
+    const invalidConversationId = await getConversationDetailForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+    );
+
+    assert.equal(invalidConversationId, null);
 
     const conversationsB = await listConversationsForBusiness(
       database.db,

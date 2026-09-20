@@ -493,10 +493,10 @@ development data.
 
 Recommended immediate order:
 
-    1. Implement conversation detail with persisted messages
-    2. Add development message simulation
-    3. Establish the human handoff workflow
-    4. Connect CRM and Inbox operational flows
+    1. Add development message simulation
+    2. Establish the human handoff workflow
+    3. Connect CRM and Inbox operational flows
+    4. Add manual conversation intervention
 
 ---
 
@@ -587,7 +587,7 @@ M3 is closed.
     Contact list web UI       VERIFIED
     CRM contact detail        DONE
     Conversation list         DONE
-    Conversation detail       NOT STARTED
+    Conversation detail       DONE
     Development messages      NOT STARTED
     Human handoff workflow    NOT STARTED
 
@@ -620,6 +620,18 @@ The conversation inbox foundation is also tenant-scoped and currently exposes:
 
 The Inbox screen has been manually verified with OPEN, HUMAN_REQUIRED, AI-active,
 human-control, and no-message conversation states.
+
+Conversation detail is tenant-scoped and exposes persisted message history in
+chronological order. Cross-tenant conversation lookup returns no conversation
+data.
+
+The conversation detail UI has been manually verified with:
+
+    persisted inbound customer messages
+    persisted outbound AI messages
+    HUMAN_REQUIRED with human control
+    OPEN with AI control
+    empty message history
 
 M4 remains in progress.
 

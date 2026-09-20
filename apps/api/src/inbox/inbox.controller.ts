@@ -3,6 +3,8 @@ import {
   Get,
   Inject,
   InternalServerErrorException,
+  NotFoundException,
+  Param,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -34,5 +36,29 @@ export class InboxController {
     return {
       items: await this.conversationReader.listConversations(businessId),
     };
+  }
+
+  @Get('conversations/:conversationId')
+  @UseGuards(SupabaseAuthGuard, TenantContextGuard)
+  async conversation(
+    @Req() request: TenantRequest,
+    @Param('conversationId') conversationId: string,
+  ) {
+    const businessId = request.tenantContext?.businessId;
+
+    if (!businessId) {
+      throw new InternalServerErrorException('Tenant context is required.');
+    }
+
+    const conversation = await this.conversationReader.getConversation(
+      businessId,
+      conversationId,
+    );
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    return conversation;
   }
 }
