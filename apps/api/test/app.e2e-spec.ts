@@ -9,6 +9,8 @@ import { AppModule } from '../src/app.module.js';
 import { AUTH_ACCESS_TOKEN_VERIFIER } from '../src/auth/auth.tokens.js';
 import type { AccessTokenVerifier } from '../src/auth/auth.types.js';
 import { DatabaseService } from '../src/database/database.service.js';
+import { DASHBOARD_SUMMARY_READER } from '../src/dashboard/dashboard.tokens.js';
+import type { DashboardSummaryReader } from '../src/dashboard/dashboard.types.js';
 import { TENANT_MEMBERSHIP_READER } from '../src/tenancy/tenancy.tokens.js';
 import type {
   TenantMembership,
@@ -77,6 +79,35 @@ describe('API (e2e)', () => {
     },
   };
 
+  const dashboardSummaryReader: DashboardSummaryReader = {
+    async getSummary(businessId) {
+      if (businessId === 'business-a') {
+        return {
+          leadsReceived: 3,
+          openConversations: 2,
+          scheduledAppointments: 1,
+          humanHandoffs: 1,
+        };
+      }
+
+      if (businessId === 'business-c') {
+        return {
+          leadsReceived: 30,
+          openConversations: 20,
+          scheduledAppointments: 10,
+          humanHandoffs: 4,
+        };
+      }
+
+      return {
+        leadsReceived: 0,
+        openConversations: 0,
+        scheduledAppointments: 0,
+        humanHandoffs: 0,
+      };
+    },
+  };
+
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -85,6 +116,8 @@ describe('API (e2e)', () => {
       .useValue(accessTokenVerifier)
       .overrideProvider(TENANT_MEMBERSHIP_READER)
       .useValue(tenantMembershipReader)
+      .overrideProvider(DASHBOARD_SUMMARY_READER)
+      .useValue(dashboardSummaryReader)
       .overrideProvider(DatabaseService)
       .useValue({
         db: {},
@@ -198,5 +231,36 @@ describe('API (e2e)', () => {
       .set('Authorization', 'Bearer single-tenant-token')
       .set('x-business-id', 'business-c')
       .expect(403);
+  });
+
+  it('/dashboard/summary rejects missing authentication', async () => {
+    await request(app.getHttpServer()).get('/dashboard/summary').expect(401);
+  });
+
+  it('/dashboard/summary returns metrics for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/dashboard/summary')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        leadsReceived: 3,
+        openConversations: 2,
+        scheduledAppointments: 1,
+        humanHandoffs: 1,
+      });
+  });
+
+  it('/dashboard/summary follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/dashboard/summary')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        leadsReceived: 30,
+        openConversations: 20,
+        scheduledAppointments: 10,
+        humanHandoffs: 4,
+      });
   });
 });

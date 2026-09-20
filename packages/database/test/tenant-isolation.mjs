@@ -7,6 +7,7 @@ import postgres from 'postgres';
 
 import {
   createDatabase,
+  getDashboardSummary,
   listBusinessMembershipsForUser,
 } from '../dist/index.js';
 
@@ -213,6 +214,194 @@ async function verifyMembershipReader() {
   await sql`
     delete from auth.users
     where id = ${userId}::uuid
+  `;
+}
+
+async function verifyDashboardSummary() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Dashboard summary A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Dashboard summary B', 'America/Bogota')
+    returning id
+  `;
+
+  const contacts = await sql`
+    insert into public.contacts (business_id, name, source)
+    values
+      (${businessA.id}::uuid, 'Dashboard Contact 1', 'test'),
+      (${businessA.id}::uuid, 'Dashboard Contact 2', 'test'),
+      (${businessA.id}::uuid, 'Dashboard Contact 3', 'test')
+    returning id
+  `;
+
+  const [pipeline] = await sql`
+    insert into public.pipelines (business_id, name, is_default)
+    values (${businessA.id}::uuid, 'Dashboard Pipeline', true)
+    returning id
+  `;
+
+  const [stage] = await sql`
+    insert into public.pipeline_stages (
+      business_id,
+      pipeline_id,
+      name,
+      position
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${pipeline.id}::uuid,
+      'Dashboard Stage',
+      1
+    )
+    returning id
+  `;
+
+  const [service] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (${businessA.id}::uuid, 'Dashboard Service', 30)
+    returning id
+  `;
+
+  const [staff] = await sql`
+    insert into public.staff_members (business_id, name)
+    values (${businessA.id}::uuid, 'Dashboard Staff')
+    returning id
+  `;
+
+  for (const contact of contacts) {
+    await sql`
+      insert into public.leads (
+        business_id,
+        contact_id,
+        pipeline_id,
+        pipeline_stage_id,
+        service_id
+      )
+      values (
+        ${businessA.id}::uuid,
+        ${contact.id}::uuid,
+        ${pipeline.id}::uuid,
+        ${stage.id}::uuid,
+        ${service.id}::uuid
+      )
+    `;
+  }
+
+  await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values
+      (
+        ${businessA.id}::uuid,
+        ${contacts[0].id}::uuid,
+        'WHATSAPP',
+        'OPEN',
+        true
+      ),
+      (
+        ${businessA.id}::uuid,
+        ${contacts[1].id}::uuid,
+        'WHATSAPP',
+        'OPEN',
+        true
+      ),
+      (
+        ${businessA.id}::uuid,
+        ${contacts[2].id}::uuid,
+        'WHATSAPP',
+        'HUMAN_REQUIRED',
+        false
+      ),
+      (
+        ${businessA.id}::uuid,
+        ${contacts[0].id}::uuid,
+        'WHATSAPP',
+        'CLOSED',
+        false
+      )
+  `;
+
+  await sql`
+    insert into public.appointments (
+      business_id,
+      contact_id,
+      service_id,
+      staff_member_id,
+      starts_at,
+      ends_at,
+      status
+    )
+    values
+      (
+        ${businessA.id}::uuid,
+        ${contacts[0].id}::uuid,
+        ${service.id}::uuid,
+        ${staff.id}::uuid,
+        '2026-10-02T14:00:00Z',
+        '2026-10-02T14:30:00Z',
+        'SCHEDULED'
+      ),
+      (
+        ${businessA.id}::uuid,
+        ${contacts[1].id}::uuid,
+        ${service.id}::uuid,
+        ${staff.id}::uuid,
+        '2026-10-02T15:00:00Z',
+        '2026-10-02T15:30:00Z',
+        'SCHEDULED'
+      ),
+      (
+        ${businessA.id}::uuid,
+        ${contacts[2].id}::uuid,
+        ${service.id}::uuid,
+        ${staff.id}::uuid,
+        '2026-10-02T16:00:00Z',
+        '2026-10-02T16:30:00Z',
+        'CANCELLED'
+      )
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const summaryA = await getDashboardSummary(database.db, businessA.id);
+
+    assert.deepEqual(summaryA, {
+      leadsReceived: 3,
+      openConversations: 2,
+      scheduledAppointments: 2,
+      humanHandoffs: 1,
+    });
+
+    const summaryB = await getDashboardSummary(database.db, businessB.id);
+
+    assert.deepEqual(summaryB, {
+      leadsReceived: 0,
+      openConversations: 0,
+      scheduledAppointments: 0,
+      humanHandoffs: 0,
+    });
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
   `;
 }
 
@@ -879,6 +1068,7 @@ try {
   const migrations = await applyMigrations();
   await verifyRls();
   await verifyMembershipReader();
+  await verifyDashboardSummary();
   await verifyTenantIsolation();
 
   console.log(

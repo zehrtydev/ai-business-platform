@@ -10,11 +10,11 @@ Temporary project name.
 
 ## Current phase
 
-    M3 — Administrative dashboard
+    M4 — CRM + Inbox
 
 Status:
 
-    IN PROGRESS
+    READY TO START
 
 M1 — Technical base is complete.
 
@@ -25,23 +25,27 @@ quality gate.
 M2 is complete, including the operational schema, automated tenant isolation tests,
 and authenticated tenant resolution.
 
-M3 is now implementing the administrative authentication and application shell.
+M3 is complete. The authenticated administrative application shell, private
+navigation, tenant-aware backend integration, and real dashboard metrics are
+implemented and manually verified.
 
 ---
 
 ## Current objective
 
-Build the administrative application foundation defined for M3.
+Begin the CRM + Inbox foundation defined for M4.
 
 Immediate target:
 
-    authenticated administrative session
+    authenticated tenant
             ↓
-    verified web-to-API request
+    contacts and leads
             ↓
-    backend tenant resolution
+    conversations and messages
             ↓
-    administrative navigation and dashboard
+    human operational workflow
+            ↓
+    AI/human handoff foundation
 
 ---
 
@@ -469,7 +473,6 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    administrative navigation and dashboard
     Redis queues
     CRM application layer
     Inbox application layer
@@ -478,9 +481,9 @@ Major areas still not implemented include:
     AI agent
     deployment pipeline
 
-M0, M1, and M2 are complete.
+M0, M1, M2, and M3 are complete.
 
-M3 is in progress.
+M4 is ready to start.
 
 ---
 
@@ -488,9 +491,10 @@ M3 is in progress.
 
 Recommended immediate order:
 
-    1. Add initial real dashboard metrics
-    2. Complete the M3 administrative dashboard foundation
-    3. Prepare the transition into CRM and Inbox
+    1. Implement the tenant-scoped contacts list
+    2. Implement the conversation inbox foundation
+    3. Add development message simulation
+    4. Establish the human handoff workflow
 
 ---
 
@@ -544,20 +548,32 @@ M2 is closed.
 
 ### M3 — Administrative dashboard
 
-    Status                  IN PROGRESS
-    Supabase Auth web SSR   DONE
-    Login/logout            DONE
-    Session                 DONE
-    Route protection        DONE
-    API token verification  DONE
-    API auth-to-tenant      DONE
-    Web-to-API auth         DONE
-    Development user        PROVISIONED
-    Login-to-tenant flow    VERIFIED
-    Navigation              DONE
+    Status                    DONE
+    Supabase Auth web SSR     DONE
+    Login/logout              DONE
+    Session                   DONE
+    Route protection          DONE
+    API token verification    DONE
+    API auth-to-tenant        DONE
+    Web-to-API auth           DONE
+    Development user          PROVISIONED
+    Login-to-tenant flow      VERIFIED
+    Navigation                DONE
     Private application shell DONE
-    Private module routes    DONE
-    Initial dashboard       UI FOUNDATION
+    Private module routes     DONE
+    Dashboard API             DONE
+    Real dashboard metrics    VERIFIED
+
+Dashboard metrics currently represent tenant-wide persisted state:
+
+    leads received          total recorded leads
+    open conversations      conversations with OPEN status
+    scheduled appointments  appointments with SCHEDULED status
+    human handoffs          conversations with HUMAN_REQUIRED status
+
+M3 exit criterion is satisfied.
+
+M3 is closed.
 
 ---
 

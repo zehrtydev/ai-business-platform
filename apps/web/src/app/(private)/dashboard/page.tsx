@@ -1,25 +1,8 @@
-const metrics = [
-  {
-    label: 'Leads received',
-    value: '—',
-    detail: 'CRM metrics pending',
-  },
-  {
-    label: 'Open conversations',
-    value: '—',
-    detail: 'Inbox metrics pending',
-  },
-  {
-    label: 'Scheduled appointments',
-    value: '—',
-    detail: 'Scheduling metrics pending',
-  },
-  {
-    label: 'Human handoffs',
-    value: '—',
-    detail: 'Inbox metrics pending',
-  },
-];
+import { redirect } from 'next/navigation';
+
+import { getDashboardSummary } from '../../../lib/api/dashboard-summary';
+import { ApiAuthenticationError } from '../../../lib/api/tenant-context';
+import { createClient } from '../../../lib/supabase/server';
 
 const foundations = [
   {
@@ -34,12 +17,60 @@ const foundations = [
   },
   {
     title: 'Administrative shell',
-    status: 'Active',
+    status: 'Ready',
     detail: 'Private application navigation is available.',
   },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  const accessToken = session?.access_token;
+
+  if (sessionError || !accessToken) {
+    redirect('/login');
+  }
+
+  let summary;
+
+  try {
+    summary = await getDashboardSummary(accessToken);
+  } catch (error) {
+    if (error instanceof ApiAuthenticationError) {
+      redirect('/login');
+    }
+
+    throw error;
+  }
+
+  const metrics = [
+    {
+      label: 'Leads received',
+      value: summary.leadsReceived,
+      detail: 'All recorded leads',
+    },
+    {
+      label: 'Open conversations',
+      value: summary.openConversations,
+      detail: 'Currently open',
+    },
+    {
+      label: 'Scheduled appointments',
+      value: summary.scheduledAppointments,
+      detail: 'Currently scheduled',
+    },
+    {
+      label: 'Human handoffs',
+      value: summary.humanHandoffs,
+      detail: 'Awaiting human attention',
+    },
+  ];
+
   return (
     <div className="page-stack">
       <header className="page-header">
@@ -54,7 +85,7 @@ export default function DashboardPage() {
 
         <span className="status-pill">
           <span className="status-pill__dot" />
-          Authenticated workspace
+          Live workspace data
         </span>
       </header>
 
@@ -62,10 +93,13 @@ export default function DashboardPage() {
         <div className="section-heading">
           <div>
             <p className="eyebrow">Operational metrics</p>
-            <h2 id="metrics-heading">Today at a glance</h2>
+            <h2 id="metrics-heading">Current activity</h2>
           </div>
 
-          <p>Live domain metrics will arrive with CRM, Inbox and Scheduling.</p>
+          <p>
+            Metrics are calculated from persisted records for the authenticated
+            business.
+          </p>
         </div>
 
         <div className="metric-grid">
