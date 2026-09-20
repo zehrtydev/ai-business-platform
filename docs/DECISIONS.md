@@ -1583,13 +1583,34 @@ Client-editable user metadata is not used for authorization.
 
 The web authentication code must compile in CI without Supabase environment variables. Runtime authentication requires the environment configuration, but build-time compilation must not depend on development credentials.
 
-The current web authentication layer does not authorize a business tenant.
+The web application forwards authenticated requests to the NestJS API from
+server-side application code.
 
-The next backend authentication step must:
+Verified page identity continues to come from:
 
-    Bearer access token
+    supabase.auth.getClaims()
+
+After identity verification, the server-side application may use:
+
+    supabase.auth.getSession()
+
+only to retrieve the current access token as an opaque transport credential.
+
+The session user object returned by `getSession()` is not an authorization source.
+
+The access token is forwarded as:
+
+    Authorization: Bearer <access token>
+
+to the server-only `API_BASE_URL`.
+
+The backend remains the authority for tenant resolution:
+
+    verified web identity
             ↓
-    verified Supabase identity
+    opaque access token transport
+            ↓
+    NestJS SupabaseAuthGuard
             ↓
     authenticatedUserId
             ↓
@@ -1597,7 +1618,7 @@ The next backend authentication step must:
             ↓
     TenantContext
 
-The NestJS authentication layer must populate `authenticatedUserId` only after token verification.
+The NestJS authentication layer populates `authenticatedUserId` only after token verification.
 
 Tenant selection and business authorization continue to follow ADR-032.
 
@@ -1662,8 +1683,8 @@ Positive:
 Tradeoffs:
 
 - Supabase Auth is currently in the request path for backend access-token verification;
-- the web application still needs to forward its authenticated access token to the NestJS API;
-- the first development user and membership must still be provisioned before the real cross-application flow can be exercised;
+- the web-to-API boundary now depends on the NestJS API being reachable from the Next.js server;
+- local development requires valid server-side API and PostgreSQL runtime configuration;
 - local JWKS verification may later reduce Auth-server verification latency after asymmetric signing is adopted and operationally validated;
 - `@supabase/ssr` remains an external integration whose behavior must be checked against current Supabase documentation when upgraded.
 

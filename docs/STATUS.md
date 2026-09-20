@@ -35,13 +35,13 @@ Build the administrative application foundation defined for M3.
 
 Immediate target:
 
-    Supabase Auth integration
+    authenticated administrative session
             ↓
-    authenticated session
+    verified web-to-API request
             ↓
-    protected private routes
+    backend tenant resolution
             ↓
-    administrative dashboard foundation
+    administrative navigation and dashboard
 
 ---
 
@@ -469,8 +469,6 @@ Google Calendar may be added depending on pilot needs.
 
 Major areas still not implemented include:
 
-    web-to-API authenticated request forwarding
-    first development user and membership provisioning
     administrative navigation and dashboard
     Redis queues
     CRM application layer
@@ -490,11 +488,9 @@ M3 is in progress.
 
 Recommended immediate order:
 
-    1. Provision and verify the first development user and membership
-    2. Forward the authenticated web access token to the NestJS API
-    3. Exercise the real login-to-tenant flow
-    4. Build the administrative navigation
-    5. Begin the initial dashboard
+    1. Build the administrative navigation
+    2. Begin the initial dashboard
+    3. Continue M3 business administration foundations
 
 ---
 
@@ -555,10 +551,11 @@ M2 is closed.
     Route protection        DONE
     API token verification  DONE
     API auth-to-tenant      DONE
-    Web-to-API auth         NOT STARTED
-    Development user        NOT PROVISIONED
+    Web-to-API auth         DONE
+    Development user        PROVISIONED
+    Login-to-tenant flow    VERIFIED
     Navigation              NOT STARTED
-    Initial dashboard       ROUTE FOUNDATION
+    Initial dashboard       AUTHENTICATED TENANT FOUNDATION
 
 ---
 

@@ -4,19 +4,23 @@ import { redirect } from 'next/navigation';
 
 import { createClient } from '../../lib/supabase/server';
 
-function readRequiredString(formData: FormData, field: string): string {
+function readRequiredString(
+  formData: FormData,
+  field: string,
+  trim: boolean,
+): string {
   const value = formData.get(field);
 
   if (typeof value !== 'string' || !value.trim()) {
     redirect('/login?error=invalid_credentials');
   }
 
-  return value.trim();
+  return trim ? value.trim() : value;
 }
 
 export async function login(formData: FormData) {
-  const email = readRequiredString(formData, 'email');
-  const password = readRequiredString(formData, 'password');
+  const email = readRequiredString(formData, 'email', true);
+  const password = readRequiredString(formData, 'password', false);
 
   const supabase = await createClient();
 
