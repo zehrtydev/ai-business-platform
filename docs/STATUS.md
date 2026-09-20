@@ -488,9 +488,9 @@ M3 is in progress.
 
 Recommended immediate order:
 
-    1. Build the administrative navigation
-    2. Begin the initial dashboard
-    3. Continue M3 business administration foundations
+    1. Add initial real dashboard metrics
+    2. Complete the M3 administrative dashboard foundation
+    3. Prepare the transition into CRM and Inbox
 
 ---
 
@@ -554,8 +554,10 @@ M2 is closed.
     Web-to-API auth         DONE
     Development user        PROVISIONED
     Login-to-tenant flow    VERIFIED
-    Navigation              NOT STARTED
-    Initial dashboard       AUTHENTICATED TENANT FOUNDATION
+    Navigation              DONE
+    Private application shell DONE
+    Private module routes    DONE
+    Initial dashboard       UI FOUNDATION
 
 ---
 
