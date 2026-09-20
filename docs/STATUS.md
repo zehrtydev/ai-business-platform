@@ -493,10 +493,9 @@ development data.
 
 Recommended immediate order:
 
-    1. Add development message simulation
-    2. Establish the human handoff workflow
+    1. Establish the human handoff workflow
+    2. Add manual conversation intervention
     3. Connect CRM and Inbox operational flows
-    4. Add manual conversation intervention
 
 ---
 
@@ -588,7 +587,7 @@ M3 is closed.
     CRM contact detail        DONE
     Conversation list         DONE
     Conversation detail       DONE
-    Development messages      NOT STARTED
+    Development messages      DONE
     Human handoff workflow    NOT STARTED
 
 The contact list currently exposes:
@@ -632,6 +631,21 @@ The conversation detail UI has been manually verified with:
     HUMAN_REQUIRED with human control
     OPEN with AI control
     empty message history
+
+Development message simulation is implemented for authenticated, tenant-scoped
+development conversations. It persists inbound CONTACT messages and updates both
+conversation activity and contact last interaction time.
+
+Development simulation rejects:
+
+    cross-tenant conversations
+    non-development channels
+    closed conversations
+    blank or oversized messages
+
+The development simulator UI has been manually verified by creating a persisted
+customer message from the conversation detail screen and confirming that the
+Inbox reorders the conversation by its updated activity time.
 
 M4 remains in progress.
 

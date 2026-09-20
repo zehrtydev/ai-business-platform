@@ -8,6 +8,7 @@ import {
 } from '../../../../lib/api/conversation-detail';
 import { ApiAuthenticationError } from '../../../../lib/api/tenant-context';
 import { createClient } from '../../../../lib/supabase/server';
+import { simulateInboundMessage } from './actions';
 
 function contactName(contact: ConversationDetail['contact']): string {
   return contact.name ?? contact.phone ?? contact.email ?? 'Unnamed contact';
@@ -50,10 +51,13 @@ function senderLabel(
 
 export default async function ConversationDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
+  searchParams: Promise<{ simulation?: string }>;
 }) {
   const { conversationId } = await params;
+  const { simulation } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -84,6 +88,10 @@ export default async function ConversationDetailPage({
   }
 
   const name = contactName(conversation.contact);
+  const canSimulateInboundMessage =
+    process.env.NODE_ENV !== 'production' &&
+    conversation.channel.startsWith('development') &&
+    conversation.status !== 'CLOSED';
 
   return (
     <div className="page-stack">
@@ -171,6 +179,66 @@ export default async function ConversationDetailPage({
               ))}
             </div>
           )}
+
+          {canSimulateInboundMessage ? (
+            <div className="development-simulator">
+              <div>
+                <p className="eyebrow">Development tool</p>
+                <h3>Simulate inbound message</h3>
+                <p>
+                  Persist a customer message through the authenticated backend
+                  without using a real messaging provider.
+                </p>
+              </div>
+
+              {simulation === 'created' ? (
+                <p className="development-simulator__notice" role="status">
+                  Development message persisted.
+                </p>
+              ) : null}
+
+              {simulation === 'invalid' ? (
+                <p className="development-simulator__notice" role="alert">
+                  Enter a message between 1 and 4000 characters.
+                </p>
+              ) : null}
+
+              {simulation === 'unavailable' ? (
+                <p className="development-simulator__notice" role="alert">
+                  This conversation is not available for development simulation.
+                </p>
+              ) : null}
+
+              <form
+                action={simulateInboundMessage}
+                className="development-simulator__form"
+              >
+                <input
+                  name="conversationId"
+                  type="hidden"
+                  value={conversation.id}
+                />
+
+                <label htmlFor="development-message-content">
+                  Customer message
+                </label>
+
+                <textarea
+                  id="development-message-content"
+                  maxLength={4000}
+                  name="content"
+                  placeholder="Type a simulated inbound customer message..."
+                  required
+                  rows={3}
+                />
+
+                <div className="development-simulator__actions">
+                  <span>Development channels only.</span>
+                  <button type="submit">Simulate inbound</button>
+                </div>
+              </form>
+            </div>
+          ) : null}
         </section>
 
         <aside

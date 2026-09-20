@@ -1,4 +1,6 @@
 export type { Database } from './client.js';
+export type { DevelopmentInboundMessage } from './queries/development-message.js';
+export { createDevelopmentInboundMessageForBusiness } from './queries/development-message.js';
 export type {
   ConversationDetail,
   ConversationDetailMessage,

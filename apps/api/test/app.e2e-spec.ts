@@ -13,8 +13,14 @@ import type { CrmContactReader } from '../src/crm/crm.types.js';
 import { DatabaseService } from '../src/database/database.service.js';
 import { DASHBOARD_SUMMARY_READER } from '../src/dashboard/dashboard.tokens.js';
 import type { DashboardSummaryReader } from '../src/dashboard/dashboard.types.js';
-import { INBOX_CONVERSATION_READER } from '../src/inbox/inbox.tokens.js';
-import type { InboxConversationReader } from '../src/inbox/inbox.types.js';
+import {
+  INBOX_CONVERSATION_READER,
+  INBOX_DEVELOPMENT_MESSAGE_WRITER,
+} from '../src/inbox/inbox.tokens.js';
+import type {
+  InboxConversationReader,
+  InboxDevelopmentMessageWriter,
+} from '../src/inbox/inbox.types.js';
 import { TENANT_MEMBERSHIP_READER } from '../src/tenancy/tenancy.tokens.js';
 import type {
   TenantMembership,
@@ -300,6 +306,38 @@ describe('API (e2e)', () => {
     },
   };
 
+  const inboxDevelopmentMessageWriter: InboxDevelopmentMessageWriter = {
+    async createInboundMessage(businessId, conversationId, content) {
+      if (businessId === 'business-a' && conversationId === 'conversation-a') {
+        return {
+          id: 'development-message-a',
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          senderUserId: null,
+          content,
+          messageType: 'TEXT',
+          providerMessageId: null,
+          createdAt: '2026-09-20T02:20:00.000Z',
+        };
+      }
+
+      if (businessId === 'business-c' && conversationId === 'conversation-c') {
+        return {
+          id: 'development-message-c',
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          senderUserId: null,
+          content,
+          messageType: 'TEXT',
+          providerMessageId: null,
+          createdAt: '2026-09-20T02:21:00.000Z',
+        };
+      }
+
+      return null;
+    },
+  };
+
   const dashboardSummaryReader: DashboardSummaryReader = {
     async getSummary(businessId) {
       if (businessId === 'business-a') {
@@ -343,6 +381,8 @@ describe('API (e2e)', () => {
       .useValue(dashboardSummaryReader)
       .overrideProvider(INBOX_CONVERSATION_READER)
       .useValue(inboxConversationReader)
+      .overrideProvider(INBOX_DEVELOPMENT_MESSAGE_WRITER)
+      .useValue(inboxDevelopmentMessageWriter)
       .overrideProvider(DatabaseService)
       .useValue({
         db: {},
@@ -730,6 +770,80 @@ describe('API (e2e)', () => {
         createdAt: '2026-09-19T23:00:00.000Z',
         updatedAt: '2026-09-20T00:30:00.000Z',
         messages: [],
+      });
+  });
+
+  it('development/messages rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/development/messages')
+      .send({
+        content: 'Development inbound message',
+      })
+      .expect(401);
+  });
+
+  it('development/messages rejects blank content', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/development/messages')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        content: '   ',
+      })
+      .expect(400);
+  });
+
+  it('development/messages persists an inbound contact message', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/development/messages')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        content: '  Simulated customer reply.  ',
+      })
+      .expect(201)
+      .expect({
+        message: {
+          id: 'development-message-a',
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          senderUserId: null,
+          content: 'Simulated customer reply.',
+          messageType: 'TEXT',
+          providerMessageId: null,
+          createdAt: '2026-09-20T02:20:00.000Z',
+        },
+      });
+  });
+
+  it('development/messages hides conversations from another tenant', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/development/messages')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        content: 'Cross tenant attempt',
+      })
+      .expect(404);
+  });
+
+  it('development/messages follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/development/messages')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .send({
+        content: 'Selected tenant message',
+      })
+      .expect(201)
+      .expect({
+        message: {
+          id: 'development-message-c',
+          direction: 'INBOUND',
+          sender: 'CONTACT',
+          senderUserId: null,
+          content: 'Selected tenant message',
+          messageType: 'TEXT',
+          providerMessageId: null,
+          createdAt: '2026-09-20T02:21:00.000Z',
+        },
       });
   });
 

@@ -59,3 +59,11 @@ export interface InboxConversationReader {
     conversationId: string,
   ): Promise<InboxConversationDetail | null>;
 }
+
+export interface InboxDevelopmentMessageWriter {
+  createInboundMessage(
+    businessId: string,
+    conversationId: string,
+    content: string,
+  ): Promise<InboxConversationMessage | null>;
+}

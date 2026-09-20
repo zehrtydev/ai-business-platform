@@ -7,6 +7,7 @@ import postgres from 'postgres';
 
 import {
   createDatabase,
+  createDevelopmentInboundMessageForBusiness,
   getContactDetailForBusiness,
   getConversationDetailForBusiness,
   getDashboardSummary,
@@ -927,6 +928,233 @@ async function verifyConversationList() {
   `;
 }
 
+async function verifyDevelopmentMessageSimulation() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Development messages A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Development messages B', 'America/Bogota')
+    returning id
+  `;
+
+  const [contactA] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Development Message Contact A',
+      'development'
+    )
+    returning id
+  `;
+
+  const [contactB] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Development Message Contact B',
+      'development'
+    )
+    returning id
+  `;
+
+  const [conversationA] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA.id}::uuid,
+      'development',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  const [nonDevelopmentConversationA] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA.id}::uuid,
+      'whatsapp',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  const [closedConversationA] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA.id}::uuid,
+      'development',
+      'CLOSED',
+      false
+    )
+    returning id
+  `;
+
+  const [conversationB] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${contactB.id}::uuid,
+      'development',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const created = await createDevelopmentInboundMessageForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+      '  Simulated inbound customer message.  ',
+    );
+
+    assert(created);
+    assert.equal(created.conversationId, conversationA.id);
+    assert.equal(created.direction, 'INBOUND');
+    assert.equal(created.sender, 'CONTACT');
+    assert.equal(created.senderUserId, null);
+    assert.equal(created.content, 'Simulated inbound customer message.');
+    assert.equal(created.messageType, 'TEXT');
+    assert.equal(created.providerMessageId, null);
+
+    const detail = await getConversationDetailForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+    );
+
+    assert(detail);
+    assert.equal(detail.messages.length, 1);
+    assert.equal(detail.messages[0].id, created.id);
+    assert.equal(
+      detail.messages[0].content,
+      'Simulated inbound customer message.',
+    );
+    assert.equal(detail.updatedAt.getTime(), created.createdAt.getTime());
+
+    const [contactAfterMessage] = await sql`
+      select last_interaction_at as "lastInteractionAt"
+      from public.contacts
+      where business_id = ${businessA.id}::uuid
+        and id = ${contactA.id}::uuid
+    `;
+
+    assert(contactAfterMessage?.lastInteractionAt);
+    assert.equal(
+      contactAfterMessage.lastInteractionAt.getTime(),
+      created.createdAt.getTime(),
+    );
+
+    const crossTenant = await createDevelopmentInboundMessageForBusiness(
+      database.db,
+      businessA.id,
+      conversationB.id,
+      'Cross tenant message',
+    );
+
+    assert.equal(crossTenant, null);
+
+    const nonDevelopment = await createDevelopmentInboundMessageForBusiness(
+      database.db,
+      businessA.id,
+      nonDevelopmentConversationA.id,
+      'Should not be accepted',
+    );
+
+    assert.equal(nonDevelopment, null);
+
+    const closed = await createDevelopmentInboundMessageForBusiness(
+      database.db,
+      businessA.id,
+      closedConversationA.id,
+      'Should not be accepted',
+    );
+
+    assert.equal(closed, null);
+
+    const invalidId = await createDevelopmentInboundMessageForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+      'Invalid identifier',
+    );
+
+    assert.equal(invalidId, null);
+
+    await assert.rejects(
+      () =>
+        createDevelopmentInboundMessageForBusiness(
+          database.db,
+          businessA.id,
+          conversationA.id,
+          '   ',
+        ),
+      /Message content is required/,
+    );
+
+    await assert.rejects(
+      () =>
+        createDevelopmentInboundMessageForBusiness(
+          database.db,
+          businessA.id,
+          conversationA.id,
+          'x'.repeat(4_001),
+        ),
+      /must not exceed 4000 characters/,
+    );
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
+  `;
+}
+
 async function verifyDashboardSummary() {
   const [businessA] = await sql`
     insert into public.businesses (name, timezone)
@@ -1780,6 +2008,7 @@ try {
   await verifyMembershipReader();
   await verifyContactList();
   await verifyConversationList();
+  await verifyDevelopmentMessageSimulation();
   await verifyDashboardSummary();
   await verifyTenantIsolation();
 
