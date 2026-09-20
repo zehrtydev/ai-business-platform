@@ -9,6 +9,7 @@ import {
   createDatabase,
   getDashboardSummary,
   listBusinessMembershipsForUser,
+  listContactsForBusiness,
 } from '../dist/index.js';
 
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
@@ -214,6 +215,308 @@ async function verifyMembershipReader() {
   await sql`
     delete from auth.users
     where id = ${userId}::uuid
+  `;
+}
+
+async function verifyContactList() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Contact list A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Contact list B', 'America/Bogota')
+    returning id
+  `;
+
+  const [contactA1] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      phone,
+      email,
+      source,
+      last_interaction_at,
+      created_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Contact A1',
+      '+10000000001',
+      'a1@example.com',
+      'development',
+      '2026-09-20T01:00:00Z',
+      '2026-09-19T20:00:00Z'
+    )
+    returning id
+  `;
+
+  const [contactA2] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source,
+      created_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Contact A2',
+      'development',
+      '2026-09-19T21:00:00Z'
+    )
+    returning id
+  `;
+
+  const [contactB] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source,
+      last_interaction_at
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Contact B',
+      'development',
+      '2026-09-20T02:00:00Z'
+    )
+    returning id
+  `;
+
+  const [pipelineA] = await sql`
+    insert into public.pipelines (
+      business_id,
+      name,
+      is_default
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Contact list pipeline A',
+      true
+    )
+    returning id
+  `;
+
+  const [pipelineB] = await sql`
+    insert into public.pipelines (
+      business_id,
+      name,
+      is_default
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Contact list pipeline B',
+      true
+    )
+    returning id
+  `;
+
+  const [stageAOld] = await sql`
+    insert into public.pipeline_stages (
+      business_id,
+      pipeline_id,
+      name,
+      position
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${pipelineA.id}::uuid,
+      'New',
+      1
+    )
+    returning id
+  `;
+
+  const [stageANew] = await sql`
+    insert into public.pipeline_stages (
+      business_id,
+      pipeline_id,
+      name,
+      position
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${pipelineA.id}::uuid,
+      'Qualified',
+      2
+    )
+    returning id
+  `;
+
+  const [stageB] = await sql`
+    insert into public.pipeline_stages (
+      business_id,
+      pipeline_id,
+      name,
+      position
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${pipelineB.id}::uuid,
+      'Other tenant stage',
+      1
+    )
+    returning id
+  `;
+
+  const [serviceAOld] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Cleaning',
+      30
+    )
+    returning id
+  `;
+
+  const [serviceANew] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Evaluation',
+      60
+    )
+    returning id
+  `;
+
+  const [serviceB] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Other tenant service',
+      45
+    )
+    returning id
+  `;
+
+  await sql`
+    insert into public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id,
+      created_at,
+      updated_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA1.id}::uuid,
+      ${pipelineA.id}::uuid,
+      ${stageAOld.id}::uuid,
+      ${serviceAOld.id}::uuid,
+      '2026-09-19T22:00:00Z',
+      '2026-09-19T22:00:00Z'
+    )
+  `;
+
+  const [latestLeadA] = await sql`
+    insert into public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id,
+      created_at,
+      updated_at
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA1.id}::uuid,
+      ${pipelineA.id}::uuid,
+      ${stageANew.id}::uuid,
+      ${serviceANew.id}::uuid,
+      '2026-09-20T00:00:00Z',
+      '2026-09-20T00:30:00Z'
+    )
+    returning id
+  `;
+
+  await sql`
+    insert into public.leads (
+      business_id,
+      contact_id,
+      pipeline_id,
+      pipeline_stage_id,
+      service_id
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${contactB.id}::uuid,
+      ${pipelineB.id}::uuid,
+      ${stageB.id}::uuid,
+      ${serviceB.id}::uuid
+    )
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const contactsA = await listContactsForBusiness(database.db, businessA.id);
+
+    assert.equal(contactsA.length, 2);
+
+    assert.deepEqual(
+      contactsA.map((contact) => contact.id),
+      [contactA1.id, contactA2.id],
+    );
+
+    assert.equal(contactsA[0].name, 'Contact A1');
+    assert.equal(contactsA[0].phone, '+10000000001');
+    assert.equal(contactsA[0].email, 'a1@example.com');
+    assert.equal(contactsA[0].source, 'development');
+
+    assert.deepEqual(contactsA[0].lead, {
+      id: latestLeadA.id,
+      pipelineStage: {
+        id: stageANew.id,
+        name: 'Qualified',
+      },
+      service: {
+        id: serviceANew.id,
+        name: 'Evaluation',
+      },
+    });
+
+    assert.equal(contactsA[1].id, contactA2.id);
+    assert.equal(contactsA[1].lead, null);
+
+    const contactsB = await listContactsForBusiness(database.db, businessB.id);
+
+    assert.equal(contactsB.length, 1);
+    assert.equal(contactsB[0].id, contactB.id);
+    assert.equal(contactsB[0].lead?.pipelineStage.id, stageB.id);
+    assert.equal(contactsB[0].lead?.service?.id, serviceB.id);
+
+    const limitedContactsA = await listContactsForBusiness(
+      database.db,
+      businessA.id,
+      1,
+    );
+
+    assert.equal(limitedContactsA.length, 1);
+    assert.equal(limitedContactsA[0].id, contactA1.id);
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
   `;
 }
 
@@ -1068,6 +1371,7 @@ try {
   const migrations = await applyMigrations();
   await verifyRls();
   await verifyMembershipReader();
+  await verifyContactList();
   await verifyDashboardSummary();
   await verifyTenantIsolation();
 

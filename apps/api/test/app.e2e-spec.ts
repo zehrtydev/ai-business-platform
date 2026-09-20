@@ -8,6 +8,8 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { AUTH_ACCESS_TOKEN_VERIFIER } from '../src/auth/auth.tokens.js';
 import type { AccessTokenVerifier } from '../src/auth/auth.types.js';
+import { CRM_CONTACT_READER } from '../src/crm/crm.tokens.js';
+import type { CrmContactReader } from '../src/crm/crm.types.js';
 import { DatabaseService } from '../src/database/database.service.js';
 import { DASHBOARD_SUMMARY_READER } from '../src/dashboard/dashboard.tokens.js';
 import type { DashboardSummaryReader } from '../src/dashboard/dashboard.types.js';
@@ -79,6 +81,52 @@ describe('API (e2e)', () => {
     },
   };
 
+  const crmContactReader: CrmContactReader = {
+    async listContacts(businessId) {
+      if (businessId === 'business-a') {
+        return [
+          {
+            id: 'contact-a',
+            name: 'Contact A',
+            phone: '+10000000001',
+            email: 'contact-a@example.com',
+            source: 'development',
+            lastInteractionAt: '2026-09-20T01:00:00.000Z',
+            createdAt: '2026-09-19T20:00:00.000Z',
+            lead: {
+              id: 'lead-a',
+              pipelineStage: {
+                id: 'stage-a',
+                name: 'New',
+              },
+              service: {
+                id: 'service-a',
+                name: 'Evaluation',
+              },
+            },
+          },
+        ];
+      }
+
+      if (businessId === 'business-c') {
+        return [
+          {
+            id: 'contact-c',
+            name: 'Contact C',
+            phone: null,
+            email: 'contact-c@example.com',
+            source: 'development',
+            lastInteractionAt: null,
+            createdAt: '2026-09-19T21:00:00.000Z',
+            lead: null,
+          },
+        ];
+      }
+
+      return [];
+    },
+  };
+
   const dashboardSummaryReader: DashboardSummaryReader = {
     async getSummary(businessId) {
       if (businessId === 'business-a') {
@@ -116,6 +164,8 @@ describe('API (e2e)', () => {
       .useValue(accessTokenVerifier)
       .overrideProvider(TENANT_MEMBERSHIP_READER)
       .useValue(tenantMembershipReader)
+      .overrideProvider(CRM_CONTACT_READER)
+      .useValue(crmContactReader)
       .overrideProvider(DASHBOARD_SUMMARY_READER)
       .useValue(dashboardSummaryReader)
       .overrideProvider(DatabaseService)
@@ -231,6 +281,63 @@ describe('API (e2e)', () => {
       .set('Authorization', 'Bearer single-tenant-token')
       .set('x-business-id', 'business-c')
       .expect(403);
+  });
+
+  it('/crm/contacts rejects missing authentication', async () => {
+    await request(app.getHttpServer()).get('/crm/contacts').expect(401);
+  });
+
+  it('/crm/contacts returns contacts for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'contact-a',
+            name: 'Contact A',
+            phone: '+10000000001',
+            email: 'contact-a@example.com',
+            source: 'development',
+            lastInteractionAt: '2026-09-20T01:00:00.000Z',
+            createdAt: '2026-09-19T20:00:00.000Z',
+            lead: {
+              id: 'lead-a',
+              pipelineStage: {
+                id: 'stage-a',
+                name: 'New',
+              },
+              service: {
+                id: 'service-a',
+                name: 'Evaluation',
+              },
+            },
+          },
+        ],
+      });
+  });
+
+  it('/crm/contacts follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/crm/contacts')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'contact-c',
+            name: 'Contact C',
+            phone: null,
+            email: 'contact-c@example.com',
+            source: 'development',
+            lastInteractionAt: null,
+            createdAt: '2026-09-19T21:00:00.000Z',
+            lead: null,
+          },
+        ],
+      });
   });
 
   it('/dashboard/summary rejects missing authentication', async () => {

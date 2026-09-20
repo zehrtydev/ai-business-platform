@@ -520,3 +520,125 @@ p {
     padding: 24px;
   }
 }
+
+.count-pill,
+.neutral-pill,
+.stage-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.count-pill {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  padding: 9px 12px;
+  font-size: 11px;
+}
+
+.data-table-shell {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-muted);
+}
+
+.contact-cell {
+  display: flex;
+  min-width: 220px;
+  align-items: center;
+  gap: 11px;
+}
+
+.contact-cell__avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--surface-strong);
+  color: white;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.contact-cell__body {
+  min-width: 0;
+}
+
+.contact-cell__body strong,
+.contact-cell__body span {
+  display: block;
+}
+
+.contact-cell__body strong {
+  font-size: 12px;
+}
+
+.contact-cell__body span {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.neutral-pill,
+.stage-pill {
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.neutral-pill {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.stage-pill {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.table-muted {
+  color: var(--text-soft);
+}

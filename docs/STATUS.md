@@ -14,7 +14,7 @@ Temporary project name.
 
 Status:
 
-    READY TO START
+    IN PROGRESS
 
 M1 — Technical base is complete.
 
@@ -474,7 +474,7 @@ Google Calendar may be added depending on pilot needs.
 Major areas still not implemented include:
 
     Redis queues
-    CRM application layer
+    CRM contact detail and editing
     Inbox application layer
     availability engine
     WhatsApp integration
@@ -483,7 +483,8 @@ Major areas still not implemented include:
 
 M0, M1, M2, and M3 are complete.
 
-M4 is ready to start.
+M4 is in progress. The first tenant-scoped CRM contact list is implemented
+and manually verified against persisted development data.
 
 ---
 
@@ -491,7 +492,7 @@ M4 is ready to start.
 
 Recommended immediate order:
 
-    1. Implement the tenant-scoped contacts list
+    1. Implement CRM contact detail
     2. Implement the conversation inbox foundation
     3. Add development message simulation
     4. Establish the human handoff workflow
@@ -574,6 +575,35 @@ Dashboard metrics currently represent tenant-wide persisted state:
 M3 exit criterion is satisfied.
 
 M3 is closed.
+
+### M4 — CRM + Inbox
+
+    Status                    IN PROGRESS
+    CRM contact list          DONE
+    Tenant-scoped CRM API     DONE
+    Contact list DB query     VERIFIED
+    Latest lead projection    VERIFIED
+    Contact list web UI       VERIFIED
+    CRM contact detail        NOT STARTED
+    Conversation list         NOT STARTED
+    Conversation detail       NOT STARTED
+    Development messages      NOT STARTED
+    Human handoff workflow    NOT STARTED
+
+The contact list currently exposes:
+
+    contact identity
+    source
+    latest lead stage
+    latest lead service
+    last interaction
+
+The backend derives the business from authenticated tenant context. The web client
+does not supply a freely trusted business identifier.
+
+The first CRM screen has been manually verified against persisted development data.
+
+M4 remains in progress.
 
 ---
 

@@ -1,0 +1,1 @@
+export const CRM_CONTACT_READER = Symbol('CRM_CONTACT_READER');
