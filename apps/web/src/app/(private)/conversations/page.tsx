@@ -34,6 +34,34 @@ function statusLabel(status: ConversationListItem['status']): string {
   }
 }
 
+function controlLabel(conversation: ConversationListItem): string {
+  if (conversation.aiEnabled) {
+    return 'AI active';
+  }
+
+  if (conversation.status === 'HUMAN_REQUIRED') {
+    return 'Waiting for human';
+  }
+
+  if (conversation.assignedToUserId) {
+    return 'Human control';
+  }
+
+  return 'AI disabled';
+}
+
+function controlPillClass(conversation: ConversationListItem): string {
+  if (conversation.aiEnabled) {
+    return 'control-pill control-pill--ai';
+  }
+
+  if (conversation.status === 'HUMAN_REQUIRED') {
+    return 'control-pill control-pill--waiting';
+  }
+
+  return 'control-pill control-pill--human';
+}
+
 export default async function ConversationsPage() {
   const supabase = await createClient();
 
@@ -157,14 +185,8 @@ export default async function ConversationsPage() {
                       {statusLabel(conversation.status)}
                     </span>
 
-                    <span
-                      className={
-                        conversation.aiEnabled
-                          ? 'control-pill control-pill--ai'
-                          : 'control-pill control-pill--human'
-                      }
-                    >
-                      {conversation.aiEnabled ? 'AI active' : 'Human control'}
+                    <span className={controlPillClass(conversation)}>
+                      {controlLabel(conversation)}
                     </span>
                   </div>
 

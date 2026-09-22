@@ -67,3 +67,41 @@ export interface InboxDevelopmentMessageWriter {
     content: string,
   ): Promise<InboxConversationMessage | null>;
 }
+
+export interface InboxConversationControlState {
+  id: string;
+  status: 'OPEN' | 'HUMAN_REQUIRED' | 'CLOSED';
+  assignedToUserId: string | null;
+  aiEnabled: boolean;
+  updatedAt: string;
+}
+
+export type InboxConversationControlMutationResult =
+  | {
+      kind: 'updated';
+      conversation: InboxConversationControlState;
+    }
+  | {
+      kind: 'not_found';
+    }
+  | {
+      kind: 'conflict';
+    };
+
+export interface InboxConversationControlWriter {
+  requestHandoff(
+    businessId: string,
+    conversationId: string,
+  ): Promise<InboxConversationControlMutationResult>;
+
+  takeOver(
+    businessId: string,
+    conversationId: string,
+    userId: string,
+  ): Promise<InboxConversationControlMutationResult>;
+
+  resumeAi(
+    businessId: string,
+    conversationId: string,
+  ): Promise<InboxConversationControlMutationResult>;
+}

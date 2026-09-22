@@ -14,10 +14,13 @@ import { DatabaseService } from '../src/database/database.service.js';
 import { DASHBOARD_SUMMARY_READER } from '../src/dashboard/dashboard.tokens.js';
 import type { DashboardSummaryReader } from '../src/dashboard/dashboard.types.js';
 import {
+  INBOX_CONVERSATION_CONTROL_WRITER,
   INBOX_CONVERSATION_READER,
   INBOX_DEVELOPMENT_MESSAGE_WRITER,
 } from '../src/inbox/inbox.tokens.js';
 import type {
+  InboxConversationControlState,
+  InboxConversationControlWriter,
   InboxConversationReader,
   InboxDevelopmentMessageWriter,
 } from '../src/inbox/inbox.types.js';
@@ -306,6 +309,141 @@ describe('API (e2e)', () => {
     },
   };
 
+  let inboxConversationControlStates = new Map<
+    string,
+    InboxConversationControlState
+  >();
+
+  function conversationControlKey(
+    businessId: string,
+    conversationId: string,
+  ): string {
+    return `${businessId}:${conversationId}`;
+  }
+
+  function resetInboxConversationControlStates(): void {
+    inboxConversationControlStates = new Map([
+      [
+        conversationControlKey('business-a', 'conversation-a'),
+        {
+          id: 'conversation-a',
+          status: 'HUMAN_REQUIRED',
+          assignedToUserId: null,
+          aiEnabled: false,
+          updatedAt: '2026-09-20T01:30:00.000Z',
+        },
+      ],
+      [
+        conversationControlKey('business-c', 'conversation-c'),
+        {
+          id: 'conversation-c',
+          status: 'OPEN',
+          assignedToUserId: null,
+          aiEnabled: true,
+          updatedAt: '2026-09-20T00:30:00.000Z',
+        },
+      ],
+    ]);
+  }
+
+  const inboxConversationControlWriter: InboxConversationControlWriter = {
+    async requestHandoff(businessId, conversationId) {
+      const key = conversationControlKey(businessId, conversationId);
+      const current = inboxConversationControlStates.get(key);
+
+      if (!current) {
+        return { kind: 'not_found' };
+      }
+
+      if (
+        current.status !== 'OPEN' ||
+        !current.aiEnabled ||
+        current.assignedToUserId !== null
+      ) {
+        return { kind: 'conflict' };
+      }
+
+      const conversation: InboxConversationControlState = {
+        ...current,
+        status: 'HUMAN_REQUIRED',
+        aiEnabled: false,
+        assignedToUserId: null,
+        updatedAt: '2026-09-20T03:00:00.000Z',
+      };
+
+      inboxConversationControlStates.set(key, conversation);
+
+      return {
+        kind: 'updated',
+        conversation,
+      };
+    },
+
+    async takeOver(businessId, conversationId, userId) {
+      const key = conversationControlKey(businessId, conversationId);
+      const current = inboxConversationControlStates.get(key);
+
+      if (!current) {
+        return { kind: 'not_found' };
+      }
+
+      if (
+        current.status !== 'HUMAN_REQUIRED' ||
+        current.aiEnabled ||
+        current.assignedToUserId !== null
+      ) {
+        return { kind: 'conflict' };
+      }
+
+      const conversation: InboxConversationControlState = {
+        ...current,
+        status: 'OPEN',
+        aiEnabled: false,
+        assignedToUserId: userId,
+        updatedAt: '2026-09-20T03:01:00.000Z',
+      };
+
+      inboxConversationControlStates.set(key, conversation);
+
+      return {
+        kind: 'updated',
+        conversation,
+      };
+    },
+
+    async resumeAi(businessId, conversationId) {
+      const key = conversationControlKey(businessId, conversationId);
+      const current = inboxConversationControlStates.get(key);
+
+      if (!current) {
+        return { kind: 'not_found' };
+      }
+
+      if (
+        current.status !== 'OPEN' ||
+        current.aiEnabled ||
+        current.assignedToUserId === null
+      ) {
+        return { kind: 'conflict' };
+      }
+
+      const conversation: InboxConversationControlState = {
+        ...current,
+        status: 'OPEN',
+        aiEnabled: true,
+        assignedToUserId: null,
+        updatedAt: '2026-09-20T03:02:00.000Z',
+      };
+
+      inboxConversationControlStates.set(key, conversation);
+
+      return {
+        kind: 'updated',
+        conversation,
+      };
+    },
+  };
+
   const inboxDevelopmentMessageWriter: InboxDevelopmentMessageWriter = {
     async createInboundMessage(businessId, conversationId, content) {
       if (businessId === 'business-a' && conversationId === 'conversation-a') {
@@ -368,6 +506,8 @@ describe('API (e2e)', () => {
   };
 
   beforeEach(async () => {
+    resetInboxConversationControlStates();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -381,6 +521,8 @@ describe('API (e2e)', () => {
       .useValue(dashboardSummaryReader)
       .overrideProvider(INBOX_CONVERSATION_READER)
       .useValue(inboxConversationReader)
+      .overrideProvider(INBOX_CONVERSATION_CONTROL_WRITER)
+      .useValue(inboxConversationControlWriter)
       .overrideProvider(INBOX_DEVELOPMENT_MESSAGE_WRITER)
       .useValue(inboxDevelopmentMessageWriter)
       .overrideProvider(DatabaseService)
@@ -771,6 +913,94 @@ describe('API (e2e)', () => {
         updatedAt: '2026-09-20T00:30:00.000Z',
         messages: [],
       });
+  });
+
+  it('conversation control rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/request-handoff')
+      .expect(401);
+  });
+
+  it('conversation control completes the human handoff workflow', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/request-handoff')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(201)
+      .expect({
+        conversation: {
+          id: 'conversation-c',
+          status: 'HUMAN_REQUIRED',
+          assignedToUserId: null,
+          aiEnabled: false,
+          updatedAt: '2026-09-20T03:00:00.000Z',
+        },
+      });
+
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/take-over')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(201)
+      .expect({
+        conversation: {
+          id: 'conversation-c',
+          status: 'OPEN',
+          assignedToUserId: 'user-b',
+          aiEnabled: false,
+          updatedAt: '2026-09-20T03:01:00.000Z',
+        },
+      });
+
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/resume-ai')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(201)
+      .expect({
+        conversation: {
+          id: 'conversation-c',
+          status: 'OPEN',
+          assignedToUserId: null,
+          aiEnabled: true,
+          updatedAt: '2026-09-20T03:02:00.000Z',
+        },
+      });
+  });
+
+  it('conversation control hides conversations from another tenant', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-c/request-handoff')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(404);
+  });
+
+  it('request-handoff rejects an invalid conversation transition', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/request-handoff')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(409);
+  });
+
+  it('take-over rejects a second takeover after ownership is claimed', async () => {
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/take-over')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(201)
+      .expect({
+        conversation: {
+          id: 'conversation-a',
+          status: 'OPEN',
+          assignedToUserId: 'user-a',
+          aiEnabled: false,
+          updatedAt: '2026-09-20T03:01:00.000Z',
+        },
+      });
+
+    await request(app.getHttpServer())
+      .post('/inbox/conversations/conversation-a/take-over')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(409);
   });
 
   it('development/messages rejects missing authentication', async () => {

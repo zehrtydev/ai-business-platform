@@ -8,7 +8,12 @@ import {
 } from '../../../../lib/api/conversation-detail';
 import { ApiAuthenticationError } from '../../../../lib/api/tenant-context';
 import { createClient } from '../../../../lib/supabase/server';
-import { simulateInboundMessage } from './actions';
+import {
+  requestHandoffAction,
+  resumeAiAction,
+  simulateInboundMessage,
+  takeOverAction,
+} from './actions';
 
 function contactName(contact: ConversationDetail['contact']): string {
   return contact.name ?? contact.phone ?? contact.email ?? 'Unnamed contact';
@@ -36,6 +41,34 @@ function statusLabel(status: ConversationDetail['status']): string {
   }
 }
 
+function controlLabel(conversation: ConversationDetail): string {
+  if (conversation.aiEnabled) {
+    return 'AI active';
+  }
+
+  if (conversation.status === 'HUMAN_REQUIRED') {
+    return 'Waiting for human';
+  }
+
+  if (conversation.assignedToUserId) {
+    return 'Human control';
+  }
+
+  return 'AI disabled';
+}
+
+function controlPillClass(conversation: ConversationDetail): string {
+  if (conversation.aiEnabled) {
+    return 'control-pill control-pill--ai';
+  }
+
+  if (conversation.status === 'HUMAN_REQUIRED') {
+    return 'control-pill control-pill--waiting';
+  }
+
+  return 'control-pill control-pill--human';
+}
+
 function senderLabel(
   sender: ConversationDetail['messages'][number]['sender'],
 ): string {
@@ -54,10 +87,10 @@ export default async function ConversationDetailPage({
   searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
-  searchParams: Promise<{ simulation?: string }>;
+  searchParams: Promise<{ simulation?: string; control?: string }>;
 }) {
   const { conversationId } = await params;
-  const { simulation } = await searchParams;
+  const { simulation, control } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -123,14 +156,8 @@ export default async function ConversationDetailPage({
             {statusLabel(conversation.status)}
           </span>
 
-          <span
-            className={
-              conversation.aiEnabled
-                ? 'control-pill control-pill--ai'
-                : 'control-pill control-pill--human'
-            }
-          >
-            {conversation.aiEnabled ? 'AI active' : 'Human control'}
+          <span className={controlPillClass(conversation)}>
+            {controlLabel(conversation)}
           </span>
         </div>
       </header>
@@ -268,7 +295,7 @@ export default async function ConversationDetailPage({
 
             <div>
               <dt>Control</dt>
-              <dd>{conversation.aiEnabled ? 'AI active' : 'Human control'}</dd>
+              <dd>{controlLabel(conversation)}</dd>
             </div>
 
             <div>
@@ -289,6 +316,80 @@ export default async function ConversationDetailPage({
               </dd>
             </div>
           </dl>
+
+          {conversation.status !== 'CLOSED' ? (
+            <div className="conversation-control-panel">
+              <div>
+                <p className="eyebrow">Conversation control</p>
+                <h3>
+                  {conversation.aiEnabled
+                    ? 'AI is responding'
+                    : conversation.status === 'HUMAN_REQUIRED'
+                      ? 'Human attention required'
+                      : 'Human is in control'}
+                </h3>
+
+                <p>
+                  {conversation.aiEnabled
+                    ? 'Pause AI replies and send this conversation to the human queue.'
+                    : conversation.status === 'HUMAN_REQUIRED'
+                      ? 'Claim this conversation to handle replies manually.'
+                      : 'Return control to the AI and clear the human assignment.'}
+                </p>
+              </div>
+
+              {control === 'conflict' ? (
+                <p className="conversation-control-panel__notice" role="alert">
+                  The conversation changed before this action completed. Review
+                  its current state and try again.
+                </p>
+              ) : null}
+
+              {conversation.aiEnabled ? (
+                <form action={requestHandoffAction}>
+                  <input
+                    name="conversationId"
+                    type="hidden"
+                    value={conversation.id}
+                  />
+                  <button
+                    className="secondary-button secondary-button--full"
+                    type="submit"
+                  >
+                    Pass to human
+                  </button>
+                </form>
+              ) : conversation.status === 'HUMAN_REQUIRED' ? (
+                <form action={takeOverAction}>
+                  <input
+                    name="conversationId"
+                    type="hidden"
+                    value={conversation.id}
+                  />
+                  <button
+                    className="secondary-button secondary-button--full"
+                    type="submit"
+                  >
+                    Take conversation
+                  </button>
+                </form>
+              ) : conversation.assignedToUserId ? (
+                <form action={resumeAiAction}>
+                  <input
+                    name="conversationId"
+                    type="hidden"
+                    value={conversation.id}
+                  />
+                  <button
+                    className="secondary-button secondary-button--full"
+                    type="submit"
+                  >
+                    Resume AI
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          ) : null}
         </aside>
       </div>
     </div>

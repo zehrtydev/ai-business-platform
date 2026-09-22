@@ -26,3 +26,12 @@ export { getDashboardSummary } from './queries/dashboard-summary.js';
 export { listBusinessMembershipsForUser } from './queries/business-membership.js';
 export { createDatabase } from './client.js';
 export * as schema from './schema/index.js';
+export type {
+  ConversationControlMutationResult,
+  ConversationControlState,
+} from './queries/conversation-handoff.js';
+export {
+  requestConversationHandoffForBusiness,
+  resumeConversationAiForBusiness,
+  takeOverConversationForBusiness,
+} from './queries/conversation-handoff.js';

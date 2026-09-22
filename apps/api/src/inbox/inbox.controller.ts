@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   Inject,
@@ -18,10 +19,13 @@ import {
   type TenantRequest,
 } from '../tenancy/tenant-context.guard.js';
 import {
+  INBOX_CONVERSATION_CONTROL_WRITER,
   INBOX_CONVERSATION_READER,
   INBOX_DEVELOPMENT_MESSAGE_WRITER,
 } from './inbox.tokens.js';
 import type {
+  InboxConversationControlMutationResult,
+  InboxConversationControlWriter,
   InboxConversationReader,
   InboxDevelopmentMessageWriter,
 } from './inbox.types.js';
@@ -52,11 +56,31 @@ function parseDevelopmentMessageContent(body: unknown): string {
   return normalizedContent;
 }
 
+function resolveControlMutation(
+  result: InboxConversationControlMutationResult,
+) {
+  if (result.kind === 'not_found') {
+    throw new NotFoundException('Conversation not found.');
+  }
+
+  if (result.kind === 'conflict') {
+    throw new ConflictException(
+      'Conversation state does not allow this transition.',
+    );
+  }
+
+  return {
+    conversation: result.conversation,
+  };
+}
+
 @Controller('inbox')
 export class InboxController {
   constructor(
     @Inject(INBOX_CONVERSATION_READER)
     private readonly conversationReader: InboxConversationReader,
+    @Inject(INBOX_CONVERSATION_CONTROL_WRITER)
+    private readonly conversationControlWriter: InboxConversationControlWriter,
     @Inject(INBOX_DEVELOPMENT_MESSAGE_WRITER)
     private readonly developmentMessageWriter: InboxDevelopmentMessageWriter,
   ) {}
@@ -97,6 +121,68 @@ export class InboxController {
     }
 
     return conversation;
+  }
+
+  @Post('conversations/:conversationId/request-handoff')
+  @UseGuards(SupabaseAuthGuard, TenantContextGuard)
+  async requestHandoff(
+    @Req() request: TenantRequest,
+    @Param('conversationId') conversationId: string,
+  ) {
+    const businessId = request.tenantContext?.businessId;
+
+    if (!businessId) {
+      throw new InternalServerErrorException('Tenant context is required.');
+    }
+
+    const result = await this.conversationControlWriter.requestHandoff(
+      businessId,
+      conversationId,
+    );
+
+    return resolveControlMutation(result);
+  }
+
+  @Post('conversations/:conversationId/take-over')
+  @UseGuards(SupabaseAuthGuard, TenantContextGuard)
+  async takeOver(
+    @Req() request: TenantRequest,
+    @Param('conversationId') conversationId: string,
+  ) {
+    const businessId = request.tenantContext?.businessId;
+    const userId = request.tenantContext?.userId;
+
+    if (!businessId || !userId) {
+      throw new InternalServerErrorException('Tenant context is required.');
+    }
+
+    const result = await this.conversationControlWriter.takeOver(
+      businessId,
+      conversationId,
+      userId,
+    );
+
+    return resolveControlMutation(result);
+  }
+
+  @Post('conversations/:conversationId/resume-ai')
+  @UseGuards(SupabaseAuthGuard, TenantContextGuard)
+  async resumeAi(
+    @Req() request: TenantRequest,
+    @Param('conversationId') conversationId: string,
+  ) {
+    const businessId = request.tenantContext?.businessId;
+
+    if (!businessId) {
+      throw new InternalServerErrorException('Tenant context is required.');
+    }
+
+    const result = await this.conversationControlWriter.resumeAi(
+      businessId,
+      conversationId,
+    );
+
+    return resolveControlMutation(result);
   }
 
   @Post('conversations/:conversationId/development/messages')

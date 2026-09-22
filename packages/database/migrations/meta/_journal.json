@@ -43,6 +43,13 @@
       "when": 1789832039289,
       "tag": "0005_conversation_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789881387471,
+      "tag": "0006_human_handoff_workflow",
+      "breakpoints": true
     }
   ]
 }

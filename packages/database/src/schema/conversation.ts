@@ -79,7 +79,31 @@ export const conversations = pgTable(
     ),
     check(
       'conversations_ai_state_valid',
-      sql`${table.status} = 'OPEN' or ${table.aiEnabled} = false`,
+      sql`(
+        (
+          ${table.status} = 'OPEN'
+          and (
+            (
+              ${table.aiEnabled} = true
+              and ${table.assignedToUserId} is null
+            )
+            or (
+              ${table.aiEnabled} = false
+              and ${table.assignedToUserId} is not null
+            )
+          )
+        )
+        or (
+          ${table.status} = 'HUMAN_REQUIRED'
+          and ${table.aiEnabled} = false
+          and ${table.assignedToUserId} is null
+        )
+        or (
+          ${table.status} = 'CLOSED'
+          and ${table.aiEnabled} = false
+          and ${table.assignedToUserId} is null
+        )
+      )`,
     ),
   ],
 ).enableRLS();
