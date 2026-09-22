@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 
 import {
+  createAppointmentForBusiness,
+  updateAppointmentStatusForBusiness,
+  getAppointmentAvailableSlotsForBusiness,
   createDatabase,
   createDevelopmentInboundMessageForBusiness,
   getContactDetailForBusiness,
@@ -14,6 +17,9 @@ import {
   listBusinessMembershipsForUser,
   listContactsForBusiness,
   listConversationsForBusiness,
+  requestConversationHandoffForBusiness,
+  resumeConversationAiForBusiness,
+  takeOverConversationForBusiness,
 } from '../dist/index.js';
 
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
@@ -925,6 +931,1020 @@ async function verifyConversationList() {
   await sql`
     delete from public.businesses
     where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
+  `;
+}
+
+async function verifyConversationHandoffWorkflow() {
+  const userA = crypto.randomUUID();
+  const userB = crypto.randomUUID();
+
+  await sql`
+    insert into auth.users (id)
+    values
+      (${userA}::uuid),
+      (${userB}::uuid)
+  `;
+
+  await sql`
+    insert into public.app_users (id, display_name)
+    values
+      (${userA}::uuid, 'Handoff User A'),
+      (${userB}::uuid, 'Handoff User B')
+  `;
+
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Handoff Business A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Handoff Business B', 'America/Bogota')
+    returning id
+  `;
+
+  await sql`
+    insert into public.business_memberships (
+      business_id,
+      user_id,
+      role
+    )
+    values
+      (${businessA.id}::uuid, ${userA}::uuid, 'owner'),
+      (${businessA.id}::uuid, ${userB}::uuid, 'member')
+  `;
+
+  const [contactA] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Handoff Contact A',
+      'development'
+    )
+    returning id
+  `;
+
+  const [contactB] = await sql`
+    insert into public.contacts (
+      business_id,
+      name,
+      source
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Handoff Contact B',
+      'development'
+    )
+    returning id
+  `;
+
+  const [conversationA] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${contactA.id}::uuid,
+      'development',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  const [conversationB] = await sql`
+    insert into public.conversations (
+      business_id,
+      contact_id,
+      channel,
+      status,
+      ai_enabled
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${contactB.id}::uuid,
+      'development',
+      'OPEN',
+      true
+    )
+    returning id
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const crossTenantHandoff =
+      await requestConversationHandoffForBusiness(
+        database.db,
+        businessA.id,
+        conversationB.id,
+      );
+
+    assert.deepEqual(crossTenantHandoff, {
+      kind: 'not_found',
+    });
+
+    const [untouchedConversationB] = await sql`
+      select
+        status,
+        ai_enabled as "aiEnabled",
+        assigned_to_user_id as "assignedToUserId"
+      from public.conversations
+      where id = ${conversationB.id}::uuid
+    `;
+
+    assert.deepEqual(
+      {
+        status: untouchedConversationB.status,
+        aiEnabled: untouchedConversationB.aiEnabled,
+        assignedToUserId: untouchedConversationB.assignedToUserId,
+      },
+      {
+        status: 'OPEN',
+        aiEnabled: true,
+        assignedToUserId: null,
+      },
+    );
+
+    const handoff = await requestConversationHandoffForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+    );
+
+    assert.equal(handoff.kind, 'updated');
+
+    if (handoff.kind !== 'updated') {
+      throw new Error('Expected request handoff to update the conversation.');
+    }
+
+    assert.equal(handoff.conversation.status, 'HUMAN_REQUIRED');
+    assert.equal(handoff.conversation.aiEnabled, false);
+    assert.equal(handoff.conversation.assignedToUserId, null);
+
+    const duplicateHandoff =
+      await requestConversationHandoffForBusiness(
+        database.db,
+        businessA.id,
+        conversationA.id,
+      );
+
+    assert.deepEqual(duplicateHandoff, {
+      kind: 'conflict',
+    });
+
+    const takeoverResults = await Promise.all([
+      takeOverConversationForBusiness(
+        database.db,
+        businessA.id,
+        conversationA.id,
+        userA,
+      ),
+      takeOverConversationForBusiness(
+        database.db,
+        businessA.id,
+        conversationA.id,
+        userB,
+      ),
+    ]);
+
+    const updatedTakeovers = takeoverResults.filter(
+      (result) => result.kind === 'updated',
+    );
+    const conflictingTakeovers = takeoverResults.filter(
+      (result) => result.kind === 'conflict',
+    );
+
+    assert.equal(
+      updatedTakeovers.length,
+      1,
+      'Exactly one concurrent takeover must succeed.',
+    );
+    assert.equal(
+      conflictingTakeovers.length,
+      1,
+      'Exactly one concurrent takeover must conflict.',
+    );
+
+    const successfulTakeover = updatedTakeovers[0];
+
+    assert(successfulTakeover);
+    assert.equal(successfulTakeover.kind, 'updated');
+
+    if (successfulTakeover.kind !== 'updated') {
+      throw new Error('Expected one takeover to succeed.');
+    }
+
+    assert.equal(successfulTakeover.conversation.status, 'OPEN');
+    assert.equal(successfulTakeover.conversation.aiEnabled, false);
+    assert(
+      successfulTakeover.conversation.assignedToUserId === userA ||
+        successfulTakeover.conversation.assignedToUserId === userB,
+    );
+
+    const winningUserId =
+      successfulTakeover.conversation.assignedToUserId;
+
+    const [persistedHumanState] = await sql`
+      select
+        status,
+        ai_enabled as "aiEnabled",
+        assigned_to_user_id as "assignedToUserId"
+      from public.conversations
+      where id = ${conversationA.id}::uuid
+    `;
+
+    assert.deepEqual(
+      {
+        status: persistedHumanState.status,
+        aiEnabled: persistedHumanState.aiEnabled,
+        assignedToUserId: persistedHumanState.assignedToUserId,
+      },
+      {
+        status: 'OPEN',
+        aiEnabled: false,
+        assignedToUserId: winningUserId,
+      },
+    );
+
+    const resumed = await resumeConversationAiForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+    );
+
+    assert.equal(resumed.kind, 'updated');
+
+    if (resumed.kind !== 'updated') {
+      throw new Error('Expected resume AI to update the conversation.');
+    }
+
+    assert.equal(resumed.conversation.status, 'OPEN');
+    assert.equal(resumed.conversation.aiEnabled, true);
+    assert.equal(resumed.conversation.assignedToUserId, null);
+
+    const duplicateResume = await resumeConversationAiForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+    );
+
+    assert.deepEqual(duplicateResume, {
+      kind: 'conflict',
+    });
+
+    await assert.rejects(
+      () => sql`
+        update public.conversations
+        set
+          ai_enabled = false,
+          assigned_to_user_id = null
+        where id = ${conversationA.id}::uuid
+      `,
+      (error) => error?.code === '23514',
+      'Database constraint must reject OPEN + AI disabled + no assignee.',
+    );
+
+    const [finalConversation] = await sql`
+      select
+        status,
+        ai_enabled as "aiEnabled",
+        assigned_to_user_id as "assignedToUserId"
+      from public.conversations
+      where id = ${conversationA.id}::uuid
+    `;
+
+    assert.deepEqual(
+      {
+        status: finalConversation.status,
+        aiEnabled: finalConversation.aiEnabled,
+        assignedToUserId: finalConversation.assignedToUserId,
+      },
+      {
+        status: 'OPEN',
+        aiEnabled: true,
+        assignedToUserId: null,
+      },
+    );
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
+  `;
+
+  await sql`
+    delete from auth.users
+    where id in (${userA}::uuid, ${userB}::uuid)
+  `;
+}
+
+async function verifyAppointmentCreationWorkflow() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Appointment Creation A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Appointment Creation B', 'America/Bogota')
+    returning id
+  `;
+
+  const [contactA] = await sql`
+    insert into public.contacts (business_id, name, source)
+    values (
+      ${businessA.id}::uuid,
+      'Appointment Contact A',
+      'test'
+    )
+    returning id
+  `;
+
+  const [contactB] = await sql`
+    insert into public.contacts (business_id, name, source)
+    values (
+      ${businessB.id}::uuid,
+      'Appointment Contact B',
+      'test'
+    )
+    returning id
+  `;
+
+  const [serviceA] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Appointment Service A',
+      60
+    )
+    returning id
+  `;
+
+  const [serviceB] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes
+    )
+    values (
+      ${businessB.id}::uuid,
+      'Appointment Service B',
+      45
+    )
+    returning id
+  `;
+
+  const [inactiveService] = await sql`
+    insert into public.services (
+      business_id,
+      name,
+      duration_minutes,
+      is_active
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Inactive Appointment Service',
+      30,
+      false
+    )
+    returning id
+  `;
+
+  const [staffA] = await sql`
+    insert into public.staff_members (business_id, name)
+    values (
+      ${businessA.id}::uuid,
+      'Appointment Staff A'
+    )
+    returning id
+  `;
+
+  const [staffB] = await sql`
+    insert into public.staff_members (business_id, name)
+    values (
+      ${businessB.id}::uuid,
+      'Appointment Staff B'
+    )
+    returning id
+  `;
+
+  const [unlinkedStaff] = await sql`
+    insert into public.staff_members (business_id, name)
+    values (
+      ${businessA.id}::uuid,
+      'Unlinked Appointment Staff'
+    )
+    returning id
+  `;
+
+  const [inactiveStaff] = await sql`
+    insert into public.staff_members (
+      business_id,
+      name,
+      is_active
+    )
+    values (
+      ${businessA.id}::uuid,
+      'Inactive Appointment Staff',
+      false
+    )
+    returning id
+  `;
+
+  await sql`
+    insert into public.staff_services (
+      business_id,
+      staff_member_id,
+      service_id
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${staffA.id}::uuid,
+      ${serviceA.id}::uuid
+    )
+  `;
+
+  await sql`
+    insert into public.availability_rules (
+      business_id,
+      staff_member_id,
+      day_of_week,
+      start_time,
+      end_time,
+      is_active
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${staffA.id}::uuid,
+      1,
+      '09:00:00'::time,
+      '17:00:00'::time,
+      true
+    )
+  `;
+
+  await sql`
+    insert into public.staff_services (
+      business_id,
+      staff_member_id,
+      service_id
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${staffA.id}::uuid,
+      ${inactiveService.id}::uuid
+    )
+  `;
+
+  await sql`
+    insert into public.staff_services (
+      business_id,
+      staff_member_id,
+      service_id
+    )
+    values (
+      ${businessA.id}::uuid,
+      ${inactiveStaff.id}::uuid,
+      ${serviceA.id}::uuid
+    )
+  `;
+
+  await sql`
+    insert into public.staff_services (
+      business_id,
+      staff_member_id,
+      service_id
+    )
+    values (
+      ${businessB.id}::uuid,
+      ${staffB.id}::uuid,
+      ${serviceB.id}::uuid
+    )
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const startsAt = new Date('2099-09-21T14:00:00.000Z');
+
+    const created = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt,
+      },
+    );
+
+    assert.equal(created.kind, 'created');
+
+    assert.equal(
+      created.appointment.startsAt.toISOString(),
+      '2099-09-21T14:00:00.000Z',
+    );
+
+    assert.equal(
+      created.appointment.endsAt.toISOString(),
+      '2099-09-21T15:00:00.000Z',
+    );
+
+    assert.equal(created.appointment.status, 'SCHEDULED');
+    assert.equal(created.appointment.contactId, contactA.id);
+    assert.equal(created.appointment.serviceId, serviceA.id);
+    assert.equal(created.appointment.staffMemberId, staffA.id);
+
+
+    const slotsAfterFirstAppointment =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffA.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.equal(slotsAfterFirstAppointment.kind, 'available');
+
+    assert.equal(
+      slotsAfterFirstAppointment.availability.timezone,
+      'America/Bogota',
+    );
+
+    assert.equal(
+      slotsAfterFirstAppointment.availability.serviceDurationMinutes,
+      60,
+    );
+
+    assert.equal(
+      slotsAfterFirstAppointment.availability.slotIntervalMinutes,
+      60,
+    );
+
+    const firstAppointmentSlotStarts =
+      slotsAfterFirstAppointment.availability.slots.map((slot) =>
+        slot.startsAt.toISOString(),
+      );
+
+    assert.equal(firstAppointmentSlotStarts.length, 7);
+
+    assert.equal(
+      firstAppointmentSlotStarts[0],
+      '2099-09-21T15:00:00.000Z',
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.at(-1),
+      '2099-09-21T21:00:00.000Z',
+    );
+
+    assert.equal(
+      slotsAfterFirstAppointment.availability.slots
+        .at(-1)
+        .endsAt.toISOString(),
+      '2099-09-21T22:00:00.000Z',
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.includes(
+        '2099-09-21T14:00:00.000Z',
+      ),
+      false,
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.includes(
+        '2099-09-21T14:15:00.000Z',
+      ),
+      false,
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.includes(
+        '2099-09-21T14:30:00.000Z',
+      ),
+      false,
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.includes(
+        '2099-09-21T14:45:00.000Z',
+      ),
+      false,
+    );
+
+    assert.equal(
+      firstAppointmentSlotStarts.includes(
+        '2099-09-21T15:00:00.000Z',
+      ),
+      true,
+    );
+
+    const unavailableDaySlots =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffA.id,
+          date: '2099-09-22',
+        },
+      );
+
+    assert.equal(unavailableDaySlots.kind, 'available');
+    assert.equal(unavailableDaySlots.availability.slots.length, 0);
+
+    const unsupportedStaffSlots =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: unlinkedStaff.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.deepEqual(unsupportedStaffSlots, {
+      kind: 'configuration',
+    });
+
+    const crossTenantServiceSlots =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceB.id,
+          staffMemberId: staffA.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.deepEqual(crossTenantServiceSlots, {
+      kind: 'not_found',
+    });
+
+    const crossTenantStaffSlots =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffB.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.deepEqual(crossTenantStaffSlots, {
+      kind: 'not_found',
+    });
+
+    const invalidDateSlots =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffA.id,
+          date: '2099-02-30',
+        },
+      );
+
+    assert.deepEqual(invalidDateSlots, {
+      kind: 'invalid',
+    });
+
+    const crossTenantContact = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactB.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(crossTenantContact, {
+      kind: 'not_found',
+    });
+
+    const crossTenantService = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceB.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(crossTenantService, {
+      kind: 'not_found',
+    });
+
+    const crossTenantStaff = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffB.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(crossTenantStaff, {
+      kind: 'not_found',
+    });
+
+    const unsupportedService = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: unlinkedStaff.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(unsupportedService, {
+      kind: 'conflict',
+      reason: 'configuration',
+    });
+
+    const inactiveServiceResult = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: inactiveService.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(inactiveServiceResult, {
+      kind: 'conflict',
+      reason: 'configuration',
+    });
+
+    const inactiveStaffResult = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: inactiveStaff.id,
+        startsAt: new Date('2099-09-21T16:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(inactiveStaffResult, {
+      kind: 'conflict',
+      reason: 'configuration',
+    });
+
+    const pastAppointment = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2020-09-21T14:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(pastAppointment, {
+      kind: 'conflict',
+      reason: 'past',
+    });
+
+    const unavailableDay = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-22T14:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(unavailableDay, {
+      kind: 'conflict',
+      reason: 'unavailable_day',
+    });
+
+    const outsideWorkingHours = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T22:00:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(outsideWorkingHours, {
+      kind: 'conflict',
+      reason: 'outside_hours',
+    });
+
+    const overlapping = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T14:30:00.000Z'),
+      },
+    );
+
+    assert.deepEqual(overlapping, {
+      kind: 'conflict',
+      reason: 'overlap',
+    });
+
+    const adjacent = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T15:00:00.000Z'),
+      },
+    );
+
+    assert.equal(adjacent.kind, 'created');
+
+    assert.equal(
+      adjacent.appointment.endsAt.toISOString(),
+      '2099-09-21T16:00:00.000Z',
+    );
+
+
+    const slotsAfterAdjacentAppointment =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffA.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.equal(slotsAfterAdjacentAppointment.kind, 'available');
+
+    const adjacentSlotStarts =
+      slotsAfterAdjacentAppointment.availability.slots.map((slot) =>
+        slot.startsAt.toISOString(),
+      );
+
+    assert.equal(adjacentSlotStarts.length, 6);
+
+    assert.equal(
+      adjacentSlotStarts[0],
+      '2099-09-21T16:00:00.000Z',
+    );
+
+    assert.equal(
+      adjacentSlotStarts.at(-1),
+      '2099-09-21T21:00:00.000Z',
+    );
+
+    const [counts] = await sql`
+      select
+        count(*) filter (
+          where business_id = ${businessA.id}::uuid
+        )::int as "businessA",
+        count(*) filter (
+          where business_id = ${businessB.id}::uuid
+        )::int as "businessB"
+      from public.appointments
+    `;
+
+    assert.deepEqual(counts, {
+      businessA: 2,
+      businessB: 0,
+    });
+
+
+    const cancelled =
+      await updateAppointmentStatusForBusiness(
+        database.db,
+        businessA.id,
+        created.appointment.id,
+        'CANCELLED',
+      );
+
+    assert.equal(cancelled.kind, 'updated');
+    assert.equal(cancelled.appointment.status, 'CANCELLED');
+
+    const terminalTransition =
+      await updateAppointmentStatusForBusiness(
+        database.db,
+        businessA.id,
+        created.appointment.id,
+        'COMPLETED',
+      );
+
+    assert.equal(terminalTransition.kind, 'conflict');
+    assert.equal(terminalTransition.currentStatus, 'CANCELLED');
+
+    const crossTenantStatusUpdate =
+      await updateAppointmentStatusForBusiness(
+        database.db,
+        businessB.id,
+        created.appointment.id,
+        'COMPLETED',
+      );
+
+    assert.equal(crossTenantStatusUpdate.kind, 'not_found');
+
+    const slotsAfterCancellation =
+      await getAppointmentAvailableSlotsForBusiness(
+        database.db,
+        businessA.id,
+        {
+          serviceId: serviceA.id,
+          staffMemberId: staffA.id,
+          date: '2099-09-21',
+        },
+      );
+
+    assert.equal(slotsAfterCancellation.kind, 'available');
+
+    assert.equal(
+      slotsAfterCancellation.availability.slots.some(
+        (slot) =>
+          slot.startsAt.toISOString() ===
+          '2099-09-21T14:00:00.000Z',
+      ),
+      true,
+      'Cancelling an appointment must release its slot.',
+    );
+
+    const replacement = await createAppointmentForBusiness(
+      database.db,
+      businessA.id,
+      {
+        contactId: contactA.id,
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        startsAt: new Date('2099-09-21T14:00:00.000Z'),
+      },
+    );
+
+    assert.equal(
+      replacement.kind,
+      'created',
+      'A cancelled appointment must no longer block a replacement booking.',
+    );
+
+    if (replacement.kind === 'created') {
+      await sql`
+        delete from public.appointments
+        where id = ${replacement.appointment.id}::uuid
+      `;
+    }
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (
+      ${businessA.id}::uuid,
+      ${businessB.id}::uuid
+    )
   `;
 }
 
@@ -2008,6 +3028,8 @@ try {
   await verifyMembershipReader();
   await verifyContactList();
   await verifyConversationList();
+  await verifyConversationHandoffWorkflow();
+  await verifyAppointmentCreationWorkflow();
   await verifyDevelopmentMessageSimulation();
   await verifyDashboardSummary();
   await verifyTenantIsolation();

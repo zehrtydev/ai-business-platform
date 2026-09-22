@@ -6,6 +6,18 @@ import {
 import request from 'supertest';
 
 import { AppModule } from '../src/app.module.js';
+import {
+  APPOINTMENT_AVAILABLE_SLOTS_READER,
+  APPOINTMENT_READER,
+  APPOINTMENT_SCHEDULING_OPTIONS_READER,
+  APPOINTMENT_WRITER,
+} from '../src/appointments/appointments.tokens.js';
+import type {
+  AppointmentAvailableSlotsReader,
+  AppointmentReader,
+  AppointmentSchedulingOptionsReader,
+  AppointmentWriter,
+} from '../src/appointments/appointments.types.js';
 import { AUTH_ACCESS_TOKEN_VERIFIER } from '../src/auth/auth.tokens.js';
 import type { AccessTokenVerifier } from '../src/auth/auth.types.js';
 import { CRM_CONTACT_READER } from '../src/crm/crm.tokens.js';
@@ -476,6 +488,302 @@ describe('API (e2e)', () => {
     },
   };
 
+  const appointmentReader: AppointmentReader = {
+    async listAppointments(businessId) {
+      if (businessId === 'business-a') {
+        return [
+          {
+            id: 'appointment-a',
+            status: 'SCHEDULED',
+            startsAt: '2026-09-21T14:00:00.000Z',
+            endsAt: '2026-09-21T14:30:00.000Z',
+            createdAt: '2026-09-20T02:00:00.000Z',
+            updatedAt: '2026-09-20T02:00:00.000Z',
+            contact: {
+              id: 'contact-a',
+              name: 'Contact A',
+              phone: '+10000000001',
+              email: 'contact-a@example.com',
+            },
+            service: {
+              id: 'service-a',
+              name: 'Evaluation',
+              durationMinutes: 30,
+            },
+            staffMember: {
+              id: 'staff-a',
+              name: 'Staff A',
+            },
+          },
+        ];
+      }
+
+      if (businessId === 'business-c') {
+        return [
+          {
+            id: 'appointment-c',
+            status: 'COMPLETED',
+            startsAt: '2026-09-22T15:00:00.000Z',
+            endsAt: '2026-09-22T16:00:00.000Z',
+            createdAt: '2026-09-20T02:10:00.000Z',
+            updatedAt: '2026-09-22T16:05:00.000Z',
+            contact: {
+              id: 'contact-c',
+              name: 'Contact C',
+              phone: null,
+              email: 'contact-c@example.com',
+            },
+            service: {
+              id: 'service-c',
+              name: 'Consultation',
+              durationMinutes: 60,
+            },
+            staffMember: {
+              id: 'staff-c',
+              name: 'Staff C',
+            },
+          },
+        ];
+      }
+
+      return [];
+    },
+  };
+
+  const appointmentSchedulingOptionsReader: AppointmentSchedulingOptionsReader = {
+    async getOptions(businessId) {
+      if (businessId === 'business-a') {
+        return {
+          timezone: 'America/Bogota',
+          services: [
+            {
+              id: 'service-a',
+              name: 'Evaluation',
+              durationMinutes: 30,
+              staffMembers: [
+                {
+                  id: 'staff-a',
+                  name: 'Staff A',
+                  availability: [
+                    {
+                      dayOfWeek: 1,
+                      startTime: '09:00:00',
+                      endTime: '17:00:00',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+      }
+
+      if (businessId === 'business-c') {
+        return {
+          timezone: 'America/New_York',
+          services: [
+            {
+              id: 'service-c',
+              name: 'Consultation',
+              durationMinutes: 60,
+              staffMembers: [
+                {
+                  id: 'staff-c',
+                  name: 'Staff C',
+                  availability: [
+                    {
+                      dayOfWeek: 2,
+                      startTime: '10:00:00',
+                      endTime: '18:00:00',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+      }
+
+      return null;
+    },
+  };
+
+  const appointmentAvailableSlotsReader: AppointmentAvailableSlotsReader = {
+    async getAvailableSlots(businessId, input) {
+      if (
+        businessId === 'business-a' &&
+        input.serviceId === 'service-a' &&
+        input.staffMemberId === 'staff-unconfigured'
+      ) {
+        return {
+          kind: 'configuration',
+        };
+      }
+
+      if (
+        businessId === 'business-a' &&
+        input.serviceId === 'service-a' &&
+        input.staffMemberId === 'staff-a'
+      ) {
+        return {
+          kind: 'available',
+          availability: {
+            timezone: 'America/Bogota',
+            date: input.date,
+            serviceId: input.serviceId,
+            staffMemberId: input.staffMemberId,
+            serviceDurationMinutes: 30,
+            slotIntervalMinutes: 30,
+            slots:
+              input.date === '2026-09-21'
+                ? [
+                    {
+                      startsAt: '2026-09-21T14:00:00.000Z',
+                      endsAt: '2026-09-21T14:30:00.000Z',
+                    },
+                    {
+                      startsAt: '2026-09-21T14:15:00.000Z',
+                      endsAt: '2026-09-21T14:45:00.000Z',
+                    },
+                  ]
+                : [],
+          },
+        };
+      }
+
+      if (
+        businessId === 'business-c' &&
+        input.serviceId === 'service-c' &&
+        input.staffMemberId === 'staff-c'
+      ) {
+        return {
+          kind: 'available',
+          availability: {
+            timezone: 'America/New_York',
+            date: input.date,
+            serviceId: input.serviceId,
+            staffMemberId: input.staffMemberId,
+            serviceDurationMinutes: 60,
+            slotIntervalMinutes: 60,
+            slots: [
+              {
+                startsAt: '2026-09-22T14:00:00.000Z',
+                endsAt: '2026-09-22T15:00:00.000Z',
+              },
+            ],
+          },
+        };
+      }
+
+      return {
+        kind: 'not_found',
+      };
+    },
+  };
+
+  const appointmentWriter: AppointmentWriter = {
+    async createAppointment(businessId, input) {
+      if (
+        businessId === 'business-a' &&
+        input.contactId === 'contact-a' &&
+        input.serviceId === 'service-a' &&
+        input.staffMemberId === 'staff-a'
+      ) {
+        if (input.startsAt === '2026-09-21T14:30:00.000Z') {
+          return {
+            kind: 'conflict',
+            reason: 'overlap',
+          };
+        }
+
+        if (input.startsAt === '2026-09-27T20:00:00.000Z') {
+          return {
+            kind: 'conflict',
+            reason: 'unavailable_day',
+          };
+        }
+
+        if (input.startsAt === '2026-09-21T22:00:00.000Z') {
+          return {
+            kind: 'conflict',
+            reason: 'outside_hours',
+          };
+        }
+
+        return {
+          kind: 'created',
+          appointment: {
+            id: 'appointment-created-a',
+            contactId: input.contactId,
+            serviceId: input.serviceId,
+            staffMemberId: input.staffMemberId,
+            startsAt: input.startsAt,
+            endsAt: '2026-09-21T14:30:00.000Z',
+            status: 'SCHEDULED',
+            createdAt: '2026-09-20T03:00:00.000Z',
+            updatedAt: '2026-09-20T03:00:00.000Z',
+          },
+        };
+      }
+
+      if (
+        businessId === 'business-c' &&
+        input.contactId === 'contact-c' &&
+        input.serviceId === 'service-c' &&
+        input.staffMemberId === 'staff-c'
+      ) {
+        return {
+          kind: 'created',
+          appointment: {
+            id: 'appointment-created-c',
+            contactId: input.contactId,
+            serviceId: input.serviceId,
+            staffMemberId: input.staffMemberId,
+            startsAt: input.startsAt,
+            endsAt: '2026-09-22T16:00:00.000Z',
+            status: 'SCHEDULED',
+            createdAt: '2026-09-20T03:10:00.000Z',
+            updatedAt: '2026-09-20T03:10:00.000Z',
+          },
+        };
+      }
+
+      return {
+        kind: 'not_found',
+      };
+    },
+
+    async updateAppointmentStatus(businessId, input) {
+      if (
+        businessId === 'business-a' &&
+        input.appointmentId === 'appointment-a'
+      ) {
+        return {
+          kind: 'updated',
+          appointment: {
+            id: input.appointmentId,
+            status: input.status,
+            updatedAt: '2026-09-22T01:30:00.000Z',
+          },
+        };
+      }
+
+      if (
+        businessId === 'business-a' &&
+        input.appointmentId === 'appointment-terminal'
+      ) {
+        return {
+          kind: 'conflict',
+          currentStatus: 'COMPLETED',
+        };
+      }
+
+      return {
+        kind: 'not_found',
+      };
+    },
+  };
+
   const dashboardSummaryReader: DashboardSummaryReader = {
     async getSummary(businessId) {
       if (businessId === 'business-a') {
@@ -517,6 +825,14 @@ describe('API (e2e)', () => {
       .useValue(tenantMembershipReader)
       .overrideProvider(CRM_CONTACT_READER)
       .useValue(crmContactReader)
+      .overrideProvider(APPOINTMENT_READER)
+      .useValue(appointmentReader)
+      .overrideProvider(APPOINTMENT_SCHEDULING_OPTIONS_READER)
+      .useValue(appointmentSchedulingOptionsReader)
+      .overrideProvider(APPOINTMENT_AVAILABLE_SLOTS_READER)
+      .useValue(appointmentAvailableSlotsReader)
+      .overrideProvider(APPOINTMENT_WRITER)
+      .useValue(appointmentWriter)
       .overrideProvider(DASHBOARD_SUMMARY_READER)
       .useValue(dashboardSummaryReader)
       .overrideProvider(INBOX_CONVERSATION_READER)
@@ -1077,6 +1393,389 @@ describe('API (e2e)', () => {
       });
   });
 
+  it('/appointments rejects missing authentication', async () => {
+    await request(app.getHttpServer()).get('/appointments').expect(401);
+  });
+
+  it('/appointments returns appointments for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'appointment-a',
+            status: 'SCHEDULED',
+            startsAt: '2026-09-21T14:00:00.000Z',
+            endsAt: '2026-09-21T14:30:00.000Z',
+            createdAt: '2026-09-20T02:00:00.000Z',
+            updatedAt: '2026-09-20T02:00:00.000Z',
+            contact: {
+              id: 'contact-a',
+              name: 'Contact A',
+              phone: '+10000000001',
+              email: 'contact-a@example.com',
+            },
+            service: {
+              id: 'service-a',
+              name: 'Evaluation',
+              durationMinutes: 30,
+            },
+            staffMember: {
+              id: 'staff-a',
+              name: 'Staff A',
+            },
+          },
+        ],
+      });
+  });
+
+  it('/appointments follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        items: [
+          {
+            id: 'appointment-c',
+            status: 'COMPLETED',
+            startsAt: '2026-09-22T15:00:00.000Z',
+            endsAt: '2026-09-22T16:00:00.000Z',
+            createdAt: '2026-09-20T02:10:00.000Z',
+            updatedAt: '2026-09-22T16:05:00.000Z',
+            contact: {
+              id: 'contact-c',
+              name: 'Contact C',
+              phone: null,
+              email: 'contact-c@example.com',
+            },
+            service: {
+              id: 'service-c',
+              name: 'Consultation',
+              durationMinutes: 60,
+            },
+            staffMember: {
+              id: 'staff-c',
+              name: 'Staff C',
+            },
+          },
+        ],
+      });
+  });
+
+  it('/appointments/options rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/options')
+      .expect(401);
+  });
+
+  it('/appointments/options returns scheduling configuration for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/options')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .expect(200)
+      .expect({
+        timezone: 'America/Bogota',
+        services: [
+          {
+            id: 'service-a',
+            name: 'Evaluation',
+            durationMinutes: 30,
+            staffMembers: [
+              {
+                id: 'staff-a',
+                name: 'Staff A',
+                availability: [
+                  {
+                    dayOfWeek: 1,
+                    startTime: '09:00:00',
+                    endTime: '17:00:00',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+  });
+
+  it('/appointments/options follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/options')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .expect(200)
+      .expect({
+        timezone: 'America/New_York',
+        services: [
+          {
+            id: 'service-c',
+            name: 'Consultation',
+            durationMinutes: 60,
+            staffMembers: [
+              {
+                id: 'staff-c',
+                name: 'Staff C',
+                availability: [
+                  {
+                    dayOfWeek: 2,
+                    startTime: '10:00:00',
+                    endTime: '18:00:00',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+  });
+
+  it('/appointments/available-slots rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .query({
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        date: '2026-09-21',
+      })
+      .expect(401);
+  });
+
+  it('/appointments/available-slots rejects invalid dates', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .query({
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        date: '2026-02-30',
+      })
+      .expect(400);
+  });
+
+  it('/appointments/available-slots hides missing resources', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .query({
+        serviceId: 'service-missing',
+        staffMemberId: 'staff-a',
+        date: '2026-09-21',
+      })
+      .expect(404);
+  });
+
+  it('/appointments/available-slots rejects invalid staff service configuration', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .query({
+        serviceId: 'service-a',
+        staffMemberId: 'staff-unconfigured',
+        date: '2026-09-21',
+      })
+      .expect(409);
+  });
+
+  it('/appointments/available-slots returns slots for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .query({
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        date: '2026-09-21',
+      })
+      .expect(200)
+      .expect({
+        timezone: 'America/Bogota',
+        date: '2026-09-21',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        serviceDurationMinutes: 30,
+        slotIntervalMinutes: 30,
+        slots: [
+          {
+            startsAt: '2026-09-21T14:00:00.000Z',
+            endsAt: '2026-09-21T14:30:00.000Z',
+          },
+          {
+            startsAt: '2026-09-21T14:15:00.000Z',
+            endsAt: '2026-09-21T14:45:00.000Z',
+          },
+        ],
+      });
+  });
+
+  it('/appointments/available-slots follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .get('/appointments/available-slots')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .query({
+        serviceId: 'service-c',
+        staffMemberId: 'staff-c',
+        date: '2026-09-22',
+      })
+      .expect(200)
+      .expect({
+        timezone: 'America/New_York',
+        date: '2026-09-22',
+        serviceId: 'service-c',
+        staffMemberId: 'staff-c',
+        serviceDurationMinutes: 60,
+        slotIntervalMinutes: 60,
+        slots: [
+          {
+            startsAt: '2026-09-22T14:00:00.000Z',
+            endsAt: '2026-09-22T15:00:00.000Z',
+          },
+        ],
+      });
+  });
+
+  it('POST /appointments rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: '2026-09-21T14:00:00.000Z',
+      })
+      .expect(401);
+  });
+
+  it('POST /appointments rejects invalid appointment data', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: 'not-a-date',
+      })
+      .expect(400);
+  });
+
+  it('POST /appointments creates an appointment for the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: '2026-09-21T14:00:00.000Z',
+      })
+      .expect(201)
+      .expect({
+        appointment: {
+          id: 'appointment-created-a',
+          contactId: 'contact-a',
+          serviceId: 'service-a',
+          staffMemberId: 'staff-a',
+          startsAt: '2026-09-21T14:00:00.000Z',
+          endsAt: '2026-09-21T14:30:00.000Z',
+          status: 'SCHEDULED',
+          createdAt: '2026-09-20T03:00:00.000Z',
+          updatedAt: '2026-09-20T03:00:00.000Z',
+        },
+      });
+  });
+
+  it('POST /appointments hides resources from another tenant', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-c',
+        serviceId: 'service-c',
+        staffMemberId: 'staff-c',
+        startsAt: '2026-09-22T15:00:00.000Z',
+      })
+      .expect(404);
+  });
+
+  it('POST /appointments exposes overlap conflict reason', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: '2026-09-21T14:30:00.000Z',
+      })
+      .expect(409)
+      .expect((response) => {
+        expect(response.body.reason).toBe('overlap');
+      });
+  });
+
+  it('POST /appointments exposes unavailable day conflict reason', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: '2026-09-27T20:00:00.000Z',
+      })
+      .expect(409)
+      .expect((response) => {
+        expect(response.body.reason).toBe('unavailable_day');
+      });
+  });
+
+  it('POST /appointments exposes outside hours conflict reason', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({
+        contactId: 'contact-a',
+        serviceId: 'service-a',
+        staffMemberId: 'staff-a',
+        startsAt: '2026-09-21T22:00:00.000Z',
+      })
+      .expect(409)
+      .expect((response) => {
+        expect(response.body.reason).toBe('outside_hours');
+      });
+  });
+
+  it('POST /appointments follows explicit authorized tenant selection', async () => {
+    await request(app.getHttpServer())
+      .post('/appointments')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .send({
+        contactId: 'contact-c',
+        serviceId: 'service-c',
+        staffMemberId: 'staff-c',
+        startsAt: '2026-09-22T15:00:00.000Z',
+      })
+      .expect(201)
+      .expect({
+        appointment: {
+          id: 'appointment-created-c',
+          contactId: 'contact-c',
+          serviceId: 'service-c',
+          staffMemberId: 'staff-c',
+          startsAt: '2026-09-22T15:00:00.000Z',
+          endsAt: '2026-09-22T16:00:00.000Z',
+          status: 'SCHEDULED',
+          createdAt: '2026-09-20T03:10:00.000Z',
+          updatedAt: '2026-09-20T03:10:00.000Z',
+        },
+      });
+  });
+
   it('/dashboard/summary rejects missing authentication', async () => {
     await request(app.getHttpServer()).get('/dashboard/summary').expect(401);
   });
@@ -1107,4 +1806,52 @@ describe('API (e2e)', () => {
         humanHandoffs: 4,
       });
   });
+
+  it('PATCH /appointments/:id/status rejects missing authentication', async () => {
+    await request(app.getHttpServer())
+      .patch('/appointments/appointment-a/status')
+      .send({ status: 'CANCELLED' })
+      .expect(401);
+  });
+
+  it('PATCH /appointments/:id/status updates a scheduled appointment', async () => {
+    await request(app.getHttpServer())
+      .patch('/appointments/appointment-a/status')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({ status: 'COMPLETED' })
+      .expect(200)
+      .expect({
+        appointment: {
+          id: 'appointment-a',
+          status: 'COMPLETED',
+          updatedAt: '2026-09-22T01:30:00.000Z',
+        },
+      });
+  });
+
+  it('PATCH /appointments/:id/status rejects SCHEDULED as a target state', async () => {
+    await request(app.getHttpServer())
+      .patch('/appointments/appointment-a/status')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({ status: 'SCHEDULED' })
+      .expect(400);
+  });
+
+  it('PATCH /appointments/:id/status returns 404 outside the resolved tenant', async () => {
+    await request(app.getHttpServer())
+      .patch('/appointments/appointment-a/status')
+      .set('Authorization', 'Bearer multi-tenant-token')
+      .set('x-business-id', 'business-c')
+      .send({ status: 'CANCELLED' })
+      .expect(404);
+  });
+
+  it('PATCH /appointments/:id/status rejects transitions from terminal states', async () => {
+    await request(app.getHttpServer())
+      .patch('/appointments/appointment-terminal/status')
+      .set('Authorization', 'Bearer single-tenant-token')
+      .send({ status: 'NO_SHOW' })
+      .expect(409);
+  });
+
 });

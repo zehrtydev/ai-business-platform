@@ -35,3 +35,40 @@ export {
   resumeConversationAiForBusiness,
   takeOverConversationForBusiness,
 } from './queries/conversation-handoff.js';
+
+export type { AppointmentListItem } from './queries/appointment-list.js';
+export { listAppointmentsForBusiness } from './queries/appointment-list.js';
+
+export type {
+  AppointmentConflictReason,
+  CreateAppointmentInput,
+  CreateAppointmentResult,
+  CreatedAppointment,
+} from './queries/appointment-create.js';
+export { createAppointmentForBusiness } from './queries/appointment-create.js';
+
+export type {
+  AppointmentSchedulingAvailabilityRule,
+  AppointmentSchedulingOptions,
+  AppointmentSchedulingService,
+  AppointmentSchedulingStaffMember,
+} from './queries/appointment-scheduling-options.js';
+export { getAppointmentSchedulingOptionsForBusiness } from './queries/appointment-scheduling-options.js';
+
+export type {
+  AppointmentAvailableSlot,
+  AppointmentAvailableSlots,
+  GetAppointmentAvailableSlotsInput,
+  GetAppointmentAvailableSlotsResult,
+} from './queries/appointment-available-slots.js';
+export {
+  getAppointmentAvailableSlotsForBusiness,
+} from './queries/appointment-available-slots.js';
+
+export type {
+  AppointmentLifecycleStatus,
+  AppointmentStatus,
+  UpdateAppointmentStatusResult,
+  UpdatedAppointmentStatus,
+} from './queries/appointment-status.js';
+export { updateAppointmentStatusForBusiness } from './queries/appointment-status.js';
