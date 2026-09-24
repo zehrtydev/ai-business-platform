@@ -83,3 +83,18 @@ export {
   setServiceActiveForBusiness,
   updateServiceForBusiness,
 } from './queries/service-management.js';
+
+export type {
+  CreateStaffMemberInput,
+  CreateStaffMemberResult,
+  StaffAssignedService,
+  StaffMemberRecord,
+  UpdateStaffMemberInput,
+  UpdateStaffMemberResult,
+} from './queries/staff-management.js';
+export {
+  createStaffMemberForBusiness,
+  listStaffMembersForBusiness,
+  setStaffMemberActiveForBusiness,
+  updateStaffMemberForBusiness,
+} from './queries/staff-management.js';

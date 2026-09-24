@@ -12,6 +12,7 @@ import {
   createDatabase,
   createDevelopmentInboundMessageForBusiness,
   createServiceForBusiness,
+  createStaffMemberForBusiness,
   getContactDetailForBusiness,
   getConversationDetailForBusiness,
   getDashboardSummary,
@@ -19,11 +20,14 @@ import {
   listContactsForBusiness,
   listConversationsForBusiness,
   listServicesForBusiness,
+  listStaffMembersForBusiness,
   requestConversationHandoffForBusiness,
   resumeConversationAiForBusiness,
   setServiceActiveForBusiness,
+  setStaffMemberActiveForBusiness,
   takeOverConversationForBusiness,
   updateServiceForBusiness,
+  updateStaffMemberForBusiness,
 } from '../dist/index.js';
 
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
@@ -2382,6 +2386,351 @@ async function verifyServiceManagement() {
   `;
 }
 
+async function verifyStaffManagement() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Staff management A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Staff management B', 'America/Bogota')
+    returning id
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const serviceA1 = await createServiceForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Dental evaluation',
+        durationMinutes: 45,
+      },
+    );
+
+    const serviceA2 = await createServiceForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Dental cleaning',
+        durationMinutes: 60,
+      },
+    );
+
+    const serviceB = await createServiceForBusiness(database.db, businessB.id, {
+      name: 'Other tenant service',
+      durationMinutes: 30,
+    });
+
+    const createdA = await createStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: '  Doctor A  ',
+        serviceIds: [serviceA1.id, serviceA1.id],
+      },
+    );
+
+    assert.equal(createdA.kind, 'created');
+
+    if (createdA.kind !== 'created') {
+      throw new Error('Expected staff member A to be created.');
+    }
+
+    assert.equal(createdA.staffMember.name, 'Doctor A');
+    assert.equal(createdA.staffMember.isActive, true);
+    assert.deepEqual(
+      createdA.staffMember.services.map((service) => service.id),
+      [serviceA1.id],
+      'Duplicate service assignments must be normalized.',
+    );
+
+    const createdAWithoutServices = await createStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Assistant A',
+      },
+    );
+
+    assert.equal(createdAWithoutServices.kind, 'created');
+
+    if (createdAWithoutServices.kind !== 'created') {
+      throw new Error('Expected staff member without services to be created.');
+    }
+
+    assert.deepEqual(createdAWithoutServices.staffMember.services, []);
+
+    const createdB = await createStaffMemberForBusiness(
+      database.db,
+      businessB.id,
+      {
+        name: 'Doctor B',
+        serviceIds: [serviceB.id],
+      },
+    );
+
+    assert.equal(createdB.kind, 'created');
+
+    if (createdB.kind !== 'created') {
+      throw new Error('Expected staff member B to be created.');
+    }
+
+    const staffA = await listStaffMembersForBusiness(database.db, businessA.id);
+
+    assert.equal(staffA.length, 2);
+    assert.deepEqual(
+      staffA.map((staffMember) => staffMember.id).sort(),
+      [createdA.staffMember.id, createdAWithoutServices.staffMember.id].sort(),
+    );
+
+    assert(
+      staffA.every((staffMember) => staffMember.id !== createdB.staffMember.id),
+      'Business A must not list staff from Business B.',
+    );
+
+    const staffB = await listStaffMembersForBusiness(database.db, businessB.id);
+
+    assert.equal(staffB.length, 1);
+    assert.equal(staffB[0].id, createdB.staffMember.id);
+    assert.deepEqual(
+      staffB[0].services.map((service) => service.id),
+      [serviceB.id],
+    );
+
+    const crossTenantCreate = await createStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Cross tenant create',
+        serviceIds: [serviceB.id],
+      },
+    );
+
+    assert.equal(crossTenantCreate.kind, 'service_not_found');
+
+    const staffAfterRejectedCreate = await listStaffMembersForBusiness(
+      database.db,
+      businessA.id,
+    );
+
+    assert.equal(
+      staffAfterRejectedCreate.length,
+      2,
+      'Rejected cross-tenant assignment must not create staff.',
+    );
+
+    const updatedA = await updateStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      createdA.staffMember.id,
+      {
+        name: '  Doctor A Updated  ',
+        serviceIds: [serviceA2.id],
+      },
+    );
+
+    assert.equal(updatedA.kind, 'updated');
+
+    if (updatedA.kind !== 'updated') {
+      throw new Error('Expected staff member A to be updated.');
+    }
+
+    assert.equal(updatedA.staffMember.name, 'Doctor A Updated');
+    assert.deepEqual(
+      updatedA.staffMember.services.map((service) => service.id),
+      [serviceA2.id],
+      'Updating staff must replace service assignments.',
+    );
+
+    const persistedAssignments = await sql`
+      select service_id as "serviceId"
+      from public.staff_services
+      where business_id = ${businessA.id}::uuid
+        and staff_member_id = ${createdA.staffMember.id}::uuid
+      order by service_id
+    `;
+
+    assert.deepEqual(
+      persistedAssignments.map((row) => row.serviceId),
+      [serviceA2.id],
+    );
+
+    const rejectedCrossTenantAssignment = await updateStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      createdA.staffMember.id,
+      {
+        name: 'Must not persist',
+        serviceIds: [serviceB.id],
+      },
+    );
+
+    assert.equal(rejectedCrossTenantAssignment.kind, 'service_not_found');
+
+    const staffAfterRejectedUpdate = await listStaffMembersForBusiness(
+      database.db,
+      businessA.id,
+    );
+
+    const unchangedA = staffAfterRejectedUpdate.find(
+      (staffMember) => staffMember.id === createdA.staffMember.id,
+    );
+
+    assert(unchangedA);
+    assert.equal(unchangedA.name, 'Doctor A Updated');
+    assert.deepEqual(
+      unchangedA.services.map((service) => service.id),
+      [serviceA2.id],
+      'Rejected assignment must preserve existing services.',
+    );
+
+    const crossTenantUpdate = await updateStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      createdB.staffMember.id,
+      {
+        name: 'Cross tenant mutation',
+        serviceIds: [],
+      },
+    );
+
+    assert.equal(crossTenantUpdate.kind, 'not_found');
+
+    const deactivated = await setStaffMemberActiveForBusiness(
+      database.db,
+      businessA.id,
+      createdA.staffMember.id,
+      false,
+    );
+
+    assert(deactivated);
+    assert.equal(deactivated.isActive, false);
+    assert.deepEqual(
+      deactivated.services.map((service) => service.id),
+      [serviceA2.id],
+    );
+
+    const crossTenantDeactivate = await setStaffMemberActiveForBusiness(
+      database.db,
+      businessA.id,
+      createdB.staffMember.id,
+      false,
+    );
+
+    assert.equal(crossTenantDeactivate, null);
+
+    const reactivated = await setStaffMemberActiveForBusiness(
+      database.db,
+      businessA.id,
+      createdA.staffMember.id,
+      true,
+    );
+
+    assert(reactivated);
+    assert.equal(reactivated.isActive, true);
+
+    const clearedAssignments = await updateStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      createdA.staffMember.id,
+      {
+        name: 'Doctor A Updated',
+        serviceIds: [],
+      },
+    );
+
+    assert.equal(clearedAssignments.kind, 'updated');
+
+    if (clearedAssignments.kind !== 'updated') {
+      throw new Error('Expected staff assignments to be cleared.');
+    }
+
+    assert.deepEqual(clearedAssignments.staffMember.services, []);
+
+    const invalidUpdate = await updateStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+      {
+        name: 'Invalid',
+        serviceIds: [],
+      },
+    );
+
+    assert.equal(invalidUpdate.kind, 'not_found');
+
+    const invalidActivation = await setStaffMemberActiveForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+      false,
+    );
+
+    assert.equal(invalidActivation, null);
+
+    const invalidServiceAssignment = await createStaffMemberForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Invalid service assignment',
+        serviceIds: ['not-a-uuid'],
+      },
+    );
+
+    assert.equal(invalidServiceAssignment.kind, 'service_not_found');
+
+    await assert.rejects(
+      () =>
+        createStaffMemberForBusiness(database.db, businessA.id, {
+          name: '   ',
+          serviceIds: [],
+        }),
+      /Staff member name is required/,
+    );
+
+    const [persistedStaffB] = await sql`
+      select
+        name,
+        is_active as "isActive"
+      from public.staff_members
+      where business_id = ${businessB.id}::uuid
+        and id = ${createdB.staffMember.id}::uuid
+    `;
+
+    assert.deepEqual(persistedStaffB, {
+      name: 'Doctor B',
+      isActive: true,
+    });
+
+    const persistedStaffBServices = await sql`
+      select service_id as "serviceId"
+      from public.staff_services
+      where business_id = ${businessB.id}::uuid
+        and staff_member_id = ${createdB.staffMember.id}::uuid
+    `;
+
+    assert.deepEqual(
+      persistedStaffBServices.map((row) => row.serviceId),
+      [serviceB.id],
+      'Cross-tenant operations must not modify Business B assignments.',
+    );
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (
+      ${businessA.id}::uuid,
+      ${businessB.id}::uuid
+    )
+  `;
+}
+
 async function verifyDashboardSummary() {
   const [businessA] = await sql`
     insert into public.businesses (name, timezone)
@@ -3238,6 +3587,7 @@ try {
   await verifyConversationHandoffWorkflow();
   await verifyAppointmentCreationWorkflow();
   await verifyServiceManagement();
+  await verifyStaffManagement();
   await verifyDevelopmentMessageSimulation();
   await verifyDashboardSummary();
   await verifyTenantIsolation();
