@@ -33,9 +33,7 @@ function isValidDateString(value: unknown): value is string {
   return typeof value === 'string' && !Number.isNaN(Date.parse(value));
 }
 
-function isStatus(
-  value: unknown,
-): value is ConversationControlState['status'] {
+function isStatus(value: unknown): value is ConversationControlState['status'] {
   return value === 'OPEN' || value === 'HUMAN_REQUIRED' || value === 'CLOSED';
 }
 
@@ -88,9 +86,7 @@ async function mutateConversationControl(
       `${apiBaseUrl.replace(
         /\/+$/,
         '',
-      )}/inbox/conversations/${encodeURIComponent(
-        conversationId,
-      )}/${action}`,
+      )}/inbox/conversations/${encodeURIComponent(conversationId)}/${action}`,
       {
         method: 'POST',
         headers: {

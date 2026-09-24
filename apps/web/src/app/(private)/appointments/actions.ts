@@ -54,10 +54,7 @@ export async function getAppointmentAvailableSlotsAction(
   const accessToken = await authenticatedAccessToken();
 
   try {
-    const availability = await getAppointmentAvailableSlots(
-      accessToken,
-      input,
-    );
+    const availability = await getAppointmentAvailableSlots(accessToken, input);
 
     return {
       kind: 'success' as const,
@@ -94,13 +91,7 @@ export async function createAppointmentAction(formData: FormData) {
   const date = readString(formData, 'date');
   const startsAtValue = readString(formData, 'startsAt');
 
-  if (
-    !contactId ||
-    !serviceId ||
-    !staffMemberId ||
-    !date ||
-    !startsAtValue
-  ) {
+  if (!contactId || !serviceId || !staffMemberId || !date || !startsAtValue) {
     redirect('/appointments?create=invalid');
   }
 
@@ -185,19 +176,13 @@ export async function createAppointmentAction(formData: FormData) {
   redirect('/appointments?create=success');
 }
 
-export async function updateAppointmentStatusAction(
-  formData: FormData,
-) {
+export async function updateAppointmentStatusAction(formData: FormData) {
   const appointmentId = readString(formData, 'appointmentId');
   const status = readString(formData, 'status');
 
   if (
     !appointmentId ||
-    (
-      status !== 'CANCELLED' &&
-      status !== 'COMPLETED' &&
-      status !== 'NO_SHOW'
-    )
+    (status !== 'CANCELLED' && status !== 'COMPLETED' && status !== 'NO_SHOW')
   ) {
     redirect('/appointments?update=invalid');
   }

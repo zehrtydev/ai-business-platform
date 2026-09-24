@@ -22,11 +22,7 @@ export interface CreatedAppointment {
 }
 
 export type AppointmentConflictReason =
-  | 'past'
-  | 'unavailable_day'
-  | 'outside_hours'
-  | 'overlap'
-  | 'configuration';
+  'past' | 'unavailable_day' | 'outside_hours' | 'overlap' | 'configuration';
 
 export type CreateAppointmentResult =
   | {
@@ -54,17 +50,11 @@ function isUuid(value: string): boolean {
   );
 }
 
-function isPostgresErrorWithCode(
-  error: unknown,
-  code: string,
-): boolean {
+function isPostgresErrorWithCode(error: unknown, code: string): boolean {
   let current: unknown = error;
 
   while (typeof current === 'object' && current !== null) {
-    if (
-      'code' in current &&
-      (current as { code?: unknown }).code === code
-    ) {
+    if ('code' in current && (current as { code?: unknown }).code === code) {
       return true;
     }
 
@@ -93,11 +83,7 @@ export async function createAppointmentForBusiness(
     throw new Error('Business ID is required.');
   }
 
-  if (
-    !isUuid(contactId) ||
-    !isUuid(serviceId) ||
-    !isUuid(staffMemberId)
-  ) {
+  if (!isUuid(contactId) || !isUuid(serviceId) || !isUuid(staffMemberId)) {
     return { kind: 'not_found' };
   }
 

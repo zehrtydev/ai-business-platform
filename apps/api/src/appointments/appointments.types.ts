@@ -23,9 +23,7 @@ export interface AppointmentListItem {
 }
 
 export interface AppointmentReader {
-  listAppointments(
-    businessId: string,
-  ): Promise<readonly AppointmentListItem[]>;
+  listAppointments(businessId: string): Promise<readonly AppointmentListItem[]>;
 }
 
 export interface AppointmentCreateInput {
@@ -48,11 +46,7 @@ export interface CreatedAppointment {
 }
 
 export type AppointmentConflictReason =
-  | 'past'
-  | 'unavailable_day'
-  | 'outside_hours'
-  | 'overlap'
-  | 'configuration';
+  'past' | 'unavailable_day' | 'outside_hours' | 'overlap' | 'configuration';
 
 export type AppointmentCreateResult =
   | {
@@ -104,11 +98,8 @@ export interface AppointmentSchedulingOptions {
 }
 
 export interface AppointmentSchedulingOptionsReader {
-  getOptions(
-    businessId: string,
-  ): Promise<AppointmentSchedulingOptions | null>;
+  getOptions(businessId: string): Promise<AppointmentSchedulingOptions | null>;
 }
-
 
 export interface AppointmentAvailableSlotsInput {
   serviceId: string;
@@ -153,14 +144,9 @@ export interface AppointmentAvailableSlotsReader {
   ): Promise<AppointmentAvailableSlotsResult>;
 }
 
-export type AppointmentLifecycleStatus =
-  | 'CANCELLED'
-  | 'COMPLETED'
-  | 'NO_SHOW';
+export type AppointmentLifecycleStatus = 'CANCELLED' | 'COMPLETED' | 'NO_SHOW';
 
-export type AppointmentStatus =
-  | 'SCHEDULED'
-  | AppointmentLifecycleStatus;
+export type AppointmentStatus = 'SCHEDULED' | AppointmentLifecycleStatus;
 
 export interface AppointmentStatusUpdateInput {
   appointmentId: string;

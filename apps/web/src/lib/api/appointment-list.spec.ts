@@ -39,9 +39,9 @@ describe('getAppointmentList', () => {
   });
 
   it('requires API_BASE_URL', async () => {
-    await expect(
-      getAppointmentList('access-token'),
-    ).rejects.toBeInstanceOf(ApiConfigurationError);
+    await expect(getAppointmentList('access-token')).rejects.toBeInstanceOf(
+      ApiConfigurationError,
+    );
   });
 
   it('returns appointments from the API', async () => {
@@ -78,9 +78,11 @@ describe('getAppointmentList', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ items: [] }), { status: 200 }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ items: [] }), { status: 200 }),
+        ),
     );
 
     await expect(getAppointmentList('access-token')).resolves.toEqual({
@@ -98,13 +100,13 @@ describe('getAppointmentList', () => {
 
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      getAppointmentList('access-token'),
-    ).rejects.toBeInstanceOf(ApiAuthenticationError);
+    await expect(getAppointmentList('access-token')).rejects.toBeInstanceOf(
+      ApiAuthenticationError,
+    );
 
-    await expect(
-      getAppointmentList('access-token'),
-    ).rejects.toBeInstanceOf(ApiTenantResolutionError);
+    await expect(getAppointmentList('access-token')).rejects.toBeInstanceOf(
+      ApiTenantResolutionError,
+    );
   });
 
   it('rejects malformed appointment responses', async () => {
@@ -127,8 +129,8 @@ describe('getAppointmentList', () => {
       ),
     );
 
-    await expect(
-      getAppointmentList('access-token'),
-    ).rejects.toBeInstanceOf(ApiUpstreamError);
+    await expect(getAppointmentList('access-token')).rejects.toBeInstanceOf(
+      ApiUpstreamError,
+    );
   });
 });

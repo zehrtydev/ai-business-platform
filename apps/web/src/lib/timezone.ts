@@ -13,10 +13,7 @@ interface DateTimeParts {
   minute: number;
 }
 
-function partsInTimeZone(
-  timestamp: number,
-  timeZone: string,
-): DateTimeParts {
+function partsInTimeZone(timestamp: number, timeZone: string): DateTimeParts {
   let parts: Intl.DateTimeFormatPart[];
 
   try {
@@ -53,10 +50,7 @@ function partsInTimeZone(
   };
 }
 
-function sameParts(
-  left: DateTimeParts,
-  right: DateTimeParts,
-): boolean {
+function sameParts(left: DateTimeParts, right: DateTimeParts): boolean {
   return (
     left.year === right.year &&
     left.month === right.month &&
@@ -70,8 +64,7 @@ export function zonedDateTimeLocalToIso(
   value: string,
   timeZone: string,
 ): string {
-  const match =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value.trim());
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value.trim());
 
   const normalizedTimeZone = timeZone.trim();
 

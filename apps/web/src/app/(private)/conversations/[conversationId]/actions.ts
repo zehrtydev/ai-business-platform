@@ -48,10 +48,7 @@ function revalidateConversation(conversationId: string): void {
 
 async function runConversationControl(
   formData: FormData,
-  mutation: (
-    accessToken: string,
-    conversationId: string,
-  ) => Promise<unknown>,
+  mutation: (accessToken: string, conversationId: string) => Promise<unknown>,
 ) {
   const conversationId = readString(formData, 'conversationId');
 
@@ -74,9 +71,7 @@ async function runConversationControl(
 
     if (error instanceof ConversationControlConflictError) {
       redirect(
-        `/conversations/${encodeURIComponent(
-          conversationId,
-        )}?control=conflict`,
+        `/conversations/${encodeURIComponent(conversationId)}?control=conflict`,
       );
     }
 
@@ -118,11 +113,7 @@ export async function simulateInboundMessage(formData: FormData) {
   const accessToken = await authenticatedAccessToken();
 
   try {
-    await createDevelopmentInboundMessage(
-      accessToken,
-      conversationId,
-      content,
-    );
+    await createDevelopmentInboundMessage(accessToken, conversationId, content);
   } catch (error) {
     if (error instanceof ApiAuthenticationError) {
       redirect('/login');

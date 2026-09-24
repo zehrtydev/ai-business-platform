@@ -6,10 +6,7 @@ import {
   AppointmentAvailableSlotsNotFoundError,
   getAppointmentAvailableSlots,
 } from './appointment-available-slots';
-import {
-  ApiConfigurationError,
-  ApiUpstreamError,
-} from './tenant-context';
+import { ApiConfigurationError, ApiUpstreamError } from './tenant-context';
 
 const input = {
   serviceId: 'service-a',
@@ -118,9 +115,7 @@ describe('getAppointmentAvailableSlots', () => {
 
     await expect(
       getAppointmentAvailableSlots('access-token', input),
-    ).rejects.toBeInstanceOf(
-      AppointmentAvailableSlotsConfigurationError,
-    );
+    ).rejects.toBeInstanceOf(AppointmentAvailableSlotsConfigurationError);
   });
 
   it('rejects malformed availability responses', async () => {

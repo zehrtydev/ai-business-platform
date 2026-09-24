@@ -4,15 +4,9 @@ import type { Database } from '../client.js';
 import { appointments } from '../schema/appointment.js';
 
 export type AppointmentStatus =
-  | 'SCHEDULED'
-  | 'CANCELLED'
-  | 'COMPLETED'
-  | 'NO_SHOW';
+  'SCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW';
 
-export type AppointmentLifecycleStatus =
-  | 'CANCELLED'
-  | 'COMPLETED'
-  | 'NO_SHOW';
+export type AppointmentLifecycleStatus = 'CANCELLED' | 'COMPLETED' | 'NO_SHOW';
 
 export interface UpdatedAppointmentStatus {
   id: string;

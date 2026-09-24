@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiUpstreamError } from './tenant-context';
 import {
@@ -109,8 +102,7 @@ describe('updateAppointmentStatus', () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            message:
-              'Only scheduled appointments can change lifecycle status.',
+            message: 'Only scheduled appointments can change lifecycle status.',
             currentStatus: 'COMPLETED',
           }),
           {
@@ -132,9 +124,9 @@ describe('updateAppointmentStatus', () => {
       throw new Error('Expected updateAppointmentStatus to reject.');
     } catch (error) {
       expect(error).toBeInstanceOf(AppointmentStatusConflictError);
-      expect(
-        (error as AppointmentStatusConflictError).currentStatus,
-      ).toBe('COMPLETED');
+      expect((error as AppointmentStatusConflictError).currentStatus).toBe(
+        'COMPLETED',
+      );
     }
   });
 

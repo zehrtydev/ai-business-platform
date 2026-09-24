@@ -5,10 +5,7 @@ import { getAppointmentSchedulingOptions } from '../../../lib/api/appointment-sc
 import { getContactList } from '../../../lib/api/contact-list';
 import { ApiAuthenticationError } from '../../../lib/api/tenant-context';
 import { createClient } from '../../../lib/supabase/server';
-import {
-  AppointmentAgenda,
-  AppointmentSummary,
-} from './appointment-agenda';
+import { AppointmentAgenda, AppointmentSummary } from './appointment-agenda';
 import { AppointmentCreateForm } from './appointment-create-form';
 
 interface AppointmentsPageProps {
@@ -158,16 +155,13 @@ export default async function AppointmentsPage({
 
   const params = await searchParams;
 
-  const createStatus =
-    typeof params.create === 'string' ? params.create : null;
+  const createStatus = typeof params.create === 'string' ? params.create : null;
 
-  const createReason =
-    typeof params.reason === 'string' ? params.reason : null;
+  const createReason = typeof params.reason === 'string' ? params.reason : null;
 
   const notice = creationNotice(createStatus, createReason);
 
-  const updateStatus =
-    typeof params.update === 'string' ? params.update : null;
+  const updateStatus = typeof params.update === 'string' ? params.update : null;
 
   const appointmentStatus =
     typeof params.appointmentStatus === 'string'
@@ -175,9 +169,7 @@ export default async function AppointmentsPage({
       : null;
 
   const currentStatus =
-    typeof params.currentStatus === 'string'
-      ? params.currentStatus
-      : null;
+    typeof params.currentStatus === 'string' ? params.currentStatus : null;
 
   const updateNotice = lifecycleNotice(
     updateStatus,
@@ -185,9 +177,7 @@ export default async function AppointmentsPage({
     currentStatus,
   );
 
-  const minimumDate = currentDateInTimezone(
-    schedulingOptions.timezone,
-  );
+  const minimumDate = currentDateInTimezone(schedulingOptions.timezone);
 
   return (
     <div className="page-stack">
@@ -196,8 +186,8 @@ export default async function AppointmentsPage({
           <p className="eyebrow">Scheduling</p>
           <h1>Appointments</h1>
           <p className="page-header__description">
-            Schedule customer activity and review assigned staff and
-            appointment status.
+            Schedule customer activity and review assigned staff and appointment
+            status.
           </p>
         </div>
 
@@ -225,9 +215,7 @@ export default async function AppointmentsPage({
         <div className="section-heading">
           <div>
             <p className="eyebrow">Manual booking</p>
-            <h2 id="appointment-create-heading">
-              Schedule appointment
-            </h2>
+            <h2 id="appointment-create-heading">Schedule appointment</h2>
           </div>
 
           <p>Business timezone: {schedulingOptions.timezone}</p>

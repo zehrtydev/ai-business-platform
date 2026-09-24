@@ -108,48 +108,21 @@ function AppointmentLifecycleControls({
           aria-label="Appointment actions"
         >
           <form action={updateAppointmentStatusAction}>
-            <input
-              type="hidden"
-              name="appointmentId"
-              value={appointment.id}
-            />
-            <input
-              type="hidden"
-              name="status"
-              value="COMPLETED"
-            />
+            <input type="hidden" name="appointmentId" value={appointment.id} />
+            <input type="hidden" name="status" value="COMPLETED" />
             <button type="submit">Complete</button>
           </form>
 
           <form action={updateAppointmentStatusAction}>
-            <input
-              type="hidden"
-              name="appointmentId"
-              value={appointment.id}
-            />
-            <input
-              type="hidden"
-              name="status"
-              value="NO_SHOW"
-            />
+            <input type="hidden" name="appointmentId" value={appointment.id} />
+            <input type="hidden" name="status" value="NO_SHOW" />
             <button type="submit">No show</button>
           </form>
 
           <form action={updateAppointmentStatusAction}>
-            <input
-              type="hidden"
-              name="appointmentId"
-              value={appointment.id}
-            />
-            <input
-              type="hidden"
-              name="status"
-              value="CANCELLED"
-            />
-            <button
-              className="appointment-action--cancel"
-              type="submit"
-            >
+            <input type="hidden" name="appointmentId" value={appointment.id} />
+            <input type="hidden" name="status" value="CANCELLED" />
+            <button className="appointment-action--cancel" type="submit">
               Cancel
             </button>
           </form>
@@ -159,9 +132,7 @@ function AppointmentLifecycleControls({
   );
 }
 
-export function AppointmentSummary({
-  appointments,
-}: AppointmentSummaryProps) {
+export function AppointmentSummary({ appointments }: AppointmentSummaryProps) {
   const scheduled = appointments.filter(
     (appointment) => appointment.status === 'SCHEDULED',
   ).length;
@@ -198,10 +169,7 @@ export function AppointmentSummary({
   ];
 
   return (
-    <section
-      className="appointment-summary"
-      aria-label="Appointment summary"
-    >
+    <section className="appointment-summary" aria-label="Appointment summary">
       {items.map((item) => (
         <article className="appointment-summary__card" key={item.label}>
           <span>{item.label}</span>
@@ -226,8 +194,8 @@ export function AppointmentAgenda({
         <div>
           <h2>No appointments yet</h2>
           <p>
-            Scheduled customer appointments will appear here when bookings
-            are created.
+            Scheduled customer appointments will appear here when bookings are
+            created.
           </p>
         </div>
       </section>
@@ -261,9 +229,7 @@ export function AppointmentAgenda({
           return (
             <section className="appointment-day" key={group.key}>
               <header className="appointment-day__header">
-                <h3>
-                  {formatDay(firstAppointment.startsAt, timezone)}
-                </h3>
+                <h3>{formatDay(firstAppointment.startsAt, timezone)}</h3>
 
                 <span>
                   {group.appointments.length}{' '}
@@ -275,10 +241,7 @@ export function AppointmentAgenda({
 
               <div className="appointment-list">
                 {group.appointments.map((appointment) => (
-                  <article
-                    className="appointment-row"
-                    key={appointment.id}
-                  >
+                  <article className="appointment-row" key={appointment.id}>
                     <div className="appointment-row__time">
                       <strong>
                         {formatTime(appointment.startsAt, timezone)}
@@ -286,9 +249,7 @@ export function AppointmentAgenda({
                         {formatTime(appointment.endsAt, timezone)}
                       </strong>
 
-                      <span>
-                        {appointment.service.durationMinutes} min
-                      </span>
+                      <span>{appointment.service.durationMinutes} min</span>
                     </div>
 
                     <div className="appointment-row__contact">
@@ -301,9 +262,7 @@ export function AppointmentAgenda({
                       <span>{appointment.staffMember.name}</span>
                     </div>
 
-                    <AppointmentLifecycleControls
-                      appointment={appointment}
-                    />
+                    <AppointmentLifecycleControls appointment={appointment} />
                   </article>
                 ))}
               </div>

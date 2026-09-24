@@ -59,9 +59,7 @@ function parseAvailabilityRule(
   };
 }
 
-function parseStaffMember(
-  value: unknown,
-): AppointmentSchedulingStaffMember {
+function parseStaffMember(value: unknown): AppointmentSchedulingStaffMember {
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
@@ -107,9 +105,7 @@ function parseService(value: unknown): AppointmentSchedulingService {
   };
 }
 
-function parseSchedulingOptions(
-  value: unknown,
-): AppointmentSchedulingOptions {
+function parseSchedulingOptions(value: unknown): AppointmentSchedulingOptions {
   if (
     !isRecord(value) ||
     typeof value.timezone !== 'string' ||

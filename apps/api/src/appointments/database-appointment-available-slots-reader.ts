@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  getAppointmentAvailableSlotsForBusiness,
-} from '@ai-business-platform/database';
+import { getAppointmentAvailableSlotsForBusiness } from '@ai-business-platform/database';
 
 import { DatabaseService } from '../database/database.service.js';
 import type {
@@ -11,9 +9,7 @@ import type {
 } from './appointments.types.js';
 
 @Injectable()
-export class DatabaseAppointmentAvailableSlotsReader
-  implements AppointmentAvailableSlotsReader
-{
+export class DatabaseAppointmentAvailableSlotsReader implements AppointmentAvailableSlotsReader {
   constructor(private readonly database: DatabaseService) {}
 
   async getAvailableSlots(

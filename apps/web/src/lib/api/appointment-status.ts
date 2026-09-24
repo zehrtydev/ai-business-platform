@@ -5,14 +5,9 @@ import {
   ApiUpstreamError,
 } from './tenant-context';
 
-export type AppointmentLifecycleStatus =
-  | 'CANCELLED'
-  | 'COMPLETED'
-  | 'NO_SHOW';
+export type AppointmentLifecycleStatus = 'CANCELLED' | 'COMPLETED' | 'NO_SHOW';
 
-export type AppointmentStatus =
-  | 'SCHEDULED'
-  | AppointmentLifecycleStatus;
+export type AppointmentStatus = 'SCHEDULED' | AppointmentLifecycleStatus;
 
 export interface UpdateAppointmentStatusInput {
   appointmentId: string;
@@ -32,11 +27,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isLifecycleStatus(
   value: unknown,
 ): value is AppointmentLifecycleStatus {
-  return (
-    value === 'CANCELLED' ||
-    value === 'COMPLETED' ||
-    value === 'NO_SHOW'
-  );
+  return value === 'CANCELLED' || value === 'COMPLETED' || value === 'NO_SHOW';
 }
 
 function isAppointmentStatus(value: unknown): value is AppointmentStatus {
@@ -162,10 +153,7 @@ export async function updateAppointmentStatus(
       );
     }
 
-    if (
-      !isRecord(payload) ||
-      !isAppointmentStatus(payload.currentStatus)
-    ) {
+    if (!isRecord(payload) || !isAppointmentStatus(payload.currentStatus)) {
       throw new ApiUpstreamError(
         'The API returned an invalid appointment status conflict response.',
       );
@@ -175,9 +163,7 @@ export async function updateAppointmentStatus(
   }
 
   if (!response.ok) {
-    throw new ApiUpstreamError(
-      `The API returned HTTP ${response.status}.`,
-    );
+    throw new ApiUpstreamError(`The API returned HTTP ${response.status}.`);
   }
 
   let payload: unknown;

@@ -88,9 +88,7 @@ describe('createAppointment', () => {
       throw new Error('Expected createAppointment to reject.');
     } catch (error) {
       expect(error).toBeInstanceOf(AppointmentCreateConflictError);
-      expect(
-        (error as AppointmentCreateConflictError).reason,
-      ).toBe(reason);
+      expect((error as AppointmentCreateConflictError).reason).toBe(reason);
     }
   });
 });

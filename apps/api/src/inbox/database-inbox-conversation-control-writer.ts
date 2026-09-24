@@ -13,9 +13,7 @@ import type {
 } from './inbox.types.js';
 
 @Injectable()
-export class DatabaseInboxConversationControlWriter
-  implements InboxConversationControlWriter
-{
+export class DatabaseInboxConversationControlWriter implements InboxConversationControlWriter {
   constructor(private readonly database: DatabaseService) {}
 
   async requestHandoff(

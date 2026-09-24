@@ -102,17 +102,15 @@ function availabilitySummary(
     daysByTimeRange.set(key, days);
   }
 
-  const groups = Array.from(daysByTimeRange.entries()).map(
-    ([key, days]) => {
-      const [startTime = '', endTime = ''] = key.split('|');
+  const groups = Array.from(daysByTimeRange.entries()).map(([key, days]) => {
+    const [startTime = '', endTime = ''] = key.split('|');
 
-      return {
-        days,
-        startTime,
-        endTime,
-      };
-    },
-  );
+    return {
+      days,
+      startTime,
+      endTime,
+    };
+  });
 
   groups.sort((left, right) => {
     const leftFirstDay = Math.min(...left.days);
@@ -134,10 +132,7 @@ function availabilitySummary(
     .join('; ');
 }
 
-function slotLabel(
-  slot: AppointmentAvailableSlot,
-  timezone: string,
-): string {
+function slotLabel(slot: AppointmentAvailableSlot, timezone: string): string {
   const formatter = new Intl.DateTimeFormat('en', {
     hour: 'numeric',
     minute: '2-digit',
@@ -170,9 +165,8 @@ export function AppointmentCreateForm({
   const availableStaff = selectedService?.staffMembers ?? [];
 
   const selectedStaff =
-    availableStaff.find(
-      (staffMember) => staffMember.id === staffMemberId,
-    ) ?? null;
+    availableStaff.find((staffMember) => staffMember.id === staffMemberId) ??
+    null;
 
   const hasConfiguration = contacts.length > 0 && services.length > 0;
 
@@ -202,9 +196,7 @@ export function AppointmentCreateForm({
         }
 
         setSlots(result.availability.slots);
-        setSlotState(
-          result.availability.slots.length > 0 ? 'ready' : 'empty',
-        );
+        setSlotState(result.availability.slots.length > 0 ? 'ready' : 'empty');
       })
       .catch(() => {
         if (cancelled) {
@@ -221,10 +213,7 @@ export function AppointmentCreateForm({
   }, [serviceId, staffMemberId, date]);
 
   return (
-    <form
-      action={createAppointmentAction}
-      className="appointment-create-form"
-    >
+    <form action={createAppointmentAction} className="appointment-create-form">
       <div className="appointment-create-grid">
         <label className="appointment-create-field">
           <span>Customer</span>
@@ -298,8 +287,7 @@ export function AppointmentCreateForm({
 
           {selectedStaff ? (
             <small>
-              Working hours:{' '}
-              {availabilitySummary(selectedStaff.availability)}
+              Working hours: {availabilitySummary(selectedStaff.availability)}
             </small>
           ) : null}
         </label>

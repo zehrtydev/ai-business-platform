@@ -11,9 +11,7 @@ import type {
 export class DatabaseAppointmentReader implements AppointmentReader {
   constructor(private readonly database: DatabaseService) {}
 
-  async listAppointments(
-    businessId: string,
-  ): Promise<AppointmentListItem[]> {
+  async listAppointments(businessId: string): Promise<AppointmentListItem[]> {
     const appointments = await listAppointmentsForBusiness(
       this.database.db,
       businessId,

@@ -1,9 +1,4 @@
-import {
-  and,
-  eq,
-  isNotNull,
-  isNull,
-} from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import type { Database } from '../client.js';
 import { conversations } from '../schema/conversation.js';
@@ -52,9 +47,7 @@ async function classifyFailedMutation(
     )
     .limit(1);
 
-  return conversation
-    ? { kind: 'conflict' }
-    : { kind: 'not_found' };
+  return conversation ? { kind: 'conflict' } : { kind: 'not_found' };
 }
 
 export async function requestConversationHandoffForBusiness(

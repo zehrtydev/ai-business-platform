@@ -1,11 +1,4 @@
-import {
-  and,
-  asc,
-  eq,
-  gt,
-  lt,
-  sql,
-} from 'drizzle-orm';
+import { and, asc, eq, gt, lt, sql } from 'drizzle-orm';
 
 import type { Database } from '../client.js';
 import { appointments } from '../schema/appointment.js';
@@ -84,8 +77,7 @@ function mergeIntervals(intervals: TimeInterval[]): TimeInterval[] {
   }
 
   const ordered = [...intervals].sort(
-    (left, right) =>
-      left.startsAt.getTime() - right.startsAt.getTime(),
+    (left, right) => left.startsAt.getTime() - right.startsAt.getTime(),
   );
 
   const first = ordered.at(0);
@@ -137,15 +129,9 @@ function freeIntervals(
   let cursor = windowStart;
 
   for (const busy of busyIntervals) {
-    const busyStart = Math.max(
-      busy.startsAt.getTime(),
-      windowStart,
-    );
+    const busyStart = Math.max(busy.startsAt.getTime(), windowStart);
 
-    const busyEnd = Math.min(
-      busy.endsAt.getTime(),
-      windowEnd,
-    );
+    const busyEnd = Math.min(busy.endsAt.getTime(), windowEnd);
 
     if (busyEnd <= cursor || busyStart >= windowEnd) {
       continue;
@@ -372,8 +358,7 @@ export async function getAppointmentAvailableSlotsForBusiness(
   }
 
   const slots = Array.from(slotsByStart.values()).sort(
-    (left, right) =>
-      left.startsAt.getTime() - right.startsAt.getTime(),
+    (left, right) => left.startsAt.getTime() - right.startsAt.getTime(),
   );
 
   return {

@@ -13,11 +13,7 @@ export interface CreateAppointmentInput {
 }
 
 export type AppointmentConflictReason =
-  | 'past'
-  | 'unavailable_day'
-  | 'outside_hours'
-  | 'overlap'
-  | 'configuration';
+  'past' | 'unavailable_day' | 'outside_hours' | 'overlap' | 'configuration';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -73,19 +69,16 @@ export async function createAppointment(
   let response: Response;
 
   try {
-    response = await fetch(
-      `${apiBaseUrl.replace(/\/+$/, '')}/appointments`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(input),
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5_000),
+    response = await fetch(`${apiBaseUrl.replace(/\/+$/, '')}/appointments`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
       },
-    );
+      body: JSON.stringify(input),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5_000),
+    });
   } catch (error) {
     throw new ApiUpstreamError('The API could not be reached.', {
       cause: error,

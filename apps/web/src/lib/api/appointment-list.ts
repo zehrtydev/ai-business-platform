@@ -124,16 +124,13 @@ export async function getAppointmentList(
   let response: Response;
 
   try {
-    response = await fetch(
-      `${apiBaseUrl.replace(/\/+$/, '')}/appointments`,
-      {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5_000),
+    response = await fetch(`${apiBaseUrl.replace(/\/+$/, '')}/appointments`, {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
       },
-    );
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5_000),
+    });
   } catch (error) {
     throw new ApiUpstreamError('The API could not be reached.', {
       cause: error,

@@ -47,9 +47,7 @@ function parseCreateAppointmentBody(body: unknown): AppointmentCreateInput {
   const serviceId =
     typeof record.serviceId === 'string' ? record.serviceId.trim() : '';
   const staffMemberId =
-    typeof record.staffMemberId === 'string'
-      ? record.staffMemberId.trim()
-      : '';
+    typeof record.staffMemberId === 'string' ? record.staffMemberId.trim() : '';
   const startsAt =
     typeof record.startsAt === 'string' ? record.startsAt.trim() : '';
 
@@ -73,16 +71,13 @@ function parseCreateAppointmentBody(body: unknown): AppointmentCreateInput {
   };
 }
 
-function parseAppointmentStatusBody(
-  body: unknown,
-): AppointmentLifecycleStatus {
+function parseAppointmentStatusBody(body: unknown): AppointmentLifecycleStatus {
   if (typeof body !== 'object' || body === null) {
     throw new BadRequestException('Appointment status is required.');
   }
 
   const record = body as Record<string, unknown>;
-  const status =
-    typeof record.status === 'string' ? record.status.trim() : '';
+  const status = typeof record.status === 'string' ? record.status.trim() : '';
 
   if (
     status !== 'CANCELLED' &&
@@ -120,19 +115,12 @@ function parseAvailableSlotsQuery(query: unknown) {
   const record = query as Record<string, unknown>;
 
   const serviceId =
-    typeof record.serviceId === 'string'
-      ? record.serviceId.trim()
-      : '';
+    typeof record.serviceId === 'string' ? record.serviceId.trim() : '';
 
   const staffMemberId =
-    typeof record.staffMemberId === 'string'
-      ? record.staffMemberId.trim()
-      : '';
+    typeof record.staffMemberId === 'string' ? record.staffMemberId.trim() : '';
 
-  const date =
-    typeof record.date === 'string'
-      ? record.date.trim()
-      : '';
+  const date = typeof record.date === 'string' ? record.date.trim() : '';
 
   if (!serviceId || !staffMemberId || !date) {
     throw new BadRequestException(
@@ -141,9 +129,7 @@ function parseAvailableSlotsQuery(query: unknown) {
   }
 
   if (!isIsoDate(date)) {
-    throw new BadRequestException(
-      'date must be a valid YYYY-MM-DD date.',
-    );
+    throw new BadRequestException('date must be a valid YYYY-MM-DD date.');
   }
 
   return {
@@ -200,16 +186,11 @@ export class AppointmentsController {
 
   @Get('available-slots')
   @UseGuards(SupabaseAuthGuard, TenantContextGuard)
-  async availableSlots(
-    @Req() request: TenantRequest,
-    @Query() query: unknown,
-  ) {
+  async availableSlots(@Req() request: TenantRequest, @Query() query: unknown) {
     const businessId = request.tenantContext?.businessId;
 
     if (!businessId) {
-      throw new InternalServerErrorException(
-        'Tenant context is required.',
-      );
+      throw new InternalServerErrorException('Tenant context is required.');
     }
 
     const input = parseAvailableSlotsQuery(query);
@@ -220,15 +201,11 @@ export class AppointmentsController {
     );
 
     if (result.kind === 'invalid') {
-      throw new BadRequestException(
-        'date must be a valid YYYY-MM-DD date.',
-      );
+      throw new BadRequestException('date must be a valid YYYY-MM-DD date.');
     }
 
     if (result.kind === 'not_found') {
-      throw new NotFoundException(
-        'Service or staff member not found.',
-      );
+      throw new NotFoundException('Service or staff member not found.');
     }
 
     if (result.kind === 'configuration') {
@@ -313,8 +290,7 @@ export class AppointmentsController {
 
     if (result.kind === 'conflict') {
       throw new ConflictException({
-        message:
-          'Only scheduled appointments can change lifecycle status.',
+        message: 'Only scheduled appointments can change lifecycle status.',
         currentStatus: result.currentStatus,
       });
     }

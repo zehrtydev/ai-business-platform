@@ -124,8 +124,7 @@ export async function getAppointmentSchedulingOptionsForBusiness(
   >();
 
   for (const rule of availabilityRows) {
-    const current =
-      availabilityByStaffId.get(rule.staffMemberId) ?? [];
+    const current = availabilityByStaffId.get(rule.staffMemberId) ?? [];
 
     current.push({
       dayOfWeek: rule.dayOfWeek,
@@ -147,8 +146,7 @@ export async function getAppointmentSchedulingOptionsForBusiness(
     current.push({
       id: row.staffMemberId,
       name: row.staffMemberName,
-      availability:
-        availabilityByStaffId.get(row.staffMemberId) ?? [],
+      availability: availabilityByStaffId.get(row.staffMemberId) ?? [],
     });
 
     staffByServiceId.set(row.serviceId, current);

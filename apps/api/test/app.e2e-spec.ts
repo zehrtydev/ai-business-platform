@@ -550,63 +550,64 @@ describe('API (e2e)', () => {
     },
   };
 
-  const appointmentSchedulingOptionsReader: AppointmentSchedulingOptionsReader = {
-    async getOptions(businessId) {
-      if (businessId === 'business-a') {
-        return {
-          timezone: 'America/Bogota',
-          services: [
-            {
-              id: 'service-a',
-              name: 'Evaluation',
-              durationMinutes: 30,
-              staffMembers: [
-                {
-                  id: 'staff-a',
-                  name: 'Staff A',
-                  availability: [
-                    {
-                      dayOfWeek: 1,
-                      startTime: '09:00:00',
-                      endTime: '17:00:00',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        };
-      }
+  const appointmentSchedulingOptionsReader: AppointmentSchedulingOptionsReader =
+    {
+      async getOptions(businessId) {
+        if (businessId === 'business-a') {
+          return {
+            timezone: 'America/Bogota',
+            services: [
+              {
+                id: 'service-a',
+                name: 'Evaluation',
+                durationMinutes: 30,
+                staffMembers: [
+                  {
+                    id: 'staff-a',
+                    name: 'Staff A',
+                    availability: [
+                      {
+                        dayOfWeek: 1,
+                        startTime: '09:00:00',
+                        endTime: '17:00:00',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          };
+        }
 
-      if (businessId === 'business-c') {
-        return {
-          timezone: 'America/New_York',
-          services: [
-            {
-              id: 'service-c',
-              name: 'Consultation',
-              durationMinutes: 60,
-              staffMembers: [
-                {
-                  id: 'staff-c',
-                  name: 'Staff C',
-                  availability: [
-                    {
-                      dayOfWeek: 2,
-                      startTime: '10:00:00',
-                      endTime: '18:00:00',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        };
-      }
+        if (businessId === 'business-c') {
+          return {
+            timezone: 'America/New_York',
+            services: [
+              {
+                id: 'service-c',
+                name: 'Consultation',
+                durationMinutes: 60,
+                staffMembers: [
+                  {
+                    id: 'staff-c',
+                    name: 'Staff C',
+                    availability: [
+                      {
+                        dayOfWeek: 2,
+                        startTime: '10:00:00',
+                        endTime: '18:00:00',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          };
+        }
 
-      return null;
-    },
-  };
+        return null;
+      },
+    };
 
   const appointmentAvailableSlotsReader: AppointmentAvailableSlotsReader = {
     async getAvailableSlots(businessId, input) {
@@ -1467,9 +1468,7 @@ describe('API (e2e)', () => {
   });
 
   it('/appointments/options rejects missing authentication', async () => {
-    await request(app.getHttpServer())
-      .get('/appointments/options')
-      .expect(401);
+    await request(app.getHttpServer()).get('/appointments/options').expect(401);
   });
 
   it('/appointments/options returns scheduling configuration for the resolved tenant', async () => {
@@ -1853,5 +1852,4 @@ describe('API (e2e)', () => {
       .send({ status: 'NO_SHOW' })
       .expect(409);
   });
-
 });

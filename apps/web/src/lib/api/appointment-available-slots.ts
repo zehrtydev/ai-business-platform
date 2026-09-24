@@ -44,9 +44,7 @@ function parseSlot(value: unknown): AppointmentAvailableSlot {
     !isValidDateTime(value.startsAt) ||
     !isValidDateTime(value.endsAt)
   ) {
-    throw new ApiUpstreamError(
-      'The API returned an invalid appointment slot.',
-    );
+    throw new ApiUpstreamError('The API returned an invalid appointment slot.');
   }
 
   return {
@@ -106,9 +104,7 @@ export class AppointmentAvailableSlotsNotFoundError extends Error {
 
 export class AppointmentAvailableSlotsConfigurationError extends Error {
   constructor() {
-    super(
-      'The selected staff member is not configured for that service.',
-    );
+    super('The selected staff member is not configured for that service.');
     this.name = 'AppointmentAvailableSlotsConfigurationError';
   }
 }
