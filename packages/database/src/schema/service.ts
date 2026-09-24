@@ -23,6 +23,8 @@ export const services = pgTable(
     name: text('name').notNull(),
     description: text('description'),
     durationMinutes: integer('duration_minutes').notNull(),
+    priceMinorUnits: integer('price_minor_units'),
+    currencyCode: text('currency_code'),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
@@ -38,6 +40,22 @@ export const services = pgTable(
     check(
       'services_duration_minutes_positive',
       sql`${table.durationMinutes} > 0`,
+    ),
+    check(
+      'services_price_minor_units_non_negative',
+      sql`${table.priceMinorUnits} is null or ${table.priceMinorUnits} >= 0`,
+    ),
+    check(
+      'services_price_currency_consistent',
+      sql`(
+        (${table.priceMinorUnits} is null and ${table.currencyCode} is null)
+        or
+        (
+          ${table.priceMinorUnits} is not null
+          and ${table.currencyCode} is not null
+          and ${table.currencyCode} ~ '^[A-Z]{3}$'
+        )
+      )`,
     ),
   ],
 ).enableRLS();

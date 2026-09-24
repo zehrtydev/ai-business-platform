@@ -8,6 +8,7 @@ import { CrmModule } from './crm/crm.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { HealthModule } from './health/health.module.js';
 import { InboxModule } from './inbox/inbox.module.js';
+import { ServicesModule } from './services/services.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
 @Module({
@@ -18,6 +19,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     DashboardModule,
     HealthModule,
     InboxModule,
+    ServicesModule,
     TenancyModule,
   ],
   controllers: [AppController],

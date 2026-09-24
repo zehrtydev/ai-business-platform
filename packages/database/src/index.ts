@@ -61,9 +61,7 @@ export type {
   GetAppointmentAvailableSlotsInput,
   GetAppointmentAvailableSlotsResult,
 } from './queries/appointment-available-slots.js';
-export {
-  getAppointmentAvailableSlotsForBusiness,
-} from './queries/appointment-available-slots.js';
+export { getAppointmentAvailableSlotsForBusiness } from './queries/appointment-available-slots.js';
 
 export type {
   AppointmentLifecycleStatus,
@@ -72,3 +70,16 @@ export type {
   UpdatedAppointmentStatus,
 } from './queries/appointment-status.js';
 export { updateAppointmentStatusForBusiness } from './queries/appointment-status.js';
+
+export type {
+  CreateServiceInput,
+  ServicePrice,
+  ServiceRecord,
+  UpdateServiceInput,
+} from './queries/service-management.js';
+export {
+  createServiceForBusiness,
+  listServicesForBusiness,
+  setServiceActiveForBusiness,
+  updateServiceForBusiness,
+} from './queries/service-management.js';

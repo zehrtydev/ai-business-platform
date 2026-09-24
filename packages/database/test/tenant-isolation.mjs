@@ -11,15 +11,19 @@ import {
   getAppointmentAvailableSlotsForBusiness,
   createDatabase,
   createDevelopmentInboundMessageForBusiness,
+  createServiceForBusiness,
   getContactDetailForBusiness,
   getConversationDetailForBusiness,
   getDashboardSummary,
   listBusinessMembershipsForUser,
   listContactsForBusiness,
   listConversationsForBusiness,
+  listServicesForBusiness,
   requestConversationHandoffForBusiness,
   resumeConversationAiForBusiness,
+  setServiceActiveForBusiness,
   takeOverConversationForBusiness,
+  updateServiceForBusiness,
 } from '../dist/index.js';
 
 const connectionString = process.env.DATABASE_TEST_URL?.trim();
@@ -1042,12 +1046,11 @@ async function verifyConversationHandoffWorkflow() {
   const database = createDatabase(connectionString);
 
   try {
-    const crossTenantHandoff =
-      await requestConversationHandoffForBusiness(
-        database.db,
-        businessA.id,
-        conversationB.id,
-      );
+    const crossTenantHandoff = await requestConversationHandoffForBusiness(
+      database.db,
+      businessA.id,
+      conversationB.id,
+    );
 
     assert.deepEqual(crossTenantHandoff, {
       kind: 'not_found',
@@ -1091,12 +1094,11 @@ async function verifyConversationHandoffWorkflow() {
     assert.equal(handoff.conversation.aiEnabled, false);
     assert.equal(handoff.conversation.assignedToUserId, null);
 
-    const duplicateHandoff =
-      await requestConversationHandoffForBusiness(
-        database.db,
-        businessA.id,
-        conversationA.id,
-      );
+    const duplicateHandoff = await requestConversationHandoffForBusiness(
+      database.db,
+      businessA.id,
+      conversationA.id,
+    );
 
     assert.deepEqual(duplicateHandoff, {
       kind: 'conflict',
@@ -1151,8 +1153,7 @@ async function verifyConversationHandoffWorkflow() {
         successfulTakeover.conversation.assignedToUserId === userB,
     );
 
-    const winningUserId =
-      successfulTakeover.conversation.assignedToUserId;
+    const winningUserId = successfulTakeover.conversation.assignedToUserId;
 
     const [persistedHumanState] = await sql`
       select
@@ -1472,17 +1473,12 @@ async function verifyAppointmentCreationWorkflow() {
     assert.equal(created.appointment.serviceId, serviceA.id);
     assert.equal(created.appointment.staffMemberId, staffA.id);
 
-
     const slotsAfterFirstAppointment =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffA.id,
-          date: '2099-09-21',
-        },
-      );
+      await getAppointmentAvailableSlotsForBusiness(database.db, businessA.id, {
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        date: '2099-09-21',
+      });
 
     assert.equal(slotsAfterFirstAppointment.kind, 'available');
 
@@ -1508,127 +1504,101 @@ async function verifyAppointmentCreationWorkflow() {
 
     assert.equal(firstAppointmentSlotStarts.length, 7);
 
-    assert.equal(
-      firstAppointmentSlotStarts[0],
-      '2099-09-21T15:00:00.000Z',
-    );
+    assert.equal(firstAppointmentSlotStarts[0], '2099-09-21T15:00:00.000Z');
+
+    assert.equal(firstAppointmentSlotStarts.at(-1), '2099-09-21T21:00:00.000Z');
 
     assert.equal(
-      firstAppointmentSlotStarts.at(-1),
-      '2099-09-21T21:00:00.000Z',
-    );
-
-    assert.equal(
-      slotsAfterFirstAppointment.availability.slots
-        .at(-1)
-        .endsAt.toISOString(),
+      slotsAfterFirstAppointment.availability.slots.at(-1).endsAt.toISOString(),
       '2099-09-21T22:00:00.000Z',
     );
 
     assert.equal(
-      firstAppointmentSlotStarts.includes(
-        '2099-09-21T14:00:00.000Z',
-      ),
+      firstAppointmentSlotStarts.includes('2099-09-21T14:00:00.000Z'),
       false,
     );
 
     assert.equal(
-      firstAppointmentSlotStarts.includes(
-        '2099-09-21T14:15:00.000Z',
-      ),
+      firstAppointmentSlotStarts.includes('2099-09-21T14:15:00.000Z'),
       false,
     );
 
     assert.equal(
-      firstAppointmentSlotStarts.includes(
-        '2099-09-21T14:30:00.000Z',
-      ),
+      firstAppointmentSlotStarts.includes('2099-09-21T14:30:00.000Z'),
       false,
     );
 
     assert.equal(
-      firstAppointmentSlotStarts.includes(
-        '2099-09-21T14:45:00.000Z',
-      ),
+      firstAppointmentSlotStarts.includes('2099-09-21T14:45:00.000Z'),
       false,
     );
 
     assert.equal(
-      firstAppointmentSlotStarts.includes(
-        '2099-09-21T15:00:00.000Z',
-      ),
+      firstAppointmentSlotStarts.includes('2099-09-21T15:00:00.000Z'),
       true,
     );
 
-    const unavailableDaySlots =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffA.id,
-          date: '2099-09-22',
-        },
-      );
+    const unavailableDaySlots = await getAppointmentAvailableSlotsForBusiness(
+      database.db,
+      businessA.id,
+      {
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        date: '2099-09-22',
+      },
+    );
 
     assert.equal(unavailableDaySlots.kind, 'available');
     assert.equal(unavailableDaySlots.availability.slots.length, 0);
 
-    const unsupportedStaffSlots =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: unlinkedStaff.id,
-          date: '2099-09-21',
-        },
-      );
+    const unsupportedStaffSlots = await getAppointmentAvailableSlotsForBusiness(
+      database.db,
+      businessA.id,
+      {
+        serviceId: serviceA.id,
+        staffMemberId: unlinkedStaff.id,
+        date: '2099-09-21',
+      },
+    );
 
     assert.deepEqual(unsupportedStaffSlots, {
       kind: 'configuration',
     });
 
     const crossTenantServiceSlots =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceB.id,
-          staffMemberId: staffA.id,
-          date: '2099-09-21',
-        },
-      );
+      await getAppointmentAvailableSlotsForBusiness(database.db, businessA.id, {
+        serviceId: serviceB.id,
+        staffMemberId: staffA.id,
+        date: '2099-09-21',
+      });
 
     assert.deepEqual(crossTenantServiceSlots, {
       kind: 'not_found',
     });
 
-    const crossTenantStaffSlots =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffB.id,
-          date: '2099-09-21',
-        },
-      );
+    const crossTenantStaffSlots = await getAppointmentAvailableSlotsForBusiness(
+      database.db,
+      businessA.id,
+      {
+        serviceId: serviceA.id,
+        staffMemberId: staffB.id,
+        date: '2099-09-21',
+      },
+    );
 
     assert.deepEqual(crossTenantStaffSlots, {
       kind: 'not_found',
     });
 
-    const invalidDateSlots =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffA.id,
-          date: '2099-02-30',
-        },
-      );
+    const invalidDateSlots = await getAppointmentAvailableSlotsForBusiness(
+      database.db,
+      businessA.id,
+      {
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        date: '2099-02-30',
+      },
+    );
 
     assert.deepEqual(invalidDateSlots, {
       kind: 'invalid',
@@ -1809,17 +1779,12 @@ async function verifyAppointmentCreationWorkflow() {
       '2099-09-21T16:00:00.000Z',
     );
 
-
     const slotsAfterAdjacentAppointment =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffA.id,
-          date: '2099-09-21',
-        },
-      );
+      await getAppointmentAvailableSlotsForBusiness(database.db, businessA.id, {
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        date: '2099-09-21',
+      });
 
     assert.equal(slotsAfterAdjacentAppointment.kind, 'available');
 
@@ -1830,15 +1795,9 @@ async function verifyAppointmentCreationWorkflow() {
 
     assert.equal(adjacentSlotStarts.length, 6);
 
-    assert.equal(
-      adjacentSlotStarts[0],
-      '2099-09-21T16:00:00.000Z',
-    );
+    assert.equal(adjacentSlotStarts[0], '2099-09-21T16:00:00.000Z');
 
-    assert.equal(
-      adjacentSlotStarts.at(-1),
-      '2099-09-21T21:00:00.000Z',
-    );
+    assert.equal(adjacentSlotStarts.at(-1), '2099-09-21T21:00:00.000Z');
 
     const [counts] = await sql`
       select
@@ -1856,57 +1815,47 @@ async function verifyAppointmentCreationWorkflow() {
       businessB: 0,
     });
 
-
-    const cancelled =
-      await updateAppointmentStatusForBusiness(
-        database.db,
-        businessA.id,
-        created.appointment.id,
-        'CANCELLED',
-      );
+    const cancelled = await updateAppointmentStatusForBusiness(
+      database.db,
+      businessA.id,
+      created.appointment.id,
+      'CANCELLED',
+    );
 
     assert.equal(cancelled.kind, 'updated');
     assert.equal(cancelled.appointment.status, 'CANCELLED');
 
-    const terminalTransition =
-      await updateAppointmentStatusForBusiness(
-        database.db,
-        businessA.id,
-        created.appointment.id,
-        'COMPLETED',
-      );
+    const terminalTransition = await updateAppointmentStatusForBusiness(
+      database.db,
+      businessA.id,
+      created.appointment.id,
+      'COMPLETED',
+    );
 
     assert.equal(terminalTransition.kind, 'conflict');
     assert.equal(terminalTransition.currentStatus, 'CANCELLED');
 
-    const crossTenantStatusUpdate =
-      await updateAppointmentStatusForBusiness(
-        database.db,
-        businessB.id,
-        created.appointment.id,
-        'COMPLETED',
-      );
+    const crossTenantStatusUpdate = await updateAppointmentStatusForBusiness(
+      database.db,
+      businessB.id,
+      created.appointment.id,
+      'COMPLETED',
+    );
 
     assert.equal(crossTenantStatusUpdate.kind, 'not_found');
 
     const slotsAfterCancellation =
-      await getAppointmentAvailableSlotsForBusiness(
-        database.db,
-        businessA.id,
-        {
-          serviceId: serviceA.id,
-          staffMemberId: staffA.id,
-          date: '2099-09-21',
-        },
-      );
+      await getAppointmentAvailableSlotsForBusiness(database.db, businessA.id, {
+        serviceId: serviceA.id,
+        staffMemberId: staffA.id,
+        date: '2099-09-21',
+      });
 
     assert.equal(slotsAfterCancellation.kind, 'available');
 
     assert.equal(
       slotsAfterCancellation.availability.slots.some(
-        (slot) =>
-          slot.startsAt.toISOString() ===
-          '2099-09-21T14:00:00.000Z',
+        (slot) => slot.startsAt.toISOString() === '2099-09-21T14:00:00.000Z',
       ),
       true,
       'Cancelling an appointment must release its slot.',
@@ -2164,6 +2113,264 @@ async function verifyDevelopmentMessageSimulation() {
           'x'.repeat(4_001),
         ),
       /must not exceed 4000 characters/,
+    );
+  } finally {
+    await database.client.end({ timeout: 5 });
+  }
+
+  await sql`
+    delete from public.businesses
+    where id in (${businessA.id}::uuid, ${businessB.id}::uuid)
+  `;
+}
+
+async function verifyServiceManagement() {
+  const [businessA] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Service management A', 'America/Bogota')
+    returning id
+  `;
+
+  const [businessB] = await sql`
+    insert into public.businesses (name, timezone)
+    values ('Service management B', 'America/Bogota')
+    returning id
+  `;
+
+  const database = createDatabase(connectionString);
+
+  try {
+    const serviceA = await createServiceForBusiness(database.db, businessA.id, {
+      name: '  Dental evaluation  ',
+      description: '  Initial consultation  ',
+      durationMinutes: 45,
+      price: {
+        minorUnits: 12_000_000,
+        currencyCode: 'cop',
+      },
+    });
+
+    assert.equal(serviceA.name, 'Dental evaluation');
+    assert.equal(serviceA.description, 'Initial consultation');
+    assert.equal(serviceA.durationMinutes, 45);
+    assert.deepEqual(serviceA.price, {
+      minorUnits: 12_000_000,
+      currencyCode: 'COP',
+    });
+    assert.equal(serviceA.isActive, true);
+
+    const serviceAWithoutPrice = await createServiceForBusiness(
+      database.db,
+      businessA.id,
+      {
+        name: 'Follow-up',
+        durationMinutes: 30,
+      },
+    );
+
+    assert.equal(serviceAWithoutPrice.description, null);
+    assert.equal(serviceAWithoutPrice.price, null);
+    assert.equal(serviceAWithoutPrice.isActive, true);
+
+    const serviceB = await createServiceForBusiness(database.db, businessB.id, {
+      name: 'Other tenant service',
+      description: 'Must remain isolated',
+      durationMinutes: 60,
+      price: {
+        minorUnits: 25_000,
+        currencyCode: 'USD',
+      },
+    });
+
+    const servicesA = await listServicesForBusiness(database.db, businessA.id);
+
+    assert.equal(servicesA.length, 2);
+    assert.deepEqual(
+      servicesA.map((service) => service.id).sort(),
+      [serviceA.id, serviceAWithoutPrice.id].sort(),
+    );
+    assert(
+      servicesA.every((service) => service.id !== serviceB.id),
+      'Business A must not list services from Business B.',
+    );
+
+    const servicesB = await listServicesForBusiness(database.db, businessB.id);
+
+    assert.equal(servicesB.length, 1);
+    assert.equal(servicesB[0].id, serviceB.id);
+
+    const updatedA = await updateServiceForBusiness(
+      database.db,
+      businessA.id,
+      serviceA.id,
+      {
+        name: '  Comprehensive evaluation  ',
+        description: '   ',
+        durationMinutes: 60,
+        price: null,
+      },
+    );
+
+    assert(updatedA);
+    assert.equal(updatedA.id, serviceA.id);
+    assert.equal(updatedA.name, 'Comprehensive evaluation');
+    assert.equal(updatedA.description, null);
+    assert.equal(updatedA.durationMinutes, 60);
+    assert.equal(updatedA.price, null);
+    assert.equal(updatedA.isActive, true);
+
+    const crossTenantUpdate = await updateServiceForBusiness(
+      database.db,
+      businessA.id,
+      serviceB.id,
+      {
+        name: 'Cross-tenant mutation',
+        description: null,
+        durationMinutes: 15,
+        price: null,
+      },
+    );
+
+    assert.equal(crossTenantUpdate, null);
+
+    const crossTenantDeactivate = await setServiceActiveForBusiness(
+      database.db,
+      businessA.id,
+      serviceB.id,
+      false,
+    );
+
+    assert.equal(crossTenantDeactivate, null);
+
+    const deactivated = await setServiceActiveForBusiness(
+      database.db,
+      businessA.id,
+      serviceA.id,
+      false,
+    );
+
+    assert(deactivated);
+    assert.equal(deactivated.id, serviceA.id);
+    assert.equal(deactivated.isActive, false);
+
+    const reactivated = await setServiceActiveForBusiness(
+      database.db,
+      businessA.id,
+      serviceA.id,
+      true,
+    );
+
+    assert(reactivated);
+    assert.equal(reactivated.id, serviceA.id);
+    assert.equal(reactivated.isActive, true);
+
+    const invalidIdUpdate = await updateServiceForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+      {
+        name: 'Invalid',
+        description: null,
+        durationMinutes: 30,
+        price: null,
+      },
+    );
+
+    assert.equal(invalidIdUpdate, null);
+
+    const invalidIdActivation = await setServiceActiveForBusiness(
+      database.db,
+      businessA.id,
+      'not-a-uuid',
+      false,
+    );
+
+    assert.equal(invalidIdActivation, null);
+
+    await assert.rejects(
+      () =>
+        createServiceForBusiness(database.db, businessA.id, {
+          name: '   ',
+          durationMinutes: 30,
+        }),
+      /Service name is required/,
+    );
+
+    await assert.rejects(
+      () =>
+        createServiceForBusiness(database.db, businessA.id, {
+          name: 'Invalid duration',
+          durationMinutes: 0,
+        }),
+      /positive integer/,
+    );
+
+    await assert.rejects(
+      () =>
+        createServiceForBusiness(database.db, businessA.id, {
+          name: 'Invalid price',
+          durationMinutes: 30,
+          price: {
+            minorUnits: -1,
+            currencyCode: 'COP',
+          },
+        }),
+      /non-negative safe integer/,
+    );
+
+    await assert.rejects(
+      () =>
+        createServiceForBusiness(database.db, businessA.id, {
+          name: 'Invalid currency',
+          durationMinutes: 30,
+          price: {
+            minorUnits: 10_000,
+            currencyCode: 'CO',
+          },
+        }),
+      /exactly three letters/,
+    );
+
+    const [persistedServiceB] = await sql`
+      select
+        name,
+        description,
+        duration_minutes as "durationMinutes",
+        price_minor_units as "priceMinorUnits",
+        currency_code as "currencyCode",
+        is_active as "isActive"
+      from public.services
+      where id = ${serviceB.id}::uuid
+    `;
+
+    assert.deepEqual(persistedServiceB, {
+      name: 'Other tenant service',
+      description: 'Must remain isolated',
+      durationMinutes: 60,
+      priceMinorUnits: 25_000,
+      currencyCode: 'USD',
+      isActive: true,
+    });
+
+    await assert.rejects(
+      () => sql`
+        insert into public.services (
+          business_id,
+          name,
+          duration_minutes,
+          price_minor_units,
+          currency_code
+        )
+        values (
+          ${businessA.id}::uuid,
+          'Invalid database price',
+          30,
+          1000,
+          null
+        )
+      `,
+      (error) => error?.code === '23514',
+      'Database must reject an amount without a currency.',
     );
   } finally {
     await database.client.end({ timeout: 5 });
@@ -3030,6 +3237,7 @@ try {
   await verifyConversationList();
   await verifyConversationHandoffWorkflow();
   await verifyAppointmentCreationWorkflow();
+  await verifyServiceManagement();
   await verifyDevelopmentMessageSimulation();
   await verifyDashboardSummary();
   await verifyTenantIsolation();
