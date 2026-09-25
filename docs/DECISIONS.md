@@ -1694,15 +1694,15 @@ Tradeoffs:
 
 Current unresolved decisions, roughly in implementation order:
 
-    ADR-022 Runtime AI model/provider
     ADR-011 WhatsApp provider
+    ADR-022 Runtime AI model/provider
     ADR-023 Calendar integration timing
     ADR-024 Observability provider
     ADR-025 Backup strategy
 
 Not all must be resolved before coding.
 
-The decisions that directly affect M1 and M2 should be resolved first.
+Resolve decisions in implementation order, prioritizing ADR-011 for M6 and ADR-022 before M7 AI runtime integration.
 
 ---
 

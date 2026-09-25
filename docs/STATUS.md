@@ -10,42 +10,63 @@ Temporary project name.
 
 ## Current phase
 
-    M4 — CRM + Inbox
+    M6 — Messaging integration
 
 Status:
 
-    IN PROGRESS
+    READY TO START
 
-M1 — Technical base is complete.
+M0 through M5 are complete and merged into `main`.
 
-The repository now has an executable monorepo foundation, local Redis infrastructure,
-health checks, shared packages, automated testing, formatting, and a GitHub Actions
-quality gate.
+The repository currently has:
 
-M2 is complete, including the operational schema, automated tenant isolation tests,
-and authenticated tenant resolution.
+- the project/product foundation;
+- the executable monorepo and CI quality gate;
+- tenant-safe persistence and authenticated tenant resolution;
+- the authenticated administrative dashboard;
+- CRM and Inbox operational foundations;
+- human handoff and AI/human conversation control;
+- services and staff management;
+- recurring availability management;
+- real appointment availability calculation;
+- appointment creation and lifecycle management;
+- PostgreSQL-level double-booking protection.
 
-M3 is complete. The authenticated administrative application shell, private
-navigation, tenant-aware backend integration, and real dashboard metrics are
-implemented and manually verified.
+The latest scheduling work passed the repository quality gate and was manually
+validated through a complete availability-to-booking flow.
 
 ---
 
 ## Current objective
 
-Begin the CRM + Inbox foundation defined for M4.
+Begin M6 — Messaging integration without coupling the application domain to a
+specific WhatsApp vendor.
 
 Immediate target:
 
-    authenticated tenant
+    WhatsApp provider webhook
             ↓
-    contacts and leads
+    provider validation
             ↓
-    conversations and messages
+    normalized inbound message
             ↓
-    human operational workflow
+    deduplication
             ↓
-    AI/human handoff foundation
+    tenant/contact resolution
+            ↓
+    conversation persistence
+            ↓
+    message persistence
+            ↓
+    asynchronous processing
+            ↓
+    outbound provider adapter
+
+Before provider-specific implementation begins, ADR-011 must be resolved.
+
+The application must continue to depend on the internal `MessagingProvider`
+abstraction rather than directly on Meta, Evolution API, a BSP, or another
+vendor.
 
 ---
 
@@ -471,21 +492,33 @@ Google Calendar may be added depending on pilot needs.
 
 ## Remaining implementation
 
-Major areas still not implemented include:
+Major areas still ahead:
 
-    Redis queues
-    CRM editing
-    Inbox application layer
-    availability engine
-    WhatsApp integration
-    AI agent
-    deployment pipeline
+    M6  WhatsApp / messaging provider integration
+    M7  AI Agent
+    M8  Complete end-to-end business flow
+    M9  Automations and reminders
+    M10 Observability and hardening
+    M11 Dental pilot
+    M12 Product validation
 
-M0, M1, M2, and M3 are complete.
+Additional operational work still expected includes:
 
-M4 is in progress. Tenant-scoped CRM contact list/detail and the conversation
-inbox foundation are implemented and manually verified against persisted
-development data.
+- asynchronous messaging queues and worker execution;
+- provider webhook verification and idempotency;
+- outbound message delivery and provider error handling;
+- deployment and production hardening;
+- backup and recovery procedures;
+- observability and retry visibility.
+
+Known non-blocking scheduling debt:
+
+    dedicated appointment detail route/page
+    dedicated GET /appointments/:appointmentId endpoint
+
+Appointments are already visible with their operational details in the agenda,
+and the scheduling exit criterion is satisfied. The dedicated detail route is a
+future usability/integration improvement and does not block M6.
 
 ---
 
@@ -493,9 +526,17 @@ development data.
 
 Recommended immediate order:
 
-    1. Establish the human handoff workflow
-    2. Add manual conversation intervention
-    3. Connect CRM and Inbox operational flows
+    1. Resolve ADR-011 — WhatsApp provider
+    2. Define the MessagingProvider contract
+    3. Implement the provider adapter boundary
+    4. Implement inbound webhook validation
+    5. Normalize and deduplicate inbound messages
+    6. Persist inbound messaging activity
+    7. Add outbound message sending
+    8. Move slow provider/AI work to asynchronous processing
+
+Do not introduce M7 AI orchestration until the M6 messaging boundary is stable
+enough to receive and persist real messages reliably.
 
 ---
 
@@ -503,47 +544,53 @@ Recommended immediate order:
 
 ### M0 — Foundation
 
+    Status                  DONE
     Product vision          DONE
-    MVP definition          DONE
-    Architecture draft      DONE
     Product definition      DONE
+    MVP definition          DONE
+    Architecture baseline   DONE
     Roadmap                 DONE
     Status tracking         DONE
     Decision log            ACTIVE
-    AGENTS.md                DONE
-    README.md                DONE
-    Bootstrap ADRs           DONE
-
-The foundational documentation and immediate bootstrap decisions are complete.
+    AGENTS.md               DONE
+    README.md               DONE
 
 M0 is closed.
 
 ### M1 — Technical base
 
     Status                  DONE
-    Workspace bootstrap     DONE
+    pnpm workspace          DONE
     apps/web                DONE
     apps/api                DONE
     apps/worker             DONE
     Shared packages         DONE
-    Redis                   DONE
+    Redis development infra DONE
     Health checks           DONE
+    Automated tests         DONE
     CI quality gate         DONE
 
 M1 is closed.
 
 ### M2 — Domain and persistence
 
-    Status                  DONE
-    ORM/migration decision  DONE
-    packages/database       FOUNDATION COMPLETE
-    Drizzle foundation      DONE
-    Development Supabase    DONE
-    Identity/tenancy schema DONE
-    Development migrations  APPLIED
-    Core schemas            DONE
-    Tenant isolation tests  AUTOMATED
-    Tenant resolution       DONE
+    Status                    DONE
+    PostgreSQL / Drizzle       DONE
+    Versioned migrations       DONE
+    Business tenancy model     DONE
+    Auth identity mapping      DONE
+    Business memberships       DONE
+    Services                   DONE
+    Staff                      DONE
+    Availability rules         DONE
+    Contacts                   DONE
+    Leads / pipelines          DONE
+    Appointments               DONE
+    Conversations              DONE
+    Messages                   DONE
+    Row-Level Security enabled DONE
+    Tenant isolation tests     DONE
+    Tenant resolution          DONE
 
 M2 is closed.
 
@@ -551,103 +598,108 @@ M2 is closed.
 
     Status                    DONE
     Supabase Auth web SSR     DONE
-    Login/logout              DONE
-    Session                   DONE
+    Login / logout            DONE
+    Session handling          DONE
     Route protection          DONE
     API token verification    DONE
-    API auth-to-tenant        DONE
-    Web-to-API auth           DONE
-    Development user          PROVISIONED
-    Login-to-tenant flow      VERIFIED
+    Auth-to-tenant resolution DONE
+    Private app shell         DONE
     Navigation                DONE
-    Private application shell DONE
-    Private module routes     DONE
     Dashboard API             DONE
-    Real dashboard metrics    VERIFIED
-
-Dashboard metrics currently represent tenant-wide persisted state:
-
-    leads received          total recorded leads
-    open conversations      conversations with OPEN status
-    scheduled appointments  appointments with SCHEDULED status
-    human handoffs          conversations with HUMAN_REQUIRED status
-
-M3 exit criterion is satisfied.
+    Real dashboard metrics    DONE
 
 M3 is closed.
 
 ### M4 — CRM + Inbox
 
-    Status                    IN PROGRESS
-    CRM contact list          DONE
-    Tenant-scoped CRM API     DONE
-    Contact list DB query     VERIFIED
-    Latest lead projection    VERIFIED
-    Contact list web UI       VERIFIED
-    CRM contact detail        DONE
-    Conversation list         DONE
-    Conversation detail       DONE
-    Development messages      DONE
-    Human handoff workflow    NOT STARTED
+    Status                     DONE
+    CRM contact list           DONE
+    CRM contact detail         DONE
+    Tenant-scoped CRM API      DONE
+    Conversation list          DONE
+    Conversation detail        DONE
+    Persisted message history  DONE
+    Development messages       DONE
+    Human handoff              DONE
+    Human takeover             DONE
+    Resume AI control          DONE
+    Tenant isolation           VERIFIED
 
-The contact list currently exposes:
+M4 is closed.
 
-    contact identity
-    source
-    latest lead stage
-    latest lead service
-    last interaction
+### M5 — Scheduling
 
-The backend derives the business from authenticated tenant context. The web client
-does not supply a freely trusted business identifier.
+    Status                     DONE
+    Service management         DONE
+    Optional service pricing   DONE
+    Staff management           DONE
+    Staff/service assignments  DONE
+    Availability rule CRUD     DONE
+    Appointment list           DONE
+    Appointment creation       DONE
+    Cancel lifecycle           DONE
+    Complete lifecycle         DONE
+    No-show lifecycle          DONE
+    Availability engine        DONE
+    Business timezone handling DONE
+    Existing booking removal   DONE
+    Booking revalidation       DONE
+    DB overlap protection      DONE
+    API E2E coverage           DONE
+    Manual functional test     VERIFIED
 
-The CRM contact list and contact detail screens have been manually verified
-against persisted development data. Contact detail supports contacts with and
-without an associated lead.
+The availability engine evaluates:
 
-Contact detail lookup is tenant-scoped by the backend and returns no cross-tenant
-contact data.
+    business timezone
+    service duration
+    active service state
+    active staff state
+    staff/service assignment
+    recurring availability rules
+    existing scheduled appointments
+    future-only slots
 
-The conversation inbox foundation is also tenant-scoped and currently exposes:
+Appointment creation validates the requested configuration again before writing.
 
-    contact identity
-    channel
-    conversation status
-    AI/human control state
-    latest persisted message
-    latest activity time
+PostgreSQL provides the final concurrency guard through an exclusion constraint
+that prevents overlapping scheduled appointments for the same staff member.
 
-The Inbox screen has been manually verified with OPEN, HUMAN_REQUIRED, AI-active,
-human-control, and no-message conversation states.
+Manual validation confirmed:
 
-Conversation detail is tenant-scoped and exposes persisted message history in
-chronological order. Cross-tenant conversation lookup returns no conversation
-data.
+    availability rule created
+            ↓
+    matching slots returned
+            ↓
+    appointment booked
+            ↓
+    booked interval no longer returned
 
-The conversation detail UI has been manually verified with:
+Known non-blocking debt:
 
-    persisted inbound customer messages
-    persisted outbound AI messages
-    HUMAN_REQUIRED with human control
-    OPEN with AI control
-    empty message history
+    no dedicated appointment detail page
+    no dedicated GET /appointments/:appointmentId endpoint
 
-Development message simulation is implemented for authenticated, tenant-scoped
-development conversations. It persists inbound CONTACT messages and updates both
-conversation activity and contact last interaction time.
+The agenda already exposes the appointment's operational details, so this does
+not block the scheduling exit criterion.
 
-Development simulation rejects:
+M5 is closed.
 
-    cross-tenant conversations
-    non-development channels
-    closed conversations
-    blank or oversized messages
+### M6 — Messaging integration
 
-The development simulator UI has been manually verified by creating a persisted
-customer message from the conversation detail screen and confirming that the
-Inbox reorders the conversation by its updated activity time.
+    Status                  NEXT
+    WhatsApp provider       OPEN
+    MessagingProvider       NOT STARTED
+    Provider webhook        NOT STARTED
+    Payload normalization   NOT STARTED
+    Deduplication           FOUNDATION AVAILABLE
+    Outbound delivery       NOT STARTED
+    Async processing        NOT STARTED
 
-M4 remains in progress.
+The existing Message persistence model already includes
+`provider_message_id`, providing the persistence foundation for provider
+delivery deduplication.
+
+ADR-011 must be resolved before provider-specific implementation begins.
 
 ---
 
