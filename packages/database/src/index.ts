@@ -98,3 +98,16 @@ export {
   setStaffMemberActiveForBusiness,
   updateStaffMemberForBusiness,
 } from './queries/staff-management.js';
+
+export type {
+  AvailabilityRuleMutationInput,
+  AvailabilityRuleRecord,
+  CreateAvailabilityRuleResult,
+  UpdateAvailabilityRuleResult,
+} from './queries/availability-rule-management.js';
+export {
+  createAvailabilityRuleForBusiness,
+  listAvailabilityRulesForBusiness,
+  setAvailabilityRuleActiveForBusiness,
+  updateAvailabilityRuleForBusiness,
+} from './queries/availability-rule-management.js';
