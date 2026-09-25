@@ -14,7 +14,7 @@ Temporary project name.
 
 Status:
 
-    READY TO START
+    IN PROGRESS
 
 M0 through M5 are complete and merged into `main`.
 
@@ -62,10 +62,15 @@ Immediate target:
             ↓
     outbound provider adapter
 
-Before provider-specific implementation begins, ADR-011 must be resolved.
+ADR-011 is accepted.
+
+Development will initially use Evolution API / Baileys with a dedicated
+WhatsApp test number.
+
+Meta WhatsApp Cloud API remains the intended production target.
 
 The application must continue to depend on the internal `MessagingProvider`
-abstraction rather than directly on Meta, Evolution API, a BSP, or another
+abstraction rather than directly on Evolution, Baileys, Meta, a BSP, or another
 vendor.
 
 ---
@@ -524,19 +529,24 @@ future usability/integration improvement and does not block M6.
 
 ## Next actions
 
-Recommended immediate order:
+Recommended immediate M6 order:
 
-    1. Resolve ADR-011 — WhatsApp provider
-    2. Define the MessagingProvider contract
-    3. Implement the provider adapter boundary
-    4. Implement inbound webhook validation
-    5. Normalize and deduplicate inbound messages
-    6. Persist inbound messaging activity
-    7. Add outbound message sending
-    8. Move slow provider/AI work to asynchronous processing
+    1. Define the provider-agnostic MessagingProvider contract
+    2. Define normalized inbound and outbound messaging contracts
+    3. Implement the Evolution API / Baileys development adapter
+    4. Connect the dedicated WhatsApp test number
+    5. Implement inbound webhook/event processing
+    6. Normalize, deduplicate and persist inbound messages
+    7. Implement outbound message delivery
+    8. Move slow messaging and later AI work to asynchronous processing
 
-Do not introduce M7 AI orchestration until the M6 messaging boundary is stable
-enough to receive and persist real messages reliably.
+Evolution/Baileys is development infrastructure only.
+
+Provider-specific payloads must be normalized before reaching CRM, Inbox,
+scheduling or future AI orchestration.
+
+Do not introduce M7 AI orchestration until the M6 messaging boundary can
+reliably receive, persist and send real WhatsApp messages.
 
 ---
 
@@ -686,8 +696,10 @@ M5 is closed.
 
 ### M6 — Messaging integration
 
-    Status                  NEXT
-    WhatsApp provider       OPEN
+    Status                  READY TO IMPLEMENT
+    ADR-011                 ACCEPTED
+    Development provider    EVOLUTION API / BAILEYS
+    Production target       META CLOUD API
     MessagingProvider       NOT STARTED
     Provider webhook        NOT STARTED
     Payload normalization   NOT STARTED
@@ -695,11 +707,23 @@ M5 is closed.
     Outbound delivery       NOT STARTED
     Async processing        NOT STARTED
 
+Development will use a dedicated real WhatsApp test number connected through
+Evolution API / Baileys so M6 can be validated without incremental messaging
+provider cost.
+
+This adapter is development-only.
+
+Meta WhatsApp Cloud API remains the intended production target.
+
+Both integrations must remain behind the same provider-agnostic
+`MessagingProvider` boundary.
+
 The existing Message persistence model already includes
 `provider_message_id`, providing the persistence foundation for provider
 delivery deduplication.
 
-ADR-011 must be resolved before provider-specific implementation begins.
+The next M6 implementation step is defining the normalized messaging contract
+and `MessagingProvider` interface before adding Evolution-specific code.
 
 ---
 

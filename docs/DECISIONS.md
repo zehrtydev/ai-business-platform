@@ -391,37 +391,262 @@ Changing or adding a provider should not require rewriting CRM, appointments, AI
 
 ---
 
-# ADR-011 — WhatsApp provider remains undecided
+# ADR-011 — Use Evolution/Baileys for development and Meta Cloud API for production
 
-**Status:** OPEN
+**Status:** ACCEPTED
 
 ## Context
 
-Meta Cloud API is an official option, but the product is intended for SMEs and onboarding/cost requirements need careful evaluation.
+M6 requires a real WhatsApp integration.
 
-Alternative providers and WhatsApp Web based solutions may offer different tradeoffs.
+During the current development stage the project has an explicit cost constraint:
 
-## Decision required
+    incremental messaging cost = 0
 
-Before M6 implementation, compare viable providers using:
+At the same time, development should use a real dedicated WhatsApp test number,
+real inbound messages, real outbound messages and real webhook/event behavior.
 
-- cost;
-- onboarding;
-- stability;
-- compliance;
-- number requirements;
-- templates;
+The project should not depend on a temporary provider design that later requires
+rewriting CRM, Inbox, AI, scheduling or conversation logic.
+
+The relevant options evaluated were:
+
+    Meta WhatsApp Cloud API
+    Evolution API with Baileys / WhatsApp Web
+    Evolution API with official Cloud API
+    Twilio
+    360dialog
+
+## Decision
+
+Use two explicit integration stages.
+
+### Development / technical pilot
+
+Use:
+
+    Evolution API
+    +
+    Baileys / WhatsApp Web connection
+
+with a dedicated WhatsApp test number.
+
+This integration exists only as a development adapter.
+
+It must not become part of the core domain model.
+
+### Production target
+
+Use:
+
+    Meta WhatsApp Cloud API
+
+as the intended production WhatsApp integration when production messaging costs
+and official customer onboarding are acceptable.
+
+The production transition will be implemented through a separate provider
+adapter.
+
+## Provider boundary
+
+All provider-specific behavior must remain behind:
+
+    MessagingProvider
+
+Conceptually, development inbound traffic is:
+
+    WhatsApp
+        ↓
+    Evolution API / Baileys
+        ↓
+    EvolutionMessagingProvider
+        ↓
+    normalized AIAA event
+        ↓
+    Contact
+    Conversation
+    Message
+    Worker
+    AI
+    Scheduling
+
+Production should become:
+
+    WhatsApp
+        ↓
+    Meta Cloud API
+        ↓
+    MetaMessagingProvider
+        ↓
+    same normalized AIAA event
+        ↓
+    same application/domain flow
+
+CRM, Inbox, Contacts, Conversations, Appointments and AI orchestration must not
+need to know which provider is active.
+
+## Normalization rule
+
+Provider payloads must be normalized before entering application/domain logic.
+
+At minimum the internal messaging representation must be able to express:
+
+    provider
+    external connection/account identity
+    external message identifier
+    channel
+    direction
+    sender identity
+    recipient identity
+    normalized phone number
+    message type
+    text content
+    media metadata when applicable
+    provider timestamp
+    delivery/status information when applicable
+    raw provider metadata only at the adapter/integration boundary
+
+Evolution-specific or Baileys-specific payload structures must not leak into the
+CRM, Inbox, scheduling or AI domains.
+
+The same rule applies later to Meta-specific Graph API payloads.
+
+## Development-number policy
+
+The Baileys development adapter must use a dedicated test number.
+
+Do not use:
+
+    a critical personal WhatsApp number
+    a production customer number
+    a number whose loss would create business impact
+
+The development connection is considered replaceable infrastructure.
+
+## Why Evolution/Baileys is acceptable for development
+
+It allows the team to validate the real messaging flow without introducing
+current messaging-provider cost.
+
+It provides enough real behavior to validate:
+
+- connection lifecycle;
+- real inbound WhatsApp messages;
+- real outbound WhatsApp messages;
+- webhook/event processing;
+- contact identification;
+- conversation creation/retrieval;
+- message persistence;
+- deduplication;
+- Inbox updates;
+- later worker and AI integration.
+
+Its purpose is technical validation, not production reliability.
+
+## Why Evolution/Baileys is not the production target
+
+Baileys relies on the WhatsApp Web protocol rather than the official WhatsApp
+Business Platform API.
+
+That creates additional operational and account risk that is not appropriate as
+the default production foundation for a commercial SaaS.
+
+Production customer messaging should therefore migrate to the official
+WhatsApp Business Platform unless a later ADR explicitly changes this decision.
+
+## Why Meta Cloud API remains the production target
+
+Meta Cloud API is the official WhatsApp Business Platform API.
+
+It provides the expected long-term foundation for:
+
+- official business onboarding;
 - webhooks;
-- multimedia;
-- support;
-- Colombia availability;
-- risk of blocking;
-- portability;
-- scale.
+- templates;
+- media;
+- delivery states;
+- provider message identifiers;
+- production support expectations;
+- future multi-customer onboarding.
 
-## Current rule
+The production adapter must still implement the same internal
+`MessagingProvider` contract.
 
-Do not write business logic that depends directly on Meta or any other provider while this decision is open.
+## BSP alternatives
+
+Twilio and 360dialog remain valid future adapters.
+
+They may be reconsidered if they materially improve:
+
+- customer onboarding;
+- number migration;
+- WhatsApp Business App coexistence;
+- support escalation;
+- operational reliability;
+- total operating cost.
+
+They are not required for the initial zero-cost development stage.
+
+## Migration requirement
+
+The Evolution development adapter is considered successful only if replacing it
+with a Meta adapter does not require redesigning the core product.
+
+Expected future migration:
+
+    remove / disable EvolutionMessagingProvider
+                    ↓
+    configure MetaMessagingProvider
+                    ↓
+    preserve internal messaging contracts
+                    ↓
+    preserve CRM / Inbox / AI / scheduling behavior
+
+Provider configuration and connection identity may change.
+
+Core business entities and workflows should not.
+
+## Compliance and risk
+
+The Evolution/Baileys adapter is an intentionally temporary development
+mechanism.
+
+It must not be presented as the official WhatsApp production integration.
+
+Any production deployment must review current WhatsApp Business Platform terms,
+messaging rules, template requirements, consent requirements and applicable
+privacy obligations before connecting customer traffic.
+
+## Consequences
+
+Positive:
+
+- current messaging development can operate with no incremental provider cost;
+- real WhatsApp numbers and real messages can be used during testing;
+- M6 can be developed end to end before production onboarding;
+- the provider abstraction is validated against more than one possible adapter;
+- later migration to Meta is anticipated from the beginning.
+
+Tradeoffs:
+
+- Evolution API becomes additional local/development infrastructure;
+- Baileys sessions require connection and reconnection handling;
+- development behavior will not perfectly reproduce the official Cloud API;
+- provider-specific edge cases must remain isolated;
+- the development number carries greater operational risk than an official API
+  integration.
+
+## Revisit triggers
+
+Revisit this decision when:
+
+- the first production pilot is ready;
+- a customer number must be connected;
+- production messaging cost is acceptable;
+- official onboarding is required;
+- WhatsApp Business App coexistence becomes a pilot requirement;
+- Evolution/Baileys becomes unstable enough to block development;
+- a BSP provides a materially better production onboarding path.
 
 ---
 
@@ -1694,7 +1919,6 @@ Tradeoffs:
 
 Current unresolved decisions, roughly in implementation order:
 
-    ADR-011 WhatsApp provider
     ADR-022 Runtime AI model/provider
     ADR-023 Calendar integration timing
     ADR-024 Observability provider
@@ -1702,7 +1926,7 @@ Current unresolved decisions, roughly in implementation order:
 
 Not all must be resolved before coding.
 
-Resolve decisions in implementation order, prioritizing ADR-011 for M6 and ADR-022 before M7 AI runtime integration.
+Resolve remaining decisions in implementation order, with ADR-022 required before M7 AI runtime integration.
 
 ---
 

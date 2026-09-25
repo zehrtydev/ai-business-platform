@@ -18,7 +18,7 @@ Current milestone state:
     M3 — Admin dashboard          COMPLETE
     M4 — CRM + Inbox              COMPLETE
     M5 — Scheduling               COMPLETE
-    M6 — Messaging integration    NEXT
+    M6 — Messaging integration    IN PROGRESS
 
 M0 through M5 are implemented in `main`.
 
@@ -54,8 +54,12 @@ The next milestone is:
 
     M6 — Messaging integration
 
-The first architectural decision is the WhatsApp provider selection tracked in
-`docs/DECISIONS.md`.
+ADR-011 is accepted.
+
+Development uses Evolution API / Baileys with a dedicated WhatsApp test number
+and zero incremental messaging-provider cost.
+
+Meta WhatsApp Cloud API remains the intended production target.
 
 See `docs/STATUS.md` for the detailed current repository state.
 
@@ -452,18 +456,21 @@ Commit prefixes:
 
 ## Current next steps
 
-The immediate implementation order is:
+The immediate M6 implementation order is:
 
-    1. Resolve ADR-011 — WhatsApp provider
-    2. Define the provider-agnostic MessagingProvider contract
-    3. Implement inbound webhook validation
-    4. Normalize provider payloads
-    5. Add webhook/message deduplication
-    6. Persist inbound conversation activity
-    7. Implement outbound message sending
-    8. Introduce asynchronous messaging processing where required
+    1. Define the provider-agnostic MessagingProvider contract
+    2. Define normalized inbound/outbound messaging contracts
+    3. Add Evolution API as the development adapter
+    4. Connect a dedicated WhatsApp test number
+    5. Implement inbound webhook/event handling
+    6. Normalize and deduplicate inbound messages
+    7. Persist inbound conversation activity
+    8. Implement outbound message sending
+    9. Introduce asynchronous processing where required
 
-Business logic must remain independent from the selected WhatsApp provider.
+Business logic must remain independent from Evolution, Baileys and Meta.
+
+The Evolution adapter is temporary development infrastructure.
 
 The provider integration must build on the existing tenant-safe Contact,
 Conversation and Message persistence model rather than introducing a parallel
