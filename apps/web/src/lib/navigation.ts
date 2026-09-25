@@ -36,6 +36,11 @@ export const navigationItems: NavigationItem[] = [
     description: 'Team and assignments',
   },
   {
+    href: '/availability',
+    label: 'Availability',
+    description: 'Staff working hours',
+  },
+  {
     href: '/settings',
     label: 'Settings',
     description: 'Business configuration',
