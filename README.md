@@ -10,22 +10,54 @@ The first real use case is a dental office, but the product is intentionally des
 
 ## Project status
 
-Current phase:
+Current milestone state:
 
-    M2 — Domain and persistence
+    M0 — Project foundation        COMPLETE
+    M1 — Technical base           COMPLETE
+    M2 — Domain and persistence   COMPLETE
+    M3 — Admin dashboard          COMPLETE
+    M4 — CRM + Inbox              COMPLETE
+    M5 — Scheduling               COMPLETE
+    M6 — Messaging integration    NEXT
 
-M1 — Technical base is complete.
+M0 through M5 are implemented in `main`.
 
-The monorepo, applications, shared packages, local Redis environment, health checks,
-formatting, testing, and CI quality gate are now established.
+The current platform foundation includes:
 
-Implementation now moves to the core domain, persistence, and multi-tenant rules.
+- executable web, API, and worker applications;
+- authenticated Supabase sessions;
+- backend tenant resolution and isolation;
+- CRM contact list and detail;
+- persisted conversations and messages;
+- Inbox conversation detail;
+- AI/human conversation control and human handoff;
+- service management;
+- staff management and service assignments;
+- recurring availability rule management;
+- real appointment slot calculation;
+- appointment creation and lifecycle management;
+- PostgreSQL-level double-booking protection;
+- automated database tenant-isolation coverage;
+- repository-wide CI quality gates.
 
-See:
+M5 was validated automatically and manually through:
 
-    docs/STATUS.md
+    Availability Rule
+            ↓
+    Available Slots
+            ↓
+    Appointment Creation
+            ↓
+    Reserved Slot Removed
 
-for the current repository state.
+The next milestone is:
+
+    M6 — Messaging integration
+
+The first architectural decision is the WhatsApp provider selection tracked in
+`docs/DECISIONS.md`.
+
+See `docs/STATUS.md` for the detailed current repository state.
 
 ---
 
@@ -420,18 +452,22 @@ Commit prefixes:
 
 ## Current next steps
 
-Before implementation:
+The immediate implementation order is:
 
-    1. Complete project foundation documentation
-    2. Resolve immediate ADRs
-    3. Select monorepo/package tooling
-    4. Select database access layer
-    5. Bootstrap web/api/worker
-    6. Configure local infrastructure
-    7. Add CI quality gate
-    8. Begin the multi-tenant domain model
+    1. Resolve ADR-011 — WhatsApp provider
+    2. Define the provider-agnostic MessagingProvider contract
+    3. Implement inbound webhook validation
+    4. Normalize provider payloads
+    5. Add webhook/message deduplication
+    6. Persist inbound conversation activity
+    7. Implement outbound message sending
+    8. Introduce asynchronous messaging processing where required
 
-See `docs/STATUS.md` for the latest state.
+Business logic must remain independent from the selected WhatsApp provider.
+
+The provider integration must build on the existing tenant-safe Contact,
+Conversation and Message persistence model rather than introducing a parallel
+source of truth.
 
 ---
 
